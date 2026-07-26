@@ -1,0 +1,27 @@
+[package]
+name = "cargo-dry4rust"
+version = "0.1.0"
+edition = "2024"
+description = "Cargo subcommand for detecting duplicated code patterns in Rust (DRY analysis) — early placeholder release"
+authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/umbgtt10/dry4rust"
+keywords = ["cargo", "subcommand", "duplication", "dry", "cli"]
+categories = ["development-tools::cargo-plugins", "command-line-utilities"]
+
+autotests = false
+
+[lib]
+name = "dry4rust"
+
+[[test]]
+name = "all_tests"
+path = "tests/all_tests.rs"
+
+[dependencies]
+anyhow = "1"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
