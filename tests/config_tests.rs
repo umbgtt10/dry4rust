@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::config::Config;
-use dry4rust::config::*;
 use std::fs;
 use tempfile::TempDir;
 
