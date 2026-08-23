@@ -227,19 +227,34 @@ Invoke-Stern4RustGate "House rules dry4rust" @("cargo-dry4rust")
 # ---------------------------------------------------------------------------
 # CRAP gate
 #
-# 32 rather than the family's usual number, and it is a ratchet rather than a
-# bound. grouper::find_near_duplicates sits at 31.3 -- complexity 27 at 82%
-# coverage, inherited from upstream. Six tests were written against it without
-# moving the coverage: the branches that remain are inside a bucketing loop
-# that is hard to reach from outside, so getting under 30 means reducing the
-# complexity, which is a change to the algorithm rather than a cleanup.
+# 15, the same number every repository in the family uses. What differs here is
+# -UseProjectThreshold, and the reason is arithmetic rather than taste.
 #
-# The number comes down when that function does. It is never raised to turn a
-# red build green, and the gate still fails on any *other* function crossing
-# the line.
+# CRAP is complexity^2 * (1 - coverage)^3 + complexity, so it is never smaller
+# than the complexity itself. A function above 15 complexity therefore cannot
+# reach 15 at any coverage, including 100%. Three inherited functions are in
+# that position or next to it:
+#
+#   grouper::find_near_duplicates   complexity 27, 82% -> 31.3   unreachable
+#   extractor::extract_recursive    complexity 20, 92% -> 20.2   unreachable
+#   main                            complexity 14, 79% -> 15.7   needs 83%
+#
+# The first two are upstream's matching and extraction algorithms. main is
+# glue, but coverage is collected from the test harness and not from spawned
+# children, so its dispatch arms cannot be reached by driving the binary --
+# seven subprocess tests moved it by nothing.
+#
+# Raising the number to 32 would have hidden all three and let a newly written
+# function at complexity 30 through in silence. Keeping 15 with the project
+# threshold keeps every function measured at the family's line and still named
+# in the report; what it spends is a budget, currently 2.4% against 5%. The
+# gate fails when that budget is exceeded, so new debt has nowhere to hide.
+#
+# Getting to 15 with zero tolerance means decomposing those functions. That is
+# a change to productive code, and it is proposed rather than assumed.
 # ---------------------------------------------------------------------------
 
-Invoke-Crap4RustGate "CRAP dry4rust" @("cargo-dry4rust") -Threshold 32
+Invoke-Crap4RustGate "CRAP dry4rust" @("cargo-dry4rust") -Threshold 15 -UseProjectThreshold
 
 # ---------------------------------------------------------------------------
 # Mirrored test gate

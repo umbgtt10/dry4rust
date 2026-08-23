@@ -69,9 +69,15 @@ are the corpus the tool measures, and several tests assert on their line
 counts, so a header stamped into them would edit the question rather than
 answer it. The report names the exclusion and how many files it removed.
 
-Two thresholds are not the defaults, and both say why in the script:
-`crap4rust` runs at 32 as a ratchet against one inherited function, and
-`iceberg4rust` at 10 as a real bound -- the worst file is 9.55.
+`crap4rust` runs at 15, the family's number, with `-UseProjectThreshold`.
+CRAP is never smaller than complexity, so three inherited functions cannot
+reach 15 at any coverage; the project threshold spends a budget for them --
+2.4% against 5% -- instead of raising the line and hiding them. They are still
+named in every report. Reaching 15 with zero tolerance means decomposing them,
+which is a change to productive code and is proposed rather than assumed.
+
+`iceberg4rust` runs at 10 rather than the default, and that one is a real bound
+-- the worst file is 9.55.
 
 `cargo install cargo-stern4rust`
 `cargo install cargo-crap4rust`

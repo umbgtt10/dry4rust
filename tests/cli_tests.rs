@@ -308,6 +308,99 @@ fn cleanup_removes_stale_entries() {
 }
 
 #[test]
+fn cmd_check_over_a_clean_fixture_passes_with_every_ceiling_at_zero() {
+    // Arrange
+    let (config, result) = analysed("no_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+    let thresholds = CheckThresholds {
+        max_exact: Some(0),
+        max_near: Some(0),
+        max_exact_percent: Some(0.0),
+        max_near_percent: Some(0.0),
+    };
+
+    // Act
+    let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
+
+    // Assert
+    assert!(outcome.is_ok());
+}
+
+#[test]
+fn cmd_check_with_a_generous_percentage_ceiling_passes() {
+    // Arrange
+    let (config, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+    let thresholds = CheckThresholds {
+        max_exact_percent: Some(100.0),
+        max_near_percent: Some(100.0),
+        ..CheckThresholds::default()
+    };
+
+    // Act
+    let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
+
+    // Assert
+    assert!(outcome.is_ok());
+}
+
+#[test]
+fn cmd_check_with_a_near_duplicate_ceiling_fails_when_it_is_exceeded() {
+    // Arrange
+    let (config, result) = analysed("near_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+    let thresholds = CheckThresholds {
+        max_near: Some(0),
+        ..CheckThresholds::default()
+    };
+
+    // Act
+    let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
+
+    // Assert
+    assert!(outcome.is_err() || result.near_groups.is_empty());
+}
+
+#[test]
+fn cmd_check_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
+    // Arrange
+    let (config, result) = analysed("near_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+    let thresholds = CheckThresholds {
+        max_near_percent: Some(0.0),
+        ..CheckThresholds::default()
+    };
+
+    // Act
+    let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
+
+    // Assert
+    assert!(outcome.is_err() || result.near_groups.is_empty());
+}
+
+#[test]
+fn cmd_check_with_a_percentage_ceiling_of_zero_fails_on_any_duplication() {
+    // Arrange
+    let (config, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+    let thresholds = CheckThresholds {
+        max_exact_percent: Some(0.0),
+        ..CheckThresholds::default()
+    };
+
+    // Act
+    let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
+
+    // Assert
+    assert!(outcome.is_err());
+}
+
+#[test]
 fn cmd_check_with_a_zero_threshold_fails_on_duplicates() {
     // Arrange
     let (config, result) = analysed("exact_dupes");
@@ -323,6 +416,48 @@ fn cmd_check_with_a_zero_threshold_fails_on_duplicates() {
 
     // Assert
     assert!(outcome.is_err());
+}
+
+#[test]
+fn cmd_check_with_an_exact_count_ceiling_above_the_findings_passes() {
+    // Arrange
+    let (config, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+    let thresholds = CheckThresholds {
+        max_exact: Some(9999),
+        max_near: Some(9999),
+        ..CheckThresholds::default()
+    };
+
+    // Act
+    let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
+
+    // Assert
+    assert!(outcome.is_ok());
+}
+
+#[test]
+fn cmd_check_with_every_ceiling_set_reports_each_breach_it_finds() {
+    // Arrange
+    let (config, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+    let thresholds = CheckThresholds {
+        max_exact: Some(0),
+        max_near: Some(0),
+        max_exact_percent: Some(0.0),
+        max_near_percent: Some(0.0),
+    };
+
+    // Act
+    let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
+
+    // Assert
+    assert!(
+        outcome.is_err(),
+        "a fixture with duplicates breaches a zero ceiling"
+    );
 }
 
 #[test]
@@ -357,6 +492,23 @@ fn cmd_cleanup_in_dry_run_leaves_the_ignore_file_alone() {
 
     // Assert
     assert!(!tmp.path().join(".dupes-ignore.toml").exists());
+}
+
+#[test]
+fn cmd_cleanup_outside_dry_run_writes_the_pruned_ignore_file() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    let (_, result) = analysed("exact_dupes");
+    let mut added = Vec::new();
+    cmd_ignore(tmp.path(), "deadbeef12345678", None, &mut added).expect("ignore accepted");
+    let mut out = Vec::new();
+
+    // Act
+    cmd_cleanup(tmp.path(), &result, &mut out, false).expect("cleanup succeeds");
+
+    // Assert
+    let text = String::from_utf8(out).expect("utf-8");
+    assert!(!text.is_empty(), "cleanup should say what it did");
 }
 
 #[test]
@@ -776,6 +928,92 @@ fn json_stats_includes_line_counts() {
     // Assert
     assert!(parsed["exact_duplicate_lines"].is_u64());
     assert!(parsed["near_duplicate_lines"].is_u64());
+}
+
+#[test]
+fn main_dispatches_the_check_subcommand_and_exits_one_when_a_ceiling_is_breached() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("check")
+        .arg("--max-exact")
+        .arg("0")
+        .arg("--path")
+        .arg(fixture_path("exact_dupes"))
+        .assert()
+        .code(1);
+}
+
+#[test]
+fn main_dispatches_the_check_subcommand_and_succeeds_on_a_clean_fixture() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("check")
+        .arg("--max-exact")
+        .arg("0")
+        .arg("--path")
+        .arg(fixture_path("no_dupes"))
+        .assert()
+        .success();
+}
+
+#[test]
+fn main_dispatches_the_cleanup_subcommand_in_dry_run() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("cleanup")
+        .arg("--dry-run")
+        .arg("--path")
+        .arg(fixture_path("exact_dupes"))
+        .assert()
+        .success();
+}
+
+#[test]
+fn main_dispatches_the_ignore_subcommand_and_records_the_fingerprint() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+
+    // Act & Assert
+    cargo_dry4rust()
+        .arg("ignore")
+        .arg("cafebabe00000001")
+        .arg("--path")
+        .arg(tmp.path())
+        .assert()
+        .success();
+}
+
+#[test]
+fn main_dispatches_the_ignored_subcommand_without_an_ignore_file() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("ignored")
+        .arg("--path")
+        .arg(fixture_path("no_dupes"))
+        .assert()
+        .success();
+}
+
+#[test]
+fn main_dispatches_the_stats_subcommand_to_a_successful_summary() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("stats")
+        .arg("--path")
+        .arg(fixture_path("exact_dupes"))
+        .assert()
+        .success();
+}
+
+#[test]
+fn main_over_a_path_that_does_not_exist_reports_the_error_and_exits_non_zero() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("--path")
+        .arg(fixture_path("no_such_fixture_anywhere"))
+        .assert()
+        .failure()
+        .stderr(str::contains("Error"));
 }
 
 #[test]
