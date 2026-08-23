@@ -69,12 +69,17 @@ are the corpus the tool measures, and several tests assert on their line
 counts, so a header stamped into them would edit the question rather than
 answer it. The report names the exclusion and how many files it removed.
 
-`crap4rust` runs at 15, the family's number, with `-UseProjectThreshold`.
-CRAP is never smaller than complexity, so three inherited functions cannot
-reach 15 at any coverage; the project threshold spends a budget for them --
-2.4% against 5% -- instead of raising the line and hiding them. They are still
-named in every report. Reaching 15 with zero tolerance means decomposing them,
-which is a change to productive code and is proposed rather than assumed.
+`crap4rust` runs at 15 -- the family's number, with no override and no
+tolerance. Nothing is baselined, skipped or budgeted.
+
+That took decomposition rather than tests. CRAP is
+`complexity^2 * (1 - coverage)^3 + complexity`, so it never falls below the
+complexity itself: a function of complexity 27 cannot reach 15 at any
+coverage, including 100%. Three inherited functions were in that position, and
+each became a struct in a file of its own with a mirrored test file --
+`NearDuplicateFinder`, `UnionFind`, `SimilarityPair`, `SubUnitExtractor`,
+`CommandDispatcher`. If this gate ever needs an override again, the honest
+move is the one taken here: split the function.
 
 `iceberg4rust` runs at 10 rather than the default, and that one is a real bound
 -- the worst file is 9.55.

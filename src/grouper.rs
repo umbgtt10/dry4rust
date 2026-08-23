@@ -5,10 +5,9 @@
 
 use std::collections::HashMap;
 
-use crate::code_unit::{CodeUnit, CodeUnitKind};
+use crate::code_unit::CodeUnit;
 use crate::fingerprint::Fingerprint;
-use crate::similarity;
-use std::ptr;
+use crate::near_duplicate_finder::NearDuplicateFinder;
 
 /// A group of duplicate code units.
 #[derive(Debug, Clone)]
@@ -96,133 +95,14 @@ pub fn group_exact_duplicates(units: &[CodeUnit]) -> Vec<DuplicateGroup> {
 }
 
 /// Find near-duplicate groups above the similarity threshold.
-/// Pre-filters by CodeUnitKind and approximate size to reduce pairwise comparisons.
+/// Pre-filters by `CodeUnitKind` and approximate size to reduce pairwise comparisons.
 #[must_use]
 pub fn find_near_duplicates(
     units: &[CodeUnit],
     threshold: f64,
     exact_fingerprints: &[Fingerprint],
 ) -> Vec<DuplicateGroup> {
-    // Build set of fingerprints that are already exact duplicates
-    let exact_set: std::collections::HashSet<Fingerprint> =
-        exact_fingerprints.iter().copied().collect();
-
-    // Filter out units that are already in exact duplicate groups
-    let candidates: Vec<&CodeUnit> = units
-        .iter()
-        .filter(|u| !exact_set.contains(&u.fingerprint))
-        .collect();
-
-    if candidates.len() < 2 {
-        return Vec::new();
-    }
-
-    // Bucket by kind and approximate size range
-    let mut buckets: HashMap<(CodeUnitKind, usize), Vec<&CodeUnit>> = HashMap::new();
-    for unit in &candidates {
-        // Size bucket: group units within 2x of each other
-        let size_bucket = if unit.node_count == 0 {
-            0
-        } else {
-            (unit.node_count as f64).log2().floor() as usize
-        };
-        buckets
-            .entry((unit.kind.clone(), size_bucket))
-            .or_default()
-            .push(unit);
-    }
-
-    // Pairwise comparison within buckets
-    let mut pairs: Vec<(usize, usize, f64)> = Vec::new();
-    let unit_indices: HashMap<*const CodeUnit, usize> = candidates
-        .iter()
-        .enumerate()
-        .map(|(i, u)| (ptr::from_ref::<CodeUnit>(*u), i))
-        .collect();
-
-    for bucket in buckets.values() {
-        if bucket.len() < 2 {
-            continue;
-        }
-        for i in 0..bucket.len() {
-            for j in (i + 1)..bucket.len() {
-                let score = similarity::similarity_score(&bucket[i].body, &bucket[j].body);
-                if score >= threshold {
-                    let idx_i = unit_indices[&ptr::from_ref::<CodeUnit>(bucket[i])];
-                    let idx_j = unit_indices[&ptr::from_ref::<CodeUnit>(bucket[j])];
-                    pairs.push((idx_i, idx_j, score));
-                }
-            }
-        }
-    }
-
-    // Build groups via transitive closure using union-find
-    let mut parent: Vec<usize> = (0..candidates.len()).collect();
-    let mut scores: HashMap<(usize, usize), f64> = HashMap::new();
-
-    for &(i, j, score) in &pairs {
-        union(&mut parent, i, j);
-        let key = (i.min(j), i.max(j));
-        scores.insert(key, score);
-    }
-
-    // Collect groups
-    let mut group_map: HashMap<usize, Vec<usize>> = HashMap::new();
-    for i in 0..candidates.len() {
-        let root = find(&mut parent, i);
-        group_map.entry(root).or_default().push(i);
-    }
-
-    let mut result: Vec<DuplicateGroup> = group_map
-        .into_values()
-        .filter(|members| members.len() > 1)
-        .map(|member_indices| {
-            // Compute minimum similarity within the group
-            let mut min_score = f64::INFINITY;
-            for &i in &member_indices {
-                for &j in &member_indices {
-                    if i < j
-                        && let Some(&s) = scores.get(&(i, j))
-                        && s < min_score
-                    {
-                        min_score = s;
-                    }
-                }
-            }
-
-            let members: Vec<CodeUnit> = member_indices
-                .iter()
-                .map(|&i| candidates[i].clone())
-                .collect();
-
-            let member_fps: Vec<Fingerprint> = members.iter().map(|m| m.fingerprint).collect();
-            let composite_fp = Fingerprint::from_fingerprints(&member_fps);
-
-            DuplicateGroup {
-                fingerprint: composite_fp,
-                members,
-                similarity: if min_score.is_infinite() {
-                    threshold
-                } else {
-                    min_score
-                },
-            }
-        })
-        .collect();
-
-    result.sort_by(|a, b| {
-        b.members
-            .len()
-            .cmp(&a.members.len())
-            .then_with(|| {
-                b.similarity
-                    .partial_cmp(&a.similarity)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .then_with(|| a.fingerprint.cmp(&b.fingerprint))
-    });
-
-    result
+    NearDuplicateFinder::new(threshold).find(units, exact_fingerprints)
 }
 
 /// Compute the total number of source lines in a duplicate group.
@@ -276,21 +156,4 @@ pub fn compute_stats_with_sub(
     stats.sub_near_groups = sub_near_groups.len();
     stats.sub_near_units = sub_near_groups.iter().map(|g| g.members.len()).sum();
     stats
-}
-
-// ── Union-Find helpers ──────────────────────────────────────────────────
-
-fn find(parent: &mut [usize], i: usize) -> usize {
-    if parent[i] != i {
-        parent[i] = find(parent, parent[i]);
-    }
-    parent[i]
-}
-
-fn union(parent: &mut [usize], i: usize, j: usize) {
-    let ri = find(parent, i);
-    let rj = find(parent, j);
-    if ri != rj {
-        parent[ri] = rj;
-    }
 }
