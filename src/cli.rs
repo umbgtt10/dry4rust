@@ -9,7 +9,9 @@ use std::path::{Path, PathBuf};
 use crate::analysis::AnalysisResult;
 use crate::analysis::analyze;
 use crate::analyzer::LanguageAnalyzer;
-use crate::ceiling::Ceiling;
+use crate::checking::ceiling::Ceiling;
+use crate::checking::check_thresholds::CheckThresholds;
+use crate::checking::stale_report::StaleReport;
 use crate::config::Config;
 use crate::error::Error as AnalysisError;
 use crate::fingerprint::Fingerprint;
@@ -19,7 +21,6 @@ use crate::output::reporter::Reporter;
 use crate::output::text::TextReporter;
 use crate::scanner;
 use crate::scanner::ScanConfig;
-use crate::stale_report::StaleReport;
 use ignore::add_ignore;
 use ignore::find_stale_entries;
 use ignore::load_ignore_file;
@@ -170,15 +171,6 @@ pub enum Command {
         #[arg(long)]
         dry_run: bool,
     },
-}
-
-/// Thresholds for the `check` subcommand.
-#[derive(Debug, Clone, Default)]
-pub struct CheckThresholds {
-    pub max_exact: Option<usize>,
-    pub max_near: Option<usize>,
-    pub max_exact_percent: Option<f64>,
-    pub max_near_percent: Option<f64>,
 }
 
 /// Optional CLI overrides applied on top of file-based config.

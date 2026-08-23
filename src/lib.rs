@@ -5,7 +5,7 @@
 
 pub mod analysis;
 pub mod analyzer;
-pub mod ceiling;
+pub mod checking;
 pub mod cli;
 pub mod code_unit;
 pub mod command_dispatcher;
@@ -23,5 +23,4 @@ pub mod output;
 pub mod rust;
 pub mod scanner;
 pub mod stable_hasher;
-pub mod stale_report;
 pub mod sub_unit_extractor;

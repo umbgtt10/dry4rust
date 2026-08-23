@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::ceiling::Ceiling;
+use dry4rust::checking::ceiling::Ceiling;
 
 #[test]
 fn breach_of_a_count_exactly_on_its_limit_reports_nothing() {

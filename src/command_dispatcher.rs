@@ -7,8 +7,8 @@ use std::io::Write;
 use std::path::Path;
 
 use crate::analyzer::LanguageAnalyzer;
+use crate::checking::check_thresholds::CheckThresholds;
 use crate::cli::AnalysisOutput;
-use crate::cli::CheckThresholds;
 use crate::cli::CliOverrides;
 use crate::cli::CliResult;
 use crate::cli::Command;

@@ -7,7 +7,7 @@ use crate::common::helpers::{cargo_dry4rust, fixture_path};
 use dry4rust::analysis::AnalysisResult;
 use dry4rust::analysis::analyze;
 use dry4rust::analysis::analyze_units;
-use dry4rust::cli::CheckThresholds;
+use dry4rust::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::CliError;
 use dry4rust::cli::CliOverrides;
 use dry4rust::cli::OutputFormat;
