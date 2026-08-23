@@ -28,10 +28,17 @@ measures how much of it is needlessly repeated.
 
 ## Status
 
-The engine is upstream's and works. The surrounding repository is under this family's house
-rules and gates: `cargo stern4rust` reports no offences with all twenty-one rules applied,
-`cargo crap4rust` finds no function at or above 15, and every source file has a mirrored
-test file. Commands below are `cargo dry4rust`; the upstream `cargo dry4rust` spelling is gone.
+The engine is upstream's, with four corrections it does not have — an exact size bound,
+aligned sequence children, a fingerprint format that survives a toolchain upgrade, and
+near-duplicate detection that no longer hides what exact detection reports. Added on top:
+baseline mode, and configuration that cannot hold an impossible threshold.
+
+The surrounding repository is under this family's house rules and gates: `cargo stern4rust`
+reports no offences with all twenty-one rules applied and no baseline of its own,
+`cargo crap4rust` finds no function at or above 15, every source file has a mirrored test
+file, and no file reaches 10 on `cargo iceberg4rust`.
+
+Commands below are `cargo dry4rust`; the upstream `cargo dupes` spelling is gone.
 
 
 ## Install
@@ -61,21 +68,30 @@ This normalized AST is hashed into a fingerprint for exact duplicate detection, 
 cargo dry4rust [OPTIONS] [COMMAND]
 
 Commands:
-  stats    Show duplication statistics only
-  report   Show full duplication report (default)
-  check    Check for duplicates and exit with non-zero if thresholds exceeded
-  ignore   Add a fingerprint to the ignore list
-  ignored  List all ignored fingerprints
+  stats     Show duplication statistics only
+  report    Show full duplication report (default)
+  check     Check for duplicates and exit with non-zero if thresholds exceeded
+  ignore    Add a fingerprint to the ignore list
+  ignored   List all ignored fingerprints
+  cleanup   Remove ignore entries that no longer match anything
+  baseline  Record the duplication that is already there
 
 Options:
-  -p, --path <PATH>            Path to analyze (defaults to current directory)
-      --min-nodes <MIN_NODES>  Minimum AST node count for analysis [default: 10]
-      --min-lines <MIN_LINES>  Minimum source line count for analysis [default: 0 (disabled)]
-      --threshold <THRESHOLD>  Similarity threshold for near-duplicates (0.0-1.0) [default: 0.8]
-      --format <FORMAT>        Output format [default: text] [possible values: text, json]
-      --exclude <EXCLUDE>      Exclude patterns (can be repeated)
-      --exclude-tests          Exclude test code (#[test] functions and #[cfg(test)] modules)
+  -p, --path <PATH>                Path to analyze (defaults to current directory)
+      --min-nodes <MIN_NODES>      Minimum AST node count for analysis [default: 10]
+      --min-lines <MIN_LINES>      Minimum source line count for analysis [default: 0 (disabled)]
+      --threshold <THRESHOLD>      Similarity threshold for near-duplicates (0.0-1.0) [default: 0.9]
+      --format <FORMAT>            Output format [default: text] [possible values: text, json]
+      --exclude <EXCLUDE>          Exclude patterns (can be repeated)
+      --exclude-tests              Exclude test code (#[test] functions and #[cfg(test)] modules)
+  -s, --sub-function               Also analyse if-branches, match arms, loop bodies and closure bodies
+      --min-sub-nodes <N>          Minimum AST node count for a sub-function unit [default: 5]
+      --baseline <PATH>            Judge the run against a recorded baseline of inherited duplication
 ```
+
+`--threshold` and the two `--max-*-percent` ceilings are checked against their ranges. A
+threshold outside `0.0..=1.0`, or a percentage outside `0.0..=100.0`, fails the run with a
+message naming the field rather than being accepted and quietly finding nothing.
 
 ### Examples
 
@@ -175,6 +191,44 @@ $ cargo dry4rust --min-lines 10 report
 $ cargo dry4rust --threshold 0.7 report
 ```
 
+## Sub-function Analysis
+
+By default a code unit is a whole function, method or closure. Two functions that share a
+copy-pasted `match` arm but differ elsewhere are not duplicates of each other, and nothing
+is reported.
+
+`--sub-function` (or `-s`) also treats each if-branch, match arm, loop body and closure
+body as a unit in its own right:
+
+```sh
+$ cargo dry4rust --sub-function report
+...
+Sub-function exact: 3 groups (6 units)
+Sub-function near:  0 groups (0 units)
+...
+Sub-function Exact Duplicates
+=============================
+
+Group 1 (fingerprint: 004522adf0425ce1, 2 members):
+  - for body (loop body) in sum_doubled at src/lib.rs:65-73
+  - for body (loop body) in accumulate at src/lib.rs:75-83
+
+Group 2 (fingerprint: 847270a821ab17a2, 2 members):
+  - match arm 2 (match arm) in classify_number at src/lib.rs:28-48
+  - match arm 2 (match arm) in describe_value at src/lib.rs:50-61
+```
+
+Each member names the function it came from, and the line range shown is that parent
+function's — not the branch's. Sub-function units are grouped separately from top-level
+ones and counted under their own headings, so a function never shares a group with its own
+branch. `--min-sub-nodes` (default `5`) is the floor a branch must reach to be considered
+at all; raise it when small branches produce noise.
+
+Two limits are worth knowing before trusting the output, both in
+[docs/OPEN_POINTS.md](docs/OPEN_POINTS.md): sub-function findings restate a function-level
+one when two functions are already duplicates of each other, and the parent line range
+means a report cannot be read straight to the branch.
+
 ## Configuration
 
 Configuration can be provided in three ways (in order of precedence):
@@ -212,13 +266,20 @@ exclude = ["tests"]
 |--------|---------|-------------|
 | `min_nodes` | `10` | Minimum AST node count for a code unit to be analyzed. Increase to skip trivial functions. |
 | `min_lines` | `0` | Minimum source line count for a code unit to be analyzed. `0` means disabled. |
-| `similarity_threshold` | `0.8` | Minimum similarity score (0.0-1.0) for near-duplicate detection. |
+| `similarity_threshold` | `0.9` | Minimum similarity score for near-duplicate detection. Must be within `0.0..=1.0`. |
 | `exclude` | `[]` | Path patterns to exclude from scanning (substring match). |
 | `exclude_tests` | `false` | Exclude `#[test]` functions and `#[cfg(test)]` modules from analysis. |
+| `sub_function` | `false` | Also analyse if-branches, match arms, loop bodies and closure bodies. |
+| `min_sub_nodes` | `5` | Minimum AST node count for a sub-function unit to be analyzed. |
+| `baseline` | `None` | Path to a recorded baseline of inherited duplication, relative to the analysed root. |
 | `max_exact_duplicates` | `None` | For `check` subcommand: maximum allowed exact duplicate groups. |
 | `max_near_duplicates` | `None` | For `check` subcommand: maximum allowed near-duplicate groups. |
-| `max_exact_percent` | `None` | For `check` subcommand: maximum allowed exact duplicate line percentage. |
-| `max_near_percent` | `None` | For `check` subcommand: maximum allowed near-duplicate line percentage. |
+| `max_exact_percent` | `None` | For `check` subcommand: maximum allowed exact duplicate line percentage. Must be within `0.0..=100.0`. |
+| `max_near_percent` | `None` | For `check` subcommand: maximum allowed near-duplicate line percentage. Must be within `0.0..=100.0`. |
+
+A value outside the range its field allows fails the run with a message naming the field,
+and exits 2. A config file that cannot be read or parsed is passed over, because a project
+with no configuration looks the same.
 
 ## Ignoring Duplicates
 
@@ -241,6 +302,56 @@ $ cargo dry4rust report
 
 The ignore list is stored in `.dry4rust-ignore.toml` in the project root.
 
+Entries whose fingerprint no longer matches anything go stale — after a refactor, or after
+an upgrade that changed the fingerprint format. `cleanup` prunes them:
+
+```sh
+$ cargo dry4rust cleanup --dry-run   # list them
+$ cargo dry4rust cleanup             # remove them
+```
+
+## Adopting on a Codebase That Already Has Duplication
+
+`ignore` is for duplication that is *meant* to be there. Duplication nobody has got to yet
+is a different thing, and recording it as intentional — one fingerprint at a time, with a
+reason invented to fill the field — writes a lie into a file that outlives whoever wrote
+it.
+
+Record it as a baseline instead. `check` then fails on what is added, not on what was
+inherited:
+
+```sh
+# Record what is already there
+$ cargo dry4rust baseline
+  exact 396fa8f6b728ff01 (3 members: process_data, compute_total, aggregate)
+Recorded 1 groups in dry4rust-baseline.json.
+
+# From now on, a zero ceiling is a gate rather than a wall
+$ cargo dry4rust --baseline dry4rust-baseline.json check --max-exact 0
+...
+Baseline: 1 groups suppressed
+
+Check passed.
+```
+
+Commit `dry4rust-baseline.json`, or put `baseline = "dry4rust-baseline.json"` in
+`dry4rust.toml` so every run picks it up without the flag. `baseline --dry-run` lists what
+would be recorded without writing anything.
+
+A baseline records a group's fingerprint **and its member count**. A third copy of an
+already-recorded duplicate makes the group larger than what was recorded, so it is
+reported — an exact group keeps its fingerprint when a copy joins it, and a baseline keyed
+on the fingerprint alone would inherit every future copy. Deleting a copy is admitted:
+progress is not something to fail on.
+
+A baseline that cannot be read — missing, malformed, or written by a version with a
+different format — fails the run and says so, rather than being treated as empty. Every
+summary a baseline touched states how many groups it suppressed, so a stale baseline is
+visible rather than silent.
+
+The reasoning is in
+[ADR-BaselineIsInheritedNotForgiven](docs/ADRs/ADR-BaselineIsInheritedNotForgiven.md).
+
 ## CI Integration
 
 Use the `check` subcommand in CI pipelines:
@@ -249,6 +360,14 @@ Use the `check` subcommand in CI pipelines:
 # GitHub Actions example
 - name: Check for code duplication
   run: cargo dry4rust check --max-exact 0 --max-exact-percent 5.0
+```
+
+On a codebase with existing duplication, add a baseline so the gate measures what the
+change introduced:
+
+```yaml
+- name: Check for new code duplication
+  run: cargo dry4rust --baseline dry4rust-baseline.json check --max-exact 0
 ```
 
 Exit codes:
@@ -290,9 +409,20 @@ The scanner automatically:
 
 ```sh
 cargo build          # Build
-cargo test           # Run all 147 tests
+cargo test           # Run the suite
 cargo clippy         # Lint check
 cargo fmt --check    # Format check
 ```
 
-Pre-commit hooks (via `cargo-husky`) run clippy and rustfmt automatically.
+Both gates are scripted, and both are mandatory after any change under `src/` or `tests/`:
+
+```powershell
+powershell -File scripts\run_stage_1.ps1   # fmt, clippy under -D warnings, tests
+powershell -File scripts\run_stage_2.ps1   # stern4rust, crap4rust, twin4rust, iceberg4rust
+```
+
+Stage 2 needs the four subcommands installed:
+
+```sh
+cargo install cargo-stern4rust cargo-crap4rust cargo-twin4rust cargo-iceberg4rust
+```

@@ -78,20 +78,57 @@ upstream's history kept as an ancestor rather than a credit line.
 - `Fingerprint::new` added so tests can name a hash without the tuple field
   being public
 
+**Added beyond the fork**
+
+- Baseline mode. `cargo dry4rust baseline` records the duplication a codebase
+  already has, `--baseline <path>` judges a run against it, and `check` then
+  fails on what is added rather than on what was inherited. An entry carries
+  the group's member count as well as its fingerprint, because an exact group
+  keeps its fingerprint when a third copy joins it -- without the count, a
+  baseline would inherit every future copy of every function it recorded. A
+  baseline that cannot be read is an error and never an empty one, and the
+  count it suppressed is in every summary it touched.
+
+**Made impossible rather than documented**
+
+- Every threshold is a `Threshold`, a newtype over a fraction that cannot be
+  built out of range. `--threshold 5` had been accepted, and because the size
+  pre-filter is derived from the threshold it discarded every pair -- so the
+  report said "no near duplicates", which is what a clean codebase says.
+  `--max-exact-percent 150` was a ceiling nothing could breach; `-5` was one
+  everything breached. All three now name the field and exit 2. `NaN` is
+  rejected by the same containment check, which a pair of comparisons would
+  have admitted.
+
+**Restructured again**
+
+- `cli.rs` -- 461 lines holding an error enum with three trait impls, three
+  more types and eight free functions -- became `src/cli/`, one type per file.
+  The six subcommands are command structs with a single `run` method, so each
+  has a constructor a test can reach. `checking/` moved under it: `Ceiling`,
+  `CheckThresholds` and `StaleReport` serve `check` and `cleanup` and nothing
+  else.
+- `write_ignore_entry`, shared by `ignored` and `cleanup`, became
+  `IgnoreEntryLine` with a `Display` impl -- a line a test can compare against
+  rather than something only a buffer can observe.
+
 **Documented**
 
-- Seven ADRs with an index; `ARCHITECTURE.md`, `FORMULA.md`,
+- Thirteen ADRs with an index; `ARCHITECTURE.md`, `FORMULA.md`,
   `OPEN_POINTS.md`, `ROADMAP.md`, this file
-- README credits the creator on its first line of body text
+- README credits the creator on its first line of body text, and documents
+  `--sub-function`, `--min-sub-nodes` and `--baseline`, which were features
+  with no entry
+- `CHANGELOG.md` states the fingerprint-format break and what to do about it
 
 **Verified**
 
-- 324 tests, up from 213
-- `stern4rust`: 0 offences over 65 files, 21 rules applied, nothing skipped,
+- 482 tests, up from 213
+- `stern4rust`: 0 offences over 118 files, 21 rules applied, nothing skipped,
   nothing baselined, one exclusion (`tests/fixtures/**`)
-- `crap4rust`: 0 crappy functions at 15, no override
+- `crap4rust`: 0 crappy functions at 15 over 216 functions, no override
 - `twin4rust`: every source file mirrored
-- `iceberg4rust`: no file at or above 10, worst is 9.55
+- `iceberg4rust`: no file at or above 10
 - Both stage gates proven to fail, not only to pass
 
 ## Version 0.1.0 (2026-07-26)

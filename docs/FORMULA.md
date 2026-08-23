@@ -46,7 +46,9 @@ where `|a|` is the node count of tree `a`, and `matching` walks both trees
 together counting nodes that agree.
 
 The range is `0.0` to `1.0`. Two empty trees score `1.0` by definition. The
-default threshold is `0.8`.
+default threshold is `0.9`, and a threshold outside `0.0..=1.0` is rejected
+rather than accepted -- see
+[ADR-ThresholdsCarryTheirRange](ADRs/ADR-ThresholdsCarryTheirRange.md).
 
 ## What `matching` counts
 
@@ -97,9 +99,9 @@ pair's score is bounded before either tree is examined:
 
 A pair is scored only when `ceiling >= t`. This is exact: every pair it
 discards provably cannot reach the threshold, and every pair that could is
-kept. Rearranged, it is a ratio bound of `(2 - t) / t` -- `1.5` at the default
-`0.8` -- but the ceiling form is what the code computes, because it needs no
-special case for a zero-size unit.
+kept. Rearranged, it is a ratio bound of `(2 - t) / t` -- about `1.22` at the
+default `0.9` -- but the ceiling form is what the code computes, because it
+needs no special case for a zero-size unit.
 
 Candidates are sorted by node count, so once a partner is too large the
 ceiling only falls further and the remainder of the list is skipped.

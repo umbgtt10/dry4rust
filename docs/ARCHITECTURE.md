@@ -9,9 +9,11 @@ matches and compared tree-to-tree for near ones. Nothing is inferred from
 names, comments or formatting, because all three are exactly what a copied
 block changes first.
 
-34 source files, roughly 4,000 lines. Near-duplicate detection lives in
-`src/near_duplicate/` -- five modules that only `grouper` reaches, grouped
-together because they answer one question between them.
+60 source files, roughly 5,500 lines, one type each. Four directories group
+the modules that answer one question between them: `src/near_duplicate/`,
+which only `grouper` reaches; `src/baseline/`, the record of inherited
+duplication; `src/cli/`, one file per command; and `src/rust/`, the only
+`LanguageAnalyzer` there is.
 
 ## Pipeline
 
@@ -40,8 +42,15 @@ together because they answer one question between them.
   ignore         drop fingerprints listed in .dry4rust-ignore.toml
      |
      v
+  baseline       drop groups a recorded baseline already accounts for,
+     |           and count how many that was
+     v
   output         text or json
 ```
+
+The two filters are not the same thing. `ignore` drops duplication somebody
+decided should stay; `baseline` drops duplication nobody has got to yet. Both
+run before the statistics, so a ceiling on a percentage measures what is left.
 
 Sub-function analysis, when enabled, re-enters at the normaliser: each
 function body yields its own if-branches, match arms, loop bodies and closure
@@ -68,10 +77,21 @@ bodies as further units, which then travel the same path.
 | `near_duplicate::union_find` | Disjoint-set forest turning similar-pairs into groups. |
 | `near_duplicate::similarity_pair` | One scored pair, and the ordered key a symmetric lookup needs. |
 | `ignore` | The suppression file: read, write, filter. |
+| `baseline::baseline_kind` | Which of the four group sets an entry was recorded from. |
+| `baseline::baseline_entry` | One recorded group: kind, fingerprint, member count, names. |
+| `baseline::baseline_file` | The file itself -- record, load, save, and where it lives. |
+| `baseline::baseline_filter` | Keeps the groups the baseline does not already account for. |
+| `threshold` | `Threshold`, a proportion that cannot be built out of range. |
 | `config` | Defaults, `dry4rust.toml`, `[package.metadata.dry4rust]`, CLI overrides. |
 | `analysis` | `analyze` and `analyze_units` -- the pipeline as one call. |
-| `cli` | `Command`, the `cmd_*` functions, `run_analysis`, `CliError`. |
-| `command_dispatcher` | Routes a parsed `Command` to the function that serves it. |
+| `cli::cli_error` | `CliError` and the exit code each variant maps to. |
+| `cli::command` | The subcommands, as `clap` sees them. |
+| `cli::cli_overrides` | What the command line said, applied over what the files said. |
+| `cli::output_format` | Text or JSON, and the reporter each builds. |
+| `cli::analysis_output` | One run's config, result and reporter, produced together. |
+| `cli::*_command` | One struct per subcommand, each with a single `run`. |
+| `cli::checking` | `Ceiling`, `CheckThresholds`, `StaleReport` -- what `check` and `cleanup` measure with. |
+| `command_dispatcher` | Routes a parsed `Command` to the type that serves it. |
 | `output` | `Reporter`, with `text` and `json` implementations. |
 
 ## Data model
@@ -122,12 +142,16 @@ extracted fragment can be compared against another extracted fragment.
 ## CLI layer
 
 `main` unpacks arguments and produces an exit code. Everything else is in the
-library, where tests reach it: `CommandDispatcher` splits the two commands
-that touch only the ignore file from the four that need an analysis first,
-runs the analysis once, and hands the result to the matching `cmd_*`.
+library, where tests reach it: `CommandDispatcher` splits the two commands that
+touch only the ignore file from the five that need an analysis first, runs the
+analysis once, and hands the result to the command struct that serves it.
 
-Every `cmd_*` takes a writer rather than printing, so each is driven directly
-against a fixture in tests and its output read back.
+Each command is a type with a constructor and a single `run`, taking a writer
+rather than printing, so each is driven directly against a fixture in tests and
+its output read back. `baseline` is the one command dispatched through
+`AnalysisOutput::produce_ignoring_baseline`: a recording that judged against
+the previous recording would hold only what had been added since, and the
+second run would empty the file.
 
 ## Related
 

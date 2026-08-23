@@ -38,20 +38,22 @@ and does not submit to it is an argument against itself.
 
 ## Current Baseline
 
-Version 0.2.0. Forked, cleaned, and under the family's gates.
+Version 0.2.0. Forked, cleaned, corrected, and under the family's gates.
 
 - Exact and near-duplicate detection over functions, methods and closures
 - Optional sub-function analysis: if-branches, match arms, loop bodies,
   closure bodies
-- Six subcommands -- `report`, `stats`, `check`, `ignore`, `ignored`,
-  `cleanup`
+- Seven subcommands -- `report`, `stats`, `check`, `ignore`, `ignored`,
+  `cleanup`, `baseline`
 - Text and JSON output
 - Four independent threshold ceilings for CI
 - Suppression by fingerprint, with a reason, and a `cleanup` that prunes
   entries no longer matching anything
+- Baseline mode: record inherited duplication so `check` fails on what is
+  added, with the suppressed count in every summary
 - Configuration from defaults, `dry4rust.toml`, `[package.metadata.dry4rust]`
-  and CLI flags
-- 324 tests; `stern4rust` clean with all 21 rules applied and no baseline;
+  and CLI flags, with every ranged value carrying its range in its type
+- 482 tests; `stern4rust` clean with all 21 rules applied and no baseline;
   `crap4rust` clean at 15 with no override; every source file mirrored;
   no file at or above 10 on `iceberg4rust`
 
@@ -61,9 +63,11 @@ first release with an engine in it and has not been published.
 ## What is left
 
 **1. Publish 0.2.0.** The manifest is ready and the name is held. It now has
-a reason beyond "the fork is tidy": three correctness fixes the incumbent does
-not have -- an exact size bound, aligned sequence children, and a fingerprint
-format that survives a toolchain upgrade.
+a reason beyond "the fork is tidy": four correctness fixes the incumbent does
+not have -- an exact size bound, aligned sequence children, a fingerprint
+format that survives a toolchain upgrade, and near-duplicate detection that no
+longer hides what exact detection reports -- plus baseline mode, which is what
+makes any of it adoptable on a codebase that has the problem.
 
 **2. Semantic redundancy detection.** The direction above. Two functions with
 the same behaviour and different structure -- a `for` loop accumulating a sum

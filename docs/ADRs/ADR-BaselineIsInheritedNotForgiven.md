@@ -130,6 +130,12 @@ A baseline that is never re-recorded hides duplication indefinitely. The
 suppressed count in every summary is what keeps that visible, and re-recording
 is one command.
 
+Shrinkage is admitted for exact groups and not for near ones. A near group's
+fingerprint is composite over its members, so losing one changes the identity
+and the group is reported as new even though it got smaller. That is a property
+of the composite fingerprint rather than of this decision, and it is recorded
+in [OPEN_POINTS.md](../OPEN_POINTS.md).
+
 `analyze_units` now returns an error where it could not before, because
 loading the baseline can fail. `AnalysisOutput` gained a second constructor,
 `produce_ignoring_baseline`, which is what `baseline` records with.

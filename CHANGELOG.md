@@ -9,15 +9,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Version 0.2.0 is the first release with an engine in it. It is a fork of
+[`cargo-dupes`](https://github.com/mpecan/cargo-dupes) by Matjaz Domen Pecan (MIT), with
+upstream's history kept as an ancestor rather than a credit line.
+
+### ⚠ BREAKING
+
+- **The fingerprint format is defined by this repository and every previously recorded
+  fingerprint is invalid.** It rested on `DefaultHasher`, a derived `Hash` and
+  native-endian integers, so a `NodeKind` reorder, a toolchain upgrade or a different
+  architecture silently repointed every entry in every ignore file. Variants are now
+  written by name into a hasher this crate owns.
+  **If you are upgrading, re-record your suppressions:** run
+  `cargo dry4rust cleanup` to prune the entries that no longer match anything, then
+  `cargo dry4rust ignore <new fingerprint>` for each one you still want suppressed.
+  `cleanup --dry-run` lists them first. The fifty entries in this repository's own ignore
+  file went stale for exactly this reason and were pruned in the same commit.
+- **Out-of-range configuration is rejected instead of accepted.** A
+  `similarity_threshold` outside `0.0..=1.0` or a `max_*_percent` outside `0.0..=100.0`
+  now fails the run with a message naming the field, and exits 2. Previously
+  `--threshold 5` was accepted and made the size pre-filter discard every pair, so the
+  report said "no near duplicates" — the same sentence a clean codebase produces. A
+  `dry4rust.toml` that has been quietly wrong will start failing.
+- **Every user-facing name follows the tool.** The `clap` program name, the ignore file
+  (`.dry4rust-ignore.toml`), the config file (`dry4rust.toml`) and the manifest key
+  (`[package.metadata.dry4rust]`) were still upstream's. Rename your files and manifest
+  section when upgrading.
+- **The tree-sitter and Python backends are gone.** One crate, one language.
+  `LanguageAnalyzer` stays as the injection seam.
+
 ### Added
-- Forked [`cargo-dupes`](https://github.com/mpecan/cargo-dupes) by Matjaz Domen Pecan
-  (MIT) into this repository, history included, replacing the placeholder skeleton with a
-  working duplicate-detection engine: AST normalisation, fingerprint hashing and
-  Dice-coefficient near-duplicate detection.
-- `LICENSE` now carries both copyright notices, upstream's first.
+- **Baseline mode.** `cargo dry4rust baseline` records the duplication a codebase already
+  has; `--baseline <PATH>` judges a run against that record, so `check` fails on what is
+  added rather than on what was inherited. `baseline --dry-run` lists what would be
+  recorded. Every summary a baseline touched states how many groups it suppressed. See
+  [ADR-BaselineIsInheritedNotForgiven](docs/ADRs/ADR-BaselineIsInheritedNotForgiven.md).
+- `baseline_suppressed` in the JSON summary, present only when a baseline was in effect.
+- `docs/`: `ARCHITECTURE.md`, `FORMULA.md`, `OPEN_POINTS.md`, `ROADMAP.md`,
+  `IMPLEMENTED-FEATURES.md`, `dry4rust-dossier.md`, and thirteen ADRs with an index.
+- `LICENSE` carries both copyright notices, upstream's first, and every source file
+  repeats them.
+- Two quality-gate scripts, `scripts/run_stage_1.ps1` and `scripts/run_stage_2.ps1`, both
+  proven to fail rather than only to pass.
+
+### Fixed
+- **Near-duplicate pairs one node apart were never compared.** The size pre-filter
+  bucketed by `floor(log2(node_count))`, so a pair of 7 and 8 nodes able to score `0.933`
+  fell either side of a boundary and was skipped, while pairs nearly twice apart were
+  compared anyway. The filter is now the exact bound the threshold implies. Codebases
+  that reported no near duplicates may now report some, and those findings were always
+  there. See
+  [ADR-SizeFilterIsAProvableBound](docs/ADRs/ADR-SizeFilterIsAProvableBound.md).
+- **A block with one inserted statement scored as though it were unrelated.** `Block`,
+  `Tuple` and `Array` children were zipped positionally, so a single insertion shifted
+  every later statement out of alignment: two blocks differing by one statement scored
+  `2/11`. They are now aligned by weighted longest-common-subsequence and score `10/11`.
+  Kinds whose children are named slots keep positional comparison, so an `If` with a
+  then-branch is still not a match for an `If` with an else-branch.
+- **`CodeUnitKind` hid near duplicates that exact detection reported.** Exact grouping
+  never considered kind, so a free function and a method with identical bodies were
+  reported as exact duplicates while the same pair differing by one statement was
+  invisible. Near-duplicate detection no longer restricts by kind.
+- **Grouping depended on `HashMap` iteration order.** `UnionFind::groups` now orders
+  groups by lowest member and members ascending, so the same input produces the same
+  output.
+- Candidate indices are carried directly rather than recovered through a
+  `HashMap<*const CodeUnit, usize>` keyed on pointer identity.
 
 ### Changed
+- `Config::load` and `CliOverrides::apply_to` are fallible, and thresholds are held in a
+  `Threshold` newtype that cannot be built out of range. See
+  [ADR-ThresholdsCarryTheirRange](docs/ADRs/ADR-ThresholdsCarryTheirRange.md).
+- `cli.rs` is now `src/cli/`, one type per file: the six subcommands are command structs
+  with a single `run` method.
+- Four functions the CRAP gate could not admit at any coverage became five types —
+  `NearDuplicateFinder`, `UnionFind`, `SimilarityPair`, `SubUnitExtractor`,
+  `CommandDispatcher` — rather than the threshold being raised. See
+  [ADR-DecompositionOverThresholdRelaxation](docs/ADRs/ADR-DecompositionOverThresholdRelaxation.md).
+- Nine re-exports removed, so every import names the module where the symbol is defined.
+- 482 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
+  baseline; `crap4rust` clean at 15 with no override; every source file mirrored; no file
+  at or above 10 on `iceberg4rust`.
 - Upstream's changelog is preserved below, under its own heading, rather than replaced.
+
+### Removed
+- The `dupes-treesitter` and `dupes-python` crates, and the `code-dupes` multi-language
+  binary. See
+  [ADR-SingleCrateSingleLanguage](docs/ADRs/ADR-SingleCrateSingleLanguage.md).
 
 
 ## [0.1.0] - 2026-07-26

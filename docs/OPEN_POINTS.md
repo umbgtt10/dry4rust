@@ -30,6 +30,35 @@ duplicates of each other: their matching internals are then reported again as
 sub-function duplicates. The counts are honest about being distinct sets, but
 the second finding carries no information the first did not.
 
+## A sub-function unit reports its parent's line range
+
+With `--sub-function`, each extracted branch, arm or loop body carries the
+line range of the function it came from, not its own. A match arm inside a
+twenty-line function is reported at the function's twenty lines.
+
+The member line is still unambiguous about *which* branch -- it names the kind
+and the ordinal, `match arm 2 (match arm) in classify_number` -- but the range
+cannot be read straight into an editor and landed on the finding.
+
+It also means the duplicated-line counts treat a sub-function group as though
+it spanned its parents in full, which overstates them.
+
+## A near-duplicate group that loses a member is new duplication to a baseline
+
+A near group's fingerprint is composite over its sorted member fingerprints,
+which is what makes suppression of a near group possible at all. It also means
+the identity changes whenever the membership does -- in either direction.
+
+For a baseline that is right in one direction and wrong in the other. Adding a
+member changes the fingerprint, so the grown group is reported, which is what
+should happen. Removing one also changes the fingerprint, so a group that
+*shrank* is reported as though it were new.
+
+Exact groups do not have this: their fingerprint is the one their members
+share, so the recorded member count carries the growth and shrinkage is
+admitted. The asymmetry is between the two kinds of group, not between the two
+directions.
+
 ## Macros are matched by name alone
 
 A `MacroCall` node keeps the macro's name and nothing else -- the invocation
