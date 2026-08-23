@@ -361,7 +361,13 @@ fn cmd_check_with_a_near_duplicate_ceiling_fails_when_it_is_exceeded() {
     let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
 
     // Assert
-    assert!(outcome.is_err() || result.near_groups.is_empty());
+    assert_eq!(
+        result.near_groups.len(),
+        1,
+        "the fixture holding a near-duplicate group is why the ceiling is \
+         breached; without that this test would prove nothing"
+    );
+    assert!(matches!(outcome, Err(CliError::CheckFailed)));
 }
 
 #[test]
@@ -379,7 +385,12 @@ fn cmd_check_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() 
     let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
 
     // Assert
-    assert!(outcome.is_err() || result.near_groups.is_empty());
+    assert!(
+        result.stats.near_duplicate_percent() > 0.0,
+        "a ceiling of zero percent is only breached because the fixture has \
+         near-duplicated lines to measure"
+    );
+    assert!(matches!(outcome, Err(CliError::CheckFailed)));
 }
 
 #[test]

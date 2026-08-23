@@ -3,11 +3,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::node::BinOpKind;
 use dry4rust::node::LiteralKind;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use dry4rust::node::PlaceholderKind;
+use dry4rust::node::UnOpKind;
 use dry4rust::node_encoder::NodeEncoder;
+use std::collections::BTreeMap;
 
 fn encoded(node: &NormalizedNode) -> u64 {
     let mut encoder = NodeEncoder::new();
@@ -133,6 +136,91 @@ fn encode_gives_equal_trees_equal_fingerprints() {
 
     // Act & Assert
     assert_eq!(encoded(&build()), encoded(&build()));
+}
+
+#[test]
+fn encode_gives_every_node_kind_a_distinct_fingerprint() {
+    // Arrange
+    let every_kind = vec![
+        NodeKind::Block,
+        NodeKind::LetBinding,
+        NodeKind::Semi,
+        NodeKind::Paren,
+        NodeKind::Literal(LiteralKind::Int),
+        NodeKind::Placeholder(PlaceholderKind::Variable, 0),
+        NodeKind::BinaryOp(BinOpKind::Add),
+        NodeKind::UnaryOp(UnOpKind::Not),
+        NodeKind::Range,
+        NodeKind::Call,
+        NodeKind::MethodCall,
+        NodeKind::FieldAccess,
+        NodeKind::Index,
+        NodeKind::Path,
+        NodeKind::Closure,
+        NodeKind::FnSignature,
+        NodeKind::Return,
+        NodeKind::Break,
+        NodeKind::Continue,
+        NodeKind::Assign,
+        NodeKind::Reference { mutable: false },
+        NodeKind::Tuple,
+        NodeKind::Array,
+        NodeKind::Set,
+        NodeKind::Repeat,
+        NodeKind::Cast,
+        NodeKind::StructInit,
+        NodeKind::Await,
+        NodeKind::Yield,
+        NodeKind::Try,
+        NodeKind::If,
+        NodeKind::Match,
+        NodeKind::MatchArm,
+        NodeKind::Loop,
+        NodeKind::While,
+        NodeKind::ForLoop,
+        NodeKind::LetExpr,
+        NodeKind::PatWild,
+        NodeKind::PatPlaceholder(PlaceholderKind::Variable, 0),
+        NodeKind::PatTuple,
+        NodeKind::PatStruct,
+        NodeKind::PatOr,
+        NodeKind::PatLiteral,
+        NodeKind::PatReference { mutable: false },
+        NodeKind::PatSlice,
+        NodeKind::PatRest,
+        NodeKind::PatRange,
+        NodeKind::TypePlaceholder(PlaceholderKind::Variable, 0),
+        NodeKind::TypeReference { mutable: false },
+        NodeKind::TypeTuple,
+        NodeKind::TypeSlice,
+        NodeKind::TypeArray,
+        NodeKind::TypePath,
+        NodeKind::TypeImplTrait,
+        NodeKind::TypeInfer,
+        NodeKind::TypeUnit,
+        NodeKind::TypeNever,
+        NodeKind::FieldValue,
+        NodeKind::MacroCall {
+            name: "m".to_string(),
+        },
+        NodeKind::Opaque,
+        NodeKind::None,
+    ];
+
+    // Act
+    let fingerprints: BTreeMap<u64, String> = every_kind
+        .iter()
+        .map(|kind| (encoded(&leaf(kind.clone())), format!("{kind:?}")))
+        .collect();
+
+    // Assert
+    assert_eq!(
+        fingerprints.len(),
+        every_kind.len(),
+        "two variants encoding to the same bytes would silently merge unrelated          code into one duplicate group; {} of {} survived",
+        fingerprints.len(),
+        every_kind.len()
+    );
 }
 
 #[test]

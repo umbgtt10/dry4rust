@@ -3,7 +3,34 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::code_unit::CodeUnit;
 use dry4rust::fingerprint::*;
+use dry4rust::rust::parser::parse_file;
+use std::fs;
+use tempfile::TempDir;
+
+/// Fingerprints are written into `.dry4rust-ignore.toml` and are expected to
+/// still match later. Any change to the normaliser, the encoder or the hasher
+/// moves them and silently breaks every suppression anyone has recorded.
+///
+/// These values are arbitrary. What matters is that they never change without
+/// someone deciding they should -- so a failure here is not a bug in the test,
+/// it is the format changing, and it needs a note in `CHANGELOG.md` marked
+/// BREAKING.
+const GOLDEN: &str = r"
+fn add_one(x: i32) -> i32 {
+    x + 1
+}
+";
+
+fn only_unit(code: &str) -> CodeUnit {
+    let tmp = TempDir::new().expect("temp dir");
+    let file = tmp.path().join("golden.rs");
+    fs::write(&file, code).expect("write");
+    let mut units = parse_file(&file, 1, 0).expect("the sample parses");
+    assert_eq!(units.len(), 1, "the sample holds exactly one unit");
+    units.remove(0)
+}
 
 #[test]
 fn composite_fingerprint_deterministic() {
@@ -58,6 +85,57 @@ fn fmt_pads_the_hash_to_sixteen_hex_digits() {
 fn from_hex_invalid() {
     // Arrange & Act & Assert
     assert!(Fingerprint::from_hex("not_hex").is_none());
+}
+
+#[test]
+fn parse_file_gives_a_renamed_copy_of_the_golden_sample_the_same_fingerprint() {
+    // Arrange
+    let renamed = r"
+fn increment(value: i32) -> i32 {
+    value + 1
+}
+";
+
+    // Act
+    let original = only_unit(GOLDEN).fingerprint;
+    let copy = only_unit(renamed).fingerprint;
+
+    // Assert
+    assert_eq!(
+        original, copy,
+        "identifiers normalise to positional placeholders, so a rename is not \
+         a different function"
+    );
+}
+
+#[test]
+fn parse_file_gives_a_structurally_different_function_a_different_fingerprint() {
+    // Arrange
+    let different = r"
+fn add_one(x: i32) -> i32 {
+    if x > 0 { x + 1 } else { x }
+}
+";
+
+    // Act
+    let original = only_unit(GOLDEN).fingerprint;
+    let other = only_unit(different).fingerprint;
+
+    // Assert
+    assert_ne!(original, other);
+}
+
+#[test]
+fn parse_file_gives_the_golden_sample_a_stable_fingerprint() {
+    // Arrange & Act
+    let unit = only_unit(GOLDEN);
+
+    // Assert
+    assert_eq!(
+        unit.fingerprint.value(),
+        16_368_680_241_809_348_210,
+        "the fingerprint format changed. That is a BREAKING change: every          recorded suppression stops matching. If it was deliberate, update          this value and say so in CHANGELOG.md"
+    );
 }
 
 #[test]
