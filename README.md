@@ -275,7 +275,12 @@ The scanner automatically:
 
 | Where | What |
 |---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | The pipeline, the components, and the data model |
+| [docs/FORMULA.md](docs/FORMULA.md) | Fingerprinting and the similarity score, precisely |
 | [docs/ADRs/](docs/ADRs/README.md) | The load-bearing decisions and why they were forced |
+| [docs/OPEN_POINTS.md](docs/OPEN_POINTS.md) | Where the model is known to be thin, including two silent false-negative sources |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Direction, current baseline, and what is left |
+| [docs/IMPLEMENTED-FEATURES.md](docs/IMPLEMENTED-FEATURES.md) | What each version added, upstream's included |
 | [docs/dry4rust-dossier.md](docs/dry4rust-dossier.md) | Research on where this tool is going, and what already holds the ground |
 
 
