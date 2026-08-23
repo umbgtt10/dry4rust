@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use crate::analysis::AnalysisResult;
 use crate::analysis::analyze;
 use crate::analyzer::LanguageAnalyzer;
+use crate::ceiling::Ceiling;
 use crate::config::Config;
 use crate::error::Error as AnalysisError;
 use crate::fingerprint::Fingerprint;
@@ -330,54 +331,54 @@ pub fn cmd_check(
 
     reporter.report_stats(&result.stats, writer)?;
 
+    let stats = &result.stats;
+    let ceilings = [
+        (
+            Ceiling::count(
+                max_exact,
+                stats.exact_duplicate_groups,
+                "exact duplicate groups",
+            ),
+            true,
+        ),
+        (
+            Ceiling::count(
+                max_near,
+                stats.near_duplicate_groups,
+                "near duplicate groups",
+            ),
+            false,
+        ),
+        (
+            Ceiling::percent(
+                max_exact_pct,
+                stats.exact_duplicate_percent(),
+                "exact duplicate lines",
+            ),
+            true,
+        ),
+        (
+            Ceiling::percent(
+                max_near_pct,
+                stats.near_duplicate_percent(),
+                "near duplicate lines",
+            ),
+            false,
+        ),
+    ];
+
     let mut failed = false;
-
-    if let Some(threshold) = max_exact
-        && result.stats.exact_duplicate_groups > threshold
-    {
-        writeln!(
-            writer,
-            "\nCheck FAILED: {} exact duplicate groups (max: {})",
-            result.stats.exact_duplicate_groups, threshold
-        )?;
-        reporter.report_exact(&result.exact_groups, writer)?;
-        failed = true;
-    }
-
-    if let Some(threshold) = max_near
-        && result.stats.near_duplicate_groups > threshold
-    {
-        writeln!(
-            writer,
-            "\nCheck FAILED: {} near duplicate groups (max: {})",
-            result.stats.near_duplicate_groups, threshold
-        )?;
-        reporter.report_near(&result.near_groups, writer)?;
-        failed = true;
-    }
-
-    if let Some(threshold) = max_exact_pct {
-        let actual = result.stats.exact_duplicate_percent();
-        if actual > threshold {
-            writeln!(
-                writer,
-                "\nCheck FAILED: {actual:.1}% exact duplicate lines (max: {threshold:.1}%)"
-            )?;
+    for (ceiling, breached_by_exact) in &ceilings {
+        let Some(message) = ceiling.breach() else {
+            continue;
+        };
+        writeln!(writer, "\nCheck FAILED: {message}")?;
+        if *breached_by_exact {
             reporter.report_exact(&result.exact_groups, writer)?;
-            failed = true;
-        }
-    }
-
-    if let Some(threshold) = max_near_pct {
-        let actual = result.stats.near_duplicate_percent();
-        if actual > threshold {
-            writeln!(
-                writer,
-                "\nCheck FAILED: {actual:.1}% near duplicate lines (max: {threshold:.1}%)"
-            )?;
+        } else {
             reporter.report_near(&result.near_groups, writer)?;
-            failed = true;
         }
+        failed = true;
     }
 
     if failed {
