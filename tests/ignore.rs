@@ -1,6 +1,6 @@
 mod common;
 
-use common::{cargo_dupes, fixture_path};
+use common::{cargo_dry4rust, fixture_path};
 use predicates::prelude::*;
 
 #[test]
@@ -15,7 +15,7 @@ fn ignore_workflow() {
     .unwrap();
 
     // First, get the report to find a fingerprint
-    let output = cargo_dupes()
+    let output = cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "report"])
         .assert()
         .success()
@@ -36,7 +36,7 @@ fn ignore_workflow() {
         .expect("Should find a fingerprint in the report");
 
     // Add it to ignore
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             tmp.path().to_str().unwrap(),
@@ -50,7 +50,7 @@ fn ignore_workflow() {
         .stdout(predicate::str::contains("Added"));
 
     // Verify it's listed
-    cargo_dupes()
+    cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "ignored"])
         .assert()
         .success()
@@ -58,7 +58,7 @@ fn ignore_workflow() {
         .stdout(predicate::str::contains("test ignore"));
 
     // Verify the report no longer shows that group
-    let output_after = cargo_dupes()
+    let output_after = cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "stats"])
         .assert()
         .success()
@@ -83,7 +83,7 @@ fn ignore_near_duplicate_workflow() {
     .unwrap();
 
     // Get report to find a near-duplicate fingerprint
-    let output = cargo_dupes()
+    let output = cargo_dry4rust()
         .args([
             "--path",
             tmp.path().to_str().unwrap(),
@@ -110,7 +110,7 @@ fn ignore_near_duplicate_workflow() {
         .expect("Should find a fingerprint in near-duplicate group");
 
     // Add it to ignore
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             tmp.path().to_str().unwrap(),
@@ -124,7 +124,7 @@ fn ignore_near_duplicate_workflow() {
         .stdout(predicate::str::contains("Added"));
 
     // Verify the near-duplicate group is now filtered out
-    let output_after = cargo_dupes()
+    let output_after = cargo_dry4rust()
         .args([
             "--path",
             tmp.path().to_str().unwrap(),
@@ -152,7 +152,7 @@ fn cleanup_removes_stale_entries() {
     .unwrap();
 
     // Get a real fingerprint from the report
-    let output = cargo_dupes()
+    let output = cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "report"])
         .assert()
         .success()
@@ -172,7 +172,7 @@ fn cleanup_removes_stale_entries() {
         .expect("Should find a fingerprint");
 
     // Ignore the real fingerprint
-    cargo_dupes()
+    cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "ignore", &real_fp])
         .assert()
         .success();
@@ -186,7 +186,7 @@ fn cleanup_removes_stale_entries() {
     std::fs::write(&ignore_path, new_content).unwrap();
 
     // Run cleanup
-    cargo_dupes()
+    cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "cleanup"])
         .assert()
         .success()
@@ -195,7 +195,7 @@ fn cleanup_removes_stale_entries() {
         .stdout(predicate::str::contains("Removed 1 stale entries"));
 
     // Verify the real fingerprint is still in the ignore file
-    cargo_dupes()
+    cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "ignored"])
         .assert()
         .success()
@@ -225,7 +225,7 @@ fn cleanup_dry_run() {
     .unwrap();
 
     // Run cleanup with --dry-run
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             tmp.path().to_str().unwrap(),

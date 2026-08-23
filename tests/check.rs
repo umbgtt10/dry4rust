@@ -1,12 +1,12 @@
 mod common;
 
-use common::{cargo_dupes, fixture_path};
+use common::{cargo_dry4rust, fixture_path};
 use predicates::prelude::*;
 
 #[test]
 fn check_no_thresholds_passes_with_duplicates() {
     // With no thresholds set, check should pass even when duplicates exist
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
@@ -19,7 +19,7 @@ fn check_no_thresholds_passes_with_duplicates() {
 
 #[test]
 fn check_fails_with_duplicates() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
@@ -34,7 +34,7 @@ fn check_fails_with_duplicates() {
 
 #[test]
 fn check_passes_with_high_threshold() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
@@ -49,7 +49,7 @@ fn check_passes_with_high_threshold() {
 
 #[test]
 fn check_no_dupes_passes() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("no_dupes").to_str().unwrap(),
@@ -64,7 +64,7 @@ fn check_no_dupes_passes() {
 
 #[test]
 fn check_fails_with_percentage_threshold_exceeded() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
@@ -82,7 +82,7 @@ fn check_fails_with_percentage_threshold_exceeded() {
 
 #[test]
 fn check_passes_with_generous_percentage_threshold() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
@@ -100,7 +100,7 @@ fn check_passes_with_generous_percentage_threshold() {
 #[test]
 fn check_absolute_passes_percentage_fails() {
     // Absolute threshold is generous (passes), but percentage is strict (fails)
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),

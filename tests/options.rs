@@ -1,12 +1,12 @@
 mod common;
 
-use common::{cargo_dupes, fixture_path};
+use common::{cargo_dry4rust, fixture_path};
 use predicates::prelude::*;
 
 #[test]
 fn min_nodes_option() {
     // With very high min_nodes, nothing should be analyzed
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
@@ -22,7 +22,7 @@ fn min_nodes_option() {
 #[test]
 fn min_lines_option() {
     // With very high min_lines, short functions should be excluded
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
@@ -38,7 +38,7 @@ fn min_lines_option() {
 #[test]
 fn exclude_option() {
     // When all files are excluded, the tool reports no source files found
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
@@ -54,7 +54,7 @@ fn exclude_option() {
 #[test]
 fn exclude_tests_flag_reduces_duplicates() {
     // Without --exclude-tests: 3 units in 1 group (2 production + 1 in #[cfg(test)] mod)
-    let output_all = cargo_dupes()
+    let output_all = cargo_dry4rust()
         .args([
             "--path",
             fixture_path("test_code").to_str().unwrap(),
@@ -72,7 +72,7 @@ fn exclude_tests_flag_reduces_duplicates() {
     assert_eq!(all["exact_duplicate_units"].as_u64().unwrap(), 3);
 
     // With --exclude-tests: only 2 production units remain
-    let output_excl = cargo_dupes()
+    let output_excl = cargo_dry4rust()
         .args([
             "--path",
             fixture_path("test_code").to_str().unwrap(),
@@ -94,7 +94,7 @@ fn exclude_tests_flag_reduces_duplicates() {
 
 #[test]
 fn exclude_tests_text_report() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("test_code").to_str().unwrap(),
@@ -109,7 +109,7 @@ fn exclude_tests_text_report() {
 
 #[test]
 fn error_on_nonexistent_path() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args(["--path", "/nonexistent/path/that/does/not/exist", "stats"])
         .assert()
         .code(2)
@@ -118,7 +118,7 @@ fn error_on_nonexistent_path() {
 
 #[test]
 fn help_works() {
-    cargo_dupes()
+    cargo_dry4rust()
         .arg("--help")
         .assert()
         .success()

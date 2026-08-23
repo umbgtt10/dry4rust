@@ -1,7 +1,7 @@
 //! Rust language analyzer for the `dupes-core` duplicate detection framework.
 //!
 //! This crate provides [`RustAnalyzer`], which implements the
-//! [`dupes_core::analyzer::LanguageAnalyzer`] trait using `syn` for AST parsing
+//! [`crate::analyzer::LanguageAnalyzer`] trait using `syn` for AST parsing
 //! and normalization.
 
 pub mod normalizer;
@@ -9,9 +9,9 @@ pub mod parser;
 
 use std::path::Path;
 
-use dupes_core::analyzer::LanguageAnalyzer;
-use dupes_core::code_unit::CodeUnit;
-use dupes_core::config::AnalysisConfig;
+use crate::analyzer::LanguageAnalyzer;
+use crate::code_unit::CodeUnit;
+use crate::config::AnalysisConfig;
 
 /// Rust language analyzer using syn for AST parsing.
 pub struct RustAnalyzer;

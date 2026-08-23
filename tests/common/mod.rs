@@ -8,6 +8,6 @@ pub fn fixture_path(name: &str) -> PathBuf {
         .join(name)
 }
 
-pub fn cargo_dupes() -> assert_cmd::Command {
-    cargo_bin_cmd!("cargo-dupes")
+pub fn cargo_dry4rust() -> assert_cmd::Command {
+    cargo_bin_cmd!("cargo-dry4rust")
 }

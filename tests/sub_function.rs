@@ -1,11 +1,11 @@
 mod common;
 
-use common::{cargo_dupes, fixture_path};
+use common::{cargo_dry4rust, fixture_path};
 use predicates::prelude::*;
 
 #[test]
 fn sub_function_detects_duplicate_branches() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("sub_function_dupes").to_str().unwrap(),
@@ -22,7 +22,7 @@ fn sub_function_detects_duplicate_branches() {
 
 #[test]
 fn sub_function_shows_parent_names() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("sub_function_dupes").to_str().unwrap(),
@@ -39,7 +39,7 @@ fn sub_function_shows_parent_names() {
 
 #[test]
 fn sub_function_stats_shown() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("sub_function_dupes").to_str().unwrap(),
@@ -53,7 +53,7 @@ fn sub_function_stats_shown() {
 
 #[test]
 fn sub_function_json_stats() {
-    let output = cargo_dupes()
+    let output = cargo_dry4rust()
         .args([
             "--path",
             fixture_path("sub_function_dupes").to_str().unwrap(),
@@ -75,7 +75,7 @@ fn sub_function_json_stats() {
 
 #[test]
 fn without_sub_function_flag_no_sub_sections() {
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("sub_function_dupes").to_str().unwrap(),
@@ -89,7 +89,7 @@ fn without_sub_function_flag_no_sub_sections() {
 
 #[test]
 fn without_sub_function_json_no_sub_fields() {
-    let output = cargo_dupes()
+    let output = cargo_dry4rust()
         .args([
             "--path",
             fixture_path("sub_function_dupes").to_str().unwrap(),
@@ -113,7 +113,7 @@ fn without_sub_function_json_no_sub_fields() {
 fn sub_function_min_sub_nodes_filters() {
     // With very high min-sub-nodes, no sub-function units should be found,
     // so the sub-function stats line is not printed at all
-    cargo_dupes()
+    cargo_dry4rust()
         .args([
             "--path",
             fixture_path("sub_function_dupes").to_str().unwrap(),

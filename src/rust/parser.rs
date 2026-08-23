@@ -3,12 +3,12 @@ use std::path::{Path, PathBuf};
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
-use dupes_core::fingerprint::Fingerprint;
-use dupes_core::node::NormalizedNode;
+use crate::fingerprint::Fingerprint;
+use crate::node::NormalizedNode;
 
-use crate::normalizer;
+use crate::rust::normalizer;
 
-pub use dupes_core::code_unit::{CodeUnit, CodeUnitKind};
+pub use crate::code_unit::{CodeUnit, CodeUnitKind};
 
 /// Check if attributes contain `#[test]`.
 fn has_test_attr(attrs: &[syn::Attribute]) -> bool {
@@ -210,7 +210,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
                 file: self.file.clone(),
                 line_start,
                 line_end,
-                signature: NormalizedNode::leaf(dupes_core::node::NodeKind::Opaque),
+                signature: NormalizedNode::leaf(crate::node::NodeKind::Opaque),
                 body: normalized,
                 fingerprint,
                 node_count,
@@ -262,7 +262,7 @@ pub fn parse_source(
 /// Parse a single Rust file and extract code units.
 ///
 /// This is a lower-level convenience function. Prefer using [`crate::RustAnalyzer`]
-/// with [`dupes_core::analyze`] for the full pipeline.
+/// with [`crate::analyze`] for the full pipeline.
 pub fn parse_file(
     path: &Path,
     min_node_count: usize,
@@ -277,7 +277,7 @@ pub fn parse_file(
 /// Parse multiple files and collect all code units, skipping files that fail to parse.
 ///
 /// This is a lower-level convenience function. Prefer using [`crate::RustAnalyzer`]
-/// with [`dupes_core::analyze`] for the full pipeline.
+/// with [`crate::analyze`] for the full pipeline.
 #[must_use]
 pub fn parse_files(
     paths: &[PathBuf],

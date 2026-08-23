@@ -1,4 +1,4 @@
-use dupes_core::node::{NodeKind, NormalizationContext, NormalizedNode, PlaceholderKind};
+use crate::node::{NodeKind, NormalizationContext, NormalizedNode, PlaceholderKind};
 
 use super::expr::normalize_expr;
 use super::helpers::{member_to_string, normalize_lit, normalize_macro};

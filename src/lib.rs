@@ -9,6 +9,7 @@ pub mod grouper;
 pub mod ignore;
 pub mod node;
 pub mod output;
+pub mod rust;
 pub mod scanner;
 pub mod similarity;
 

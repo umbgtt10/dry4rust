@@ -3,8 +3,8 @@ use std::process;
 
 use clap::Parser;
 
-use dupes_core::cli::{self, CliOverrides, Command, OutputFormat};
-use dupes_rust::RustAnalyzer;
+use dry4rust::cli::{self, CliOverrides, Command, OutputFormat};
+use dry4rust::rust::RustAnalyzer;
 
 #[derive(Parser)]
 #[command(
@@ -108,7 +108,7 @@ fn main() {
                 eprintln!("Warning: {warning}");
             }
 
-            let reporter: &dyn dupes_core::output::Reporter = &*output.reporter;
+            let reporter: &dyn dry4rust::output::Reporter = &*output.reporter;
 
             match &command {
                 Command::Stats => cli::cmd_stats(&output.result, reporter, &mut writer),

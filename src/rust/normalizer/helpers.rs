@@ -1,4 +1,4 @@
-use dupes_core::node::{
+use crate::node::{
     BinOpKind, LiteralKind, NodeKind, NormalizationContext, NormalizedNode, UnOpKind,
 };
 use syn::punctuated::Punctuated;

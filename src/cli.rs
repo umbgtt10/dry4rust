@@ -106,8 +106,7 @@ pub type CliResult<T = ()> = Result<T, CliError>;
 // ---------------------------------------------------------------------------
 
 /// Output format for CLI reports.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, clap::ValueEnum)]
 pub enum OutputFormat {
     #[default]
     Text,
@@ -115,8 +114,7 @@ pub enum OutputFormat {
 }
 
 /// CLI subcommands shared between `cargo-dupes` and `code-dupes`.
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "cli", derive(clap::Subcommand))]
+#[derive(Debug, Clone, clap::Subcommand)]
 pub enum Command {
     /// Show duplication statistics only.
     Stats,
@@ -125,16 +123,16 @@ pub enum Command {
     /// Check for duplicates and exit with non-zero if thresholds exceeded.
     Check {
         /// Maximum allowed exact duplicate groups (exit 1 if exceeded).
-        #[cfg_attr(feature = "cli", arg(long))]
+        #[arg(long)]
         max_exact: Option<usize>,
         /// Maximum allowed near duplicate groups (exit 1 if exceeded).
-        #[cfg_attr(feature = "cli", arg(long))]
+        #[arg(long)]
         max_near: Option<usize>,
         /// Maximum allowed exact duplicate percentage (exit 1 if exceeded).
-        #[cfg_attr(feature = "cli", arg(long))]
+        #[arg(long)]
         max_exact_percent: Option<f64>,
         /// Maximum allowed near duplicate percentage (exit 1 if exceeded).
-        #[cfg_attr(feature = "cli", arg(long))]
+        #[arg(long)]
         max_near_percent: Option<f64>,
     },
     /// Add a fingerprint to the ignore list.
@@ -142,7 +140,7 @@ pub enum Command {
         /// The fingerprint to ignore (hex string).
         fingerprint: String,
         /// Reason for ignoring.
-        #[cfg_attr(feature = "cli", arg(long))]
+        #[arg(long)]
         reason: Option<String>,
     },
     /// List all ignored fingerprints.
@@ -150,7 +148,7 @@ pub enum Command {
     /// Remove stale entries from the ignore file.
     Cleanup {
         /// Only list stale entries without removing them.
-        #[cfg_attr(feature = "cli", arg(long))]
+        #[arg(long)]
         dry_run: bool,
     },
 }

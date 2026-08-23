@@ -106,24 +106,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargo-dupes"
-version = "0.2.1"
+name = "cargo-dry4rust"
+version = "0.2.0"
 dependencies = [
  "assert_cmd",
- "cargo-husky",
  "clap",
- "dupes-core",
- "dupes-rust",
  "predicates",
+ "proc-macro2",
+ "serde",
  "serde_json",
+ "syn",
  "tempfile",
+ "thiserror",
+ "toml",
+ "walkdir",
 ]
-
-[[package]]
-name = "cargo-husky"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
 
 [[package]]
 name = "cfg-if"
@@ -182,30 +179,6 @@ name = "difflib"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6184e33543162437515c2e2b48714794e37845ec9851711914eec9d308f6ebe8"
-
-[[package]]
-name = "dupes-core"
-version = "0.2.1"
-dependencies = [
- "clap",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror",
- "toml",
- "walkdir",
-]
-
-[[package]]
-name = "dupes-rust"
-version = "0.2.1"
-dependencies = [
- "dupes-core",
- "proc-macro2",
- "serde_json",
- "syn",
- "tempfile",
-]
 
 [[package]]
 name = "equivalent"

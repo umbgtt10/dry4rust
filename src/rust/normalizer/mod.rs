@@ -1,5 +1,5 @@
 // Re-export core node types used by the normalizer's public API and tests.
-pub use dupes_core::node::{
+pub use crate::node::{
     BinOpKind, LiteralKind, NodeKind, NormalizationContext, NormalizedNode, PlaceholderKind,
     UnOpKind, count_nodes, reindex_placeholders,
 };
