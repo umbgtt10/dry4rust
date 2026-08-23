@@ -88,20 +88,6 @@ fn normalize_type_handles_every_type_form_it_claims_to() {
 }
 
 #[test]
-fn normalize_type_sees_through_parentheses_to_the_inner_type() {
-    // Arrange
-    let bare: syn::Type = parse_str("i32").expect("parses");
-    let parenthesised: syn::Type = parse_str("(i32)").expect("parses");
-
-    // Act
-    let a = normalize_type(&bare, &mut NormalizationContext::new());
-    let b = normalize_type(&parenthesised, &mut NormalizationContext::new());
-
-    // Assert
-    assert_eq!(a, b);
-}
-
-#[test]
 fn normalize_type_keeps_never_and_infer_apart() {
     // Arrange
     let never: syn::Type = parse_str("!").expect("parses");
@@ -114,4 +100,18 @@ fn normalize_type_keeps_never_and_infer_apart() {
 
     // Assert
     assert_ne!(a, b);
+}
+
+#[test]
+fn normalize_type_sees_through_parentheses_to_the_inner_type() {
+    // Arrange
+    let bare: syn::Type = parse_str("i32").expect("parses");
+    let parenthesised: syn::Type = parse_str("(i32)").expect("parses");
+
+    // Act
+    let a = normalize_type(&bare, &mut NormalizationContext::new());
+    let b = normalize_type(&parenthesised, &mut NormalizationContext::new());
+
+    // Assert
+    assert_eq!(a, b);
 }

@@ -7,19 +7,6 @@ use dry4rust::node::PlaceholderKind;
 use dry4rust::normalization_context::NormalizationContext;
 
 #[test]
-fn placeholder_for_the_same_identifier_twice_returns_the_same_index() {
-    // Arrange
-    let mut ctx = NormalizationContext::new();
-
-    // Act
-    let first = ctx.placeholder("value", PlaceholderKind::Variable);
-    let again = ctx.placeholder("value", PlaceholderKind::Variable);
-
-    // Assert
-    assert_eq!(first, again);
-}
-
-#[test]
 fn placeholder_counts_each_kind_from_zero_independently() {
     // Arrange
     let mut ctx = NormalizationContext::new();
@@ -45,4 +32,17 @@ fn placeholder_for_distinct_identifiers_returns_rising_indices() {
     // Assert
     assert_eq!(first, 0);
     assert_eq!(second, 1);
+}
+
+#[test]
+fn placeholder_for_the_same_identifier_twice_returns_the_same_index() {
+    // Arrange
+    let mut ctx = NormalizationContext::new();
+
+    // Act
+    let first = ctx.placeholder("value", PlaceholderKind::Variable);
+    let again = ctx.placeholder("value", PlaceholderKind::Variable);
+
+    // Assert
+    assert_eq!(first, again);
 }

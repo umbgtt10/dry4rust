@@ -7,15 +7,16 @@ use dry4rust::output::reporter::display_path;
 use std::path::Path;
 
 #[test]
-fn display_path_without_a_base_returns_the_path_unchanged() {
+fn display_path_outside_its_base_falls_back_to_the_whole_path() {
     // Arrange
-    let path = Path::new("src/lib.rs");
+    let base = Path::new("/project");
+    let path = Path::new("/elsewhere/lib.rs");
 
     // Act
-    let shown = display_path(None, path);
+    let shown = display_path(Some(base), path);
 
     // Assert
-    assert_eq!(shown, "src/lib.rs");
+    assert!(shown.contains("elsewhere"), "{shown}");
 }
 
 #[test]
@@ -33,14 +34,13 @@ fn display_path_under_its_base_returns_the_relative_part() {
 }
 
 #[test]
-fn display_path_outside_its_base_falls_back_to_the_whole_path() {
+fn display_path_without_a_base_returns_the_path_unchanged() {
     // Arrange
-    let base = Path::new("/project");
-    let path = Path::new("/elsewhere/lib.rs");
+    let path = Path::new("src/lib.rs");
 
     // Act
-    let shown = display_path(Some(base), path);
+    let shown = display_path(None, path);
 
     // Assert
-    assert!(shown.contains("elsewhere"), "{shown}");
+    assert_eq!(shown, "src/lib.rs");
 }
