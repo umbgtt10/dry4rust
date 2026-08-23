@@ -1,3 +1,8 @@
+// Copyright (c) 2026 Matjaz Domen Pecan
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
 //! Tests for dupes-core modules that require syn for test data construction.
 //! These tests exercise fingerprint, similarity, grouper, and extractor functionality
 //! using syn-parsed Rust code, so they live in dupes-rust (which depends on syn).

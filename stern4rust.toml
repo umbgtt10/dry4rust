@@ -21,3 +21,15 @@
 # it. Files written from scratch here carry the same four lines, because a
 # header rule that compares against one file needs one header.
 header-file = "docs/header.txt"
+
+# The fixture crates under tests/fixtures are analysis input: deliberately
+# duplicated, near-duplicated and deliberately clean Rust that the tool is
+# pointed at, with the integration tests asserting on what it finds. Their
+# shape is the thing under test.
+#
+# Excluded rather than stamped. A four-line header on each would add twenty-four
+# lines to the corpus the tool measures, and `total_lines` and the duplicate
+# line counts are exactly what several tests assert on -- so the header would be
+# editing the question rather than answering it. The report names the exclusion
+# and how many files it removed, so this is visible rather than silent.
+exclude = ["tests/fixtures/**"]

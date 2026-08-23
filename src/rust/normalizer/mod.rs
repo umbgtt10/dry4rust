@@ -1,3 +1,8 @@
+// Copyright (c) 2026 Matjaz Domen Pecan
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
 // Re-export core node types used by the normalizer's public API and tests.
 pub use crate::node::{
     BinOpKind, LiteralKind, NodeKind, NormalizationContext, NormalizedNode, PlaceholderKind,
