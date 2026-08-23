@@ -3,10 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
-
 use crate::code_unit::CodeUnit;
-use crate::code_unit::CodeUnitKind;
 use crate::near_duplicate::similarity::similarity_score;
 use crate::near_duplicate::similarity_pair::SimilarityPair;
 
@@ -28,12 +25,31 @@ impl PairScanner {
     }
 
     /// Every pair among `candidates` that scores at or above the threshold.
+    ///
+    /// Kind does not restrict what is compared. `group_exact_duplicates` has
+    /// always ignored it -- a free function and a method with identical
+    /// normalised bodies are reported as exact duplicates -- and there is no
+    /// reading under which the same pair differing by one statement should be
+    /// invisible instead.
     #[must_use]
     pub fn scan(&self, candidates: &[&CodeUnit]) -> Vec<SimilarityPair> {
-        Self::by_kind(candidates)
-            .values()
-            .flat_map(|group| self.pairs_within(candidates, group))
-            .collect()
+        let ordered = Self::by_size(candidates);
+        let mut pairs = Vec::new();
+        for (offset, &left) in ordered.iter().enumerate() {
+            for &right in ordered.iter().skip(offset + 1) {
+                if !self.could_reach_threshold(
+                    candidates[left].node_count,
+                    candidates[right].node_count,
+                ) {
+                    break;
+                }
+                let score = similarity_score(&candidates[left].body, &candidates[right].body);
+                if score >= self.threshold {
+                    pairs.push(SimilarityPair::new(left, right, score));
+                }
+            }
+        }
+        pairs
     }
 
     /// The highest score a pair could reach given nothing but their sizes.
@@ -59,40 +75,15 @@ impl PairScanner {
         ceiling >= self.threshold - f64::EPSILON
     }
 
-    /// Index the candidates by kind, each list sorted by node count ascending.
+    /// Candidate indices ordered by node count ascending.
     ///
-    /// Lists hold indices rather than references: the caller needs indices
-    /// back to build pairs, and carrying them through is cheaper and plainer
-    /// than recovering them afterwards from pointer identity.
-    fn by_kind(candidates: &[&CodeUnit]) -> HashMap<CodeUnitKind, Vec<usize>> {
-        let mut groups: HashMap<CodeUnitKind, Vec<usize>> = HashMap::new();
-        for (index, unit) in candidates.iter().enumerate() {
-            groups.entry(unit.kind.clone()).or_default().push(index);
-        }
-        for group in groups.values_mut() {
-            group.sort_by_key(|&index| candidates[index].node_count);
-        }
-        groups
-    }
-
-    /// `group` is sorted by node count, so once a partner is too large the
-    /// ceiling only falls further and the rest of the group can be skipped.
-    fn pairs_within(&self, candidates: &[&CodeUnit], group: &[usize]) -> Vec<SimilarityPair> {
-        let mut pairs = Vec::new();
-        for (offset, &left) in group.iter().enumerate() {
-            for &right in group.iter().skip(offset + 1) {
-                if !self.could_reach_threshold(
-                    candidates[left].node_count,
-                    candidates[right].node_count,
-                ) {
-                    break;
-                }
-                let score = similarity_score(&candidates[left].body, &candidates[right].body);
-                if score >= self.threshold {
-                    pairs.push(SimilarityPair::new(left, right, score));
-                }
-            }
-        }
-        pairs
+    /// The order is what makes the size bound cheap: `could_reach_threshold`
+    /// falls monotonically as the partner grows, so the first partner that
+    /// fails ends the scan for that unit rather than merely skipping one
+    /// comparison.
+    fn by_size(candidates: &[&CodeUnit]) -> Vec<usize> {
+        let mut ordered: Vec<usize> = (0..candidates.len()).collect();
+        ordered.sort_by_key(|&index| candidates[index].node_count);
+        ordered
     }
 }

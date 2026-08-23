@@ -47,9 +47,8 @@ The filter is the exact bound the threshold implies.
 is the highest score a pair can reach given only its sizes. A pair is scored
 when `ceiling >= t`, and skipped otherwise.
 
-Candidates are sorted by node count within each kind. `ceiling` falls
-monotonically as the partner grows, so the first partner that fails ends the
-scan for that unit.
+Candidates are sorted by node count. `ceiling` falls monotonically as the
+partner grows, so the first partner that fails ends the scan for that unit.
 
 ## Forcing constraints / Evidence
 
@@ -88,10 +87,9 @@ possibly score.
 is exact, so the filter costs no findings, and there is no reason to pay for
 comparisons whose outcome is already known.
 
-**Also drop the kind filter while here.** Deferred rather than rejected. It is
-a real inconsistency -- exact detection ignores kind, near detection does not
--- but removing it changes what the tool reports rather than correcting what
-it computes. Recorded in [OPEN_POINTS.md](../OPEN_POINTS.md).
+**Also drop the kind filter while here.** Deferred at the time, and done
+immediately afterwards once the inconsistency was stated plainly. See
+[ADR-KindDoesNotRestrictComparison](ADR-KindDoesNotRestrictComparison.md).
 
 ## Consequences
 
@@ -108,7 +106,7 @@ derived from the threshold, so it tracks it.
 
 ## Enforcement
 
-`tests/near_duplicate_finder_tests.rs` holds the three edges: the pair that
+`tests/near_duplicate/pair_scanner_tests.rs` holds the three edges: the pair that
 straddles a power of two, the pair too far apart, and the pair whose ceiling
 is exactly the threshold.
 

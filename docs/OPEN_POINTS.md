@@ -40,29 +40,6 @@ The fix is a hasher this repository controls rather than one it borrows. It
 has not been done because it invalidates every existing suppression file once,
 and doing that deliberately is better than doing it twice.
 
-## Near-duplicate detection is restricted by kind; exact detection is not
-
-`group_exact_duplicates` compares fingerprints and nothing else, so a free
-function and a method with identical normalised signature and body are
-reported as exact duplicates.
-
-`NearDuplicateFinder` groups candidates by `CodeUnitKind` first and never
-compares across groups. The same free function and method, differing by one
-statement, are never compared at all.
-
-So the two halves of the tool disagree about whether kind matters. Identical
-across kinds is a finding; nearly identical across kinds is invisible. Nothing
-in the output distinguishes "no near duplicates" from "no near duplicates
-within a kind".
-
-Whether the restriction should go is a real question rather than an obvious
-fix. Removing it compares `Function` against `Method` against `Closure`, which
-is likely wanted, and under sub-function analysis also compares `IfBranch`
-against `MatchArm` against `LoopBody`, which may be noise. The size filter now
-bounds the extra work, so cost is not the objection it once was.
-
-Unresolved deliberately. It changes what the tool reports.
-
 ## A group with no directly scored pair reports the threshold, not a measurement
 
 Groups are built by transitive closure, so `A~B` and `B~C` puts `A`, `B` and

@@ -122,23 +122,6 @@ fn new_records_the_threshold_that_could_reach_threshold_then_applies() {
 }
 
 #[test]
-fn scan_never_pairs_units_of_different_kinds() {
-    // Arrange
-    let function = sized_unit(CodeUnitKind::Function, 8);
-    let method = sized_unit(CodeUnitKind::Method, 8);
-    let candidates = vec![&function, &method];
-
-    // Act
-    let pairs = PairScanner::new(0.5).scan(&candidates);
-
-    // Assert
-    assert!(
-        pairs.is_empty(),
-        "identical bodies of different kinds are not compared -- see OPEN_POINTS.md"
-    );
-}
-
-#[test]
 fn scan_over_a_single_candidate_finds_no_pairs() {
     // Arrange
     let only = sized_unit(CodeUnitKind::Function, 8);
@@ -149,6 +132,45 @@ fn scan_over_a_single_candidate_finds_no_pairs() {
 
     // Assert
     assert!(pairs.is_empty());
+}
+
+#[test]
+fn scan_pairs_a_function_with_a_method_whose_body_matches() {
+    // Arrange
+    let function = sized_unit(CodeUnitKind::Function, 8);
+    let method = sized_unit(CodeUnitKind::Method, 8);
+    let candidates = vec![&function, &method];
+
+    // Act
+    let pairs = PairScanner::new(0.5).scan(&candidates);
+
+    // Assert
+    assert_eq!(
+        pairs.len(),
+        1,
+        "group_exact_duplicates already reports this pair when the bodies are \
+         identical; kind must not hide it when they merely match closely"
+    );
+    assert!((pairs[0].score - 1.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn scan_pairs_sub_function_units_of_different_kinds() {
+    // Arrange
+    let branch = sized_unit(CodeUnitKind::IfBranch, 8);
+    let arm = sized_unit(CodeUnitKind::MatchArm, 8);
+    let candidates = vec![&branch, &arm];
+
+    // Act
+    let pairs = PairScanner::new(0.5).scan(&candidates);
+
+    // Assert
+    assert_eq!(
+        pairs.len(),
+        1,
+        "a block of logic repeated as an if-branch and as a match arm is the \
+         duplication a reader would want extracted, not noise"
+    );
 }
 
 #[test]

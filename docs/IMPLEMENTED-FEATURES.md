@@ -44,6 +44,11 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Corrected in the engine**
 
+- `CodeUnitKind` no longer restricts near-duplicate detection.
+  `group_exact_duplicates` had always ignored kind, so a free function and a
+  method with identical bodies were reported as exact duplicates while the
+  same pair differing by one statement was invisible. The two halves of the
+  tool now agree.
 - The size pre-filter is now the exact bound the threshold implies, rather
   than `floor(log2(n))` bucketing. The old filter never compared units 7 and 8
   nodes apart -- a pair able to score `0.933` against a threshold of `0.8` --

@@ -75,14 +75,7 @@ every comparison after it. A longest-common-subsequence over children, or a
 tree-edit distance, would make the score measure content rather than
 alignment. This is the highest-value correctness work available.
 
-**4. Decide whether kind should restrict near-duplicate detection.** Exact
-detection ignores `CodeUnitKind`; near detection groups by it, so a free
-function and a method that are identical are reported and the same pair
-differing by one statement is not. Removing the restriction is probably right
-for `Function` / `Method` / `Closure` and probably noise for sub-function
-kinds. See [OPEN_POINTS.md](OPEN_POINTS.md).
-
-**5. Semantic redundancy detection.** The direction above. Two functions with
+**4. Semantic redundancy detection.** The direction above. Two functions with
 the same behaviour and different structure -- a `for` loop accumulating a sum
 against an `iter().sum()`, a hand-rolled `match` against an `unwrap_or`. This
 is the work the fork exists for, and it is deliberately last, because it

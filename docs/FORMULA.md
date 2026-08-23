@@ -66,10 +66,13 @@ than a setting.
 
 ## Why the score is not computed for every pair
 
-Comparing every unit with every other is quadratic. Two filters run first, and
-neither can separate a pair the scorer would have accepted:
+Comparing every unit with every other is quadratic. One filter runs first, and
+it cannot separate a pair the scorer would have accepted.
 
-**Kind.** A `Function` is never compared with a `MatchArm`.
+`CodeUnitKind` is not that filter, and does not restrict anything.
+`group_exact_duplicates` has always ignored kind, so a free function and a
+method with identical normalised bodies are exact duplicates; near detection
+now agrees rather than hiding the same pair when it differs by one statement.
 
 **Size.** `matching` can never exceed the smaller tree's node count, so a
 pair's score is bounded before either tree is examined:
@@ -86,8 +89,8 @@ kept. Rearranged, it is a ratio bound of `(2 - t) / t` -- `1.5` at the default
 `0.8` -- but the ceiling form is what the code computes, because it needs no
 special case for a zero-size unit.
 
-Candidates are sorted by node count within each kind, so once a partner is too
-large the ceiling only falls further and the remainder of the list is skipped.
+Candidates are sorted by node count, so once a partner is too large the
+ceiling only falls further and the remainder of the list is skipped.
 The filter therefore costs one comparison per pair examined and nothing per
 pair avoided.
 
