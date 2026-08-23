@@ -7,6 +7,7 @@ use std::io;
 
 use crate::grouper::{DuplicateGroup, DuplicationStats};
 use crate::output::{Reporter, display_path};
+use serde_json::to_string_pretty;
 
 pub struct JsonReporter {
     pub base_path: Option<std::path::PathBuf>,
@@ -80,7 +81,7 @@ impl Reporter for JsonReporter {
             sub_near_groups: stats.sub_near_groups,
             sub_near_units: stats.sub_near_units,
         };
-        let json = serde_json::to_string_pretty(&json_stats).map_err(io::Error::other)?;
+        let json = to_string_pretty(&json_stats).map_err(io::Error::other)?;
         writeln!(writer, "{json}")
     }
 
@@ -120,7 +121,7 @@ impl JsonReporter {
         writer: &mut dyn io::Write,
     ) -> io::Result<()> {
         let json_groups: Vec<JsonGroup> = groups.iter().map(|g| self.to_json_group(g)).collect();
-        let json = serde_json::to_string_pretty(&json_groups).map_err(io::Error::other)?;
+        let json = to_string_pretty(&json_groups).map_err(io::Error::other)?;
         writeln!(writer, "{json}")
     }
 

@@ -7,6 +7,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
 use crate::AnalysisResult;
+use crate::analyze;
 use crate::analyzer::LanguageAnalyzer;
 use crate::config::Config;
 use crate::fingerprint::Fingerprint;
@@ -14,6 +15,13 @@ use crate::ignore::{self, IgnoreEntry};
 use crate::output::Reporter;
 use crate::output::json::JsonReporter;
 use crate::output::text::TextReporter;
+use crate::scanner;
+use crate::scanner::ScanConfig;
+use ignore::add_ignore;
+use ignore::find_stale_entries;
+use ignore::load_ignore_file;
+use ignore::remove_stale_entries;
+use ignore::save_ignore_file;
 
 // ---------------------------------------------------------------------------
 // Error types
@@ -243,7 +251,7 @@ pub fn run_analysis(
     let mut config = Config::load(root);
     apply_overrides(&mut config, overrides);
 
-    let scan_config = crate::scanner::ScanConfig::new(config.root.clone())
+    let scan_config = ScanConfig::new(config.root.clone())
         .with_excludes(config.exclude.clone())
         .with_extensions(
             analyzer
@@ -252,13 +260,13 @@ pub fn run_analysis(
                 .map(std::string::ToString::to_string)
                 .collect(),
         );
-    let files = crate::scanner::scan_files(&scan_config);
+    let files = scanner::scan_files(&scan_config);
 
     if files.is_empty() {
         return Err(CliError::NoSourceFiles(config.root));
     }
 
-    let result = crate::analyze(analyzer, &files, &config)?;
+    let result = analyze(analyzer, &files, &config)?;
     let reporter = create_reporter(format, Some(root));
 
     Ok(AnalysisOutput {
@@ -385,16 +393,16 @@ pub fn cmd_ignore(
 ) -> CliResult {
     let fp = Fingerprint::from_hex(fingerprint)
         .ok_or_else(|| CliError::InvalidFingerprint(fingerprint.to_string()))?;
-    let mut ignore_file = ignore::load_ignore_file(root);
-    ignore::add_ignore(&mut ignore_file, &fp, reason, vec![]);
-    ignore::save_ignore_file(root, &ignore_file)?;
+    let mut ignore_file = load_ignore_file(root);
+    add_ignore(&mut ignore_file, &fp, reason, vec![]);
+    save_ignore_file(root, &ignore_file)?;
     writeln!(writer, "Added {fingerprint} to ignore list.")?;
     Ok(())
 }
 
 /// List all ignored fingerprints.
 pub fn cmd_ignored(root: &Path, writer: &mut impl Write) -> CliResult {
-    let ignore_file = ignore::load_ignore_file(root);
+    let ignore_file = load_ignore_file(root);
     if ignore_file.ignore.is_empty() {
         writeln!(writer, "No ignored fingerprints.")?;
     } else {
@@ -413,10 +421,10 @@ pub fn cmd_cleanup(
     writer: &mut impl Write,
     dry_run: bool,
 ) -> CliResult {
-    let mut ignore_file = ignore::load_ignore_file(root);
+    let mut ignore_file = load_ignore_file(root);
 
     if dry_run {
-        let stale = ignore::find_stale_entries(&ignore_file, &result.all_fingerprints);
+        let stale = find_stale_entries(&ignore_file, &result.all_fingerprints);
         if stale.is_empty() {
             writeln!(writer, "No stale entries found.")?;
         } else {
@@ -427,11 +435,11 @@ pub fn cmd_cleanup(
             writeln!(writer, "\n{} stale entries would be removed.", stale.len())?;
         }
     } else {
-        let removed = ignore::remove_stale_entries(&mut ignore_file, &result.all_fingerprints);
+        let removed = remove_stale_entries(&mut ignore_file, &result.all_fingerprints);
         if removed.is_empty() {
             writeln!(writer, "No stale entries found.")?;
         } else {
-            ignore::save_ignore_file(root, &ignore_file)?;
+            save_ignore_file(root, &ignore_file)?;
             writeln!(writer, "Removed stale entries:")?;
             for entry in &removed {
                 write_ignore_entry(writer, entry)?;

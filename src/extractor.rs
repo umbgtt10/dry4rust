@@ -5,6 +5,8 @@
 
 use crate::code_unit::CodeUnitKind;
 use crate::node::{self, NodeKind, NormalizedNode};
+use node::count_nodes;
+use node::reindex_placeholders;
 
 /// A sub-unit extracted from a normalized function body.
 pub struct SubUnit {
@@ -125,8 +127,8 @@ fn try_add(
     min_node_count: usize,
     results: &mut Vec<SubUnit>,
 ) {
-    let reindexed = node::reindex_placeholders(node);
-    let node_count = node::count_nodes(&reindexed);
+    let reindexed = reindex_placeholders(node);
+    let node_count = count_nodes(&reindexed);
     if node_count >= min_node_count {
         results.push(SubUnit {
             kind,

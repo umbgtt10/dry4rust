@@ -22,6 +22,21 @@ fn create_test_tree(dir: &Path) {
 }
 
 #[test]
+fn is_excluded_works() {
+    let path = Path::new("/foo/bar/tests/test.rs");
+    assert!(is_excluded(path, &["tests".to_string()]));
+    assert!(!is_excluded(path, &["benches".to_string()]));
+}
+
+#[test]
+fn scan_empty_directory() {
+    let tmp = TempDir::new().unwrap();
+    let config = ScanConfig::new(tmp.path().to_path_buf());
+    let files = scan_files(&config);
+    assert!(files.is_empty());
+}
+
+#[test]
 fn scan_finds_rust_files() {
     let tmp = TempDir::new().unwrap();
     create_test_tree(tmp.path());
@@ -32,12 +47,13 @@ fn scan_finds_rust_files() {
 }
 
 #[test]
-fn scan_skips_target_directory() {
+fn scan_respects_exclude_patterns() {
     let tmp = TempDir::new().unwrap();
     create_test_tree(tmp.path());
-    let config = ScanConfig::new(tmp.path().to_path_buf());
+    let config = ScanConfig::new(tmp.path().to_path_buf()).with_excludes(vec!["utils".to_string()]);
     let files = scan_files(&config);
-    assert!(!files.iter().any(|f| f.to_string_lossy().contains("target")));
+    assert!(!files.iter().any(|f| f.to_string_lossy().contains("utils")));
+    assert_eq!(files.len(), 2);
 }
 
 #[test]
@@ -54,26 +70,10 @@ fn scan_skips_hidden_directories() {
 }
 
 #[test]
-fn scan_respects_exclude_patterns() {
+fn scan_skips_target_directory() {
     let tmp = TempDir::new().unwrap();
     create_test_tree(tmp.path());
-    let config = ScanConfig::new(tmp.path().to_path_buf()).with_excludes(vec!["utils".to_string()]);
-    let files = scan_files(&config);
-    assert!(!files.iter().any(|f| f.to_string_lossy().contains("utils")));
-    assert_eq!(files.len(), 2);
-}
-
-#[test]
-fn scan_empty_directory() {
-    let tmp = TempDir::new().unwrap();
     let config = ScanConfig::new(tmp.path().to_path_buf());
     let files = scan_files(&config);
-    assert!(files.is_empty());
-}
-
-#[test]
-fn is_excluded_works() {
-    let path = Path::new("/foo/bar/tests/test.rs");
-    assert!(is_excluded(path, &["tests".to_string()]));
-    assert!(!is_excluded(path, &["benches".to_string()]));
+    assert!(!files.iter().any(|f| f.to_string_lossy().contains("target")));
 }

@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use crate::code_unit::{CodeUnit, CodeUnitKind};
 use crate::fingerprint::Fingerprint;
 use crate::similarity;
+use std::ptr;
 
 /// A group of duplicate code units.
 #[derive(Debug, Clone)]
@@ -136,7 +137,7 @@ pub fn find_near_duplicates(
     let unit_indices: HashMap<*const CodeUnit, usize> = candidates
         .iter()
         .enumerate()
-        .map(|(i, u)| (std::ptr::from_ref::<CodeUnit>(*u), i))
+        .map(|(i, u)| (ptr::from_ref::<CodeUnit>(*u), i))
         .collect();
 
     for bucket in buckets.values() {
@@ -147,8 +148,8 @@ pub fn find_near_duplicates(
             for j in (i + 1)..bucket.len() {
                 let score = similarity::similarity_score(&bucket[i].body, &bucket[j].body);
                 if score >= threshold {
-                    let idx_i = unit_indices[&std::ptr::from_ref::<CodeUnit>(bucket[i])];
-                    let idx_j = unit_indices[&std::ptr::from_ref::<CodeUnit>(bucket[j])];
+                    let idx_i = unit_indices[&ptr::from_ref::<CodeUnit>(bucket[i])];
+                    let idx_j = unit_indices[&ptr::from_ref::<CodeUnit>(bucket[j])];
                     pairs.push((idx_i, idx_j, score));
                 }
             }

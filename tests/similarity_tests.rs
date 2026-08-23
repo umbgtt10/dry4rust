@@ -7,26 +7,12 @@ use dry4rust::node::{BinOpKind, LiteralKind, PlaceholderKind};
 use dry4rust::node::{NodeKind, NormalizedNode};
 use dry4rust::similarity::*;
 
-fn var(idx: usize) -> NormalizedNode {
-    NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, idx))
-}
-
 fn int_lit() -> NormalizedNode {
     NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Int))
 }
 
-#[test]
-fn identical_leaves_score_one() {
-    let a = int_lit();
-    let b = int_lit();
-    assert!((similarity_score(&a, &b) - 1.0).abs() < f64::EPSILON);
-}
-
-#[test]
-fn completely_different_kinds_score_zero() {
-    let a = int_lit();
-    let b = NormalizedNode::leaf(NodeKind::PatWild);
-    assert!(similarity_score(&a, &b) < f64::EPSILON);
+fn var(idx: usize) -> NormalizedNode {
+    NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, idx))
 }
 
 #[test]
@@ -37,9 +23,9 @@ fn both_none_sentinels_score_one() {
 }
 
 #[test]
-fn none_vs_real_node_score_zero() {
-    let a = NormalizedNode::none();
-    let b = int_lit();
+fn completely_different_kinds_score_zero() {
+    let a = int_lit();
+    let b = NormalizedNode::leaf(NodeKind::PatWild);
     assert!(similarity_score(&a, &b) < f64::EPSILON);
 }
 
@@ -56,6 +42,13 @@ fn different_child_counts_uses_shared_prefix() {
     // matching = Block(1) + 3 Int(1) = 4
     // nodes_a = 4, nodes_b = 6 => score = 8/10 = 0.8
     assert!((score - 0.8).abs() < f64::EPSILON);
+}
+
+#[test]
+fn identical_leaves_score_one() {
+    let a = int_lit();
+    let b = int_lit();
+    assert!((similarity_score(&a, &b) - 1.0).abs() < f64::EPSILON);
 }
 
 #[test]
@@ -83,31 +76,6 @@ fn if_with_else_vs_if_without_else() {
     // matching: If(1) + var(1) + Block(1) + Int(1) + (Block vs None = 0) = 4
     // score = 2*4 / (6+4) = 0.8
     assert!((score - 0.8).abs() < f64::EPSILON);
-}
-
-#[test]
-fn return_with_vs_without_value() {
-    // Return -> [value] vs Return -> []
-    let with_val = NormalizedNode::with_children(NodeKind::Return, vec![int_lit()]);
-    let without_val = NormalizedNode::with_children(NodeKind::Return, vec![]);
-    let score = similarity_score(&with_val, &without_val);
-    // with_val: Return + Int = 2 nodes; without_val: Return = 1 node
-    // matching: Return(1) + zip(empty) = 1
-    // score = 2*1 / (2+1) = 2/3
-    assert!((score - 2.0 / 3.0).abs() < f64::EPSILON);
-}
-
-#[test]
-fn same_discriminant_different_data_no_self_match() {
-    // BinaryOp(Add) vs BinaryOp(Sub) — same discriminant, different data
-    let a =
-        NormalizedNode::with_children(NodeKind::BinaryOp(BinOpKind::Add), vec![var(0), int_lit()]);
-    let b =
-        NormalizedNode::with_children(NodeKind::BinaryOp(BinOpKind::Sub), vec![var(0), int_lit()]);
-    let score = similarity_score(&a, &b);
-    // matching: BinOp self_match=0 (Add!=Sub) + var(1) + int(1) = 2
-    // nodes_a = 3, nodes_b = 3 => score = 4/6 = 0.667
-    assert!((score - 2.0 / 3.0).abs() < f64::EPSILON);
 }
 
 #[test]
@@ -145,6 +113,38 @@ fn macro_call_same_name_different_args_partial() {
     // a: MacroCall + Int = 2; b: MacroCall + Int + var = 3
     // matching: MacroCall(1) + Int(1) = 2; score = 4/5 = 0.8
     assert!((score - 0.8).abs() < f64::EPSILON);
+}
+
+#[test]
+fn none_vs_real_node_score_zero() {
+    let a = NormalizedNode::none();
+    let b = int_lit();
+    assert!(similarity_score(&a, &b) < f64::EPSILON);
+}
+
+#[test]
+fn return_with_vs_without_value() {
+    // Return -> [value] vs Return -> []
+    let with_val = NormalizedNode::with_children(NodeKind::Return, vec![int_lit()]);
+    let without_val = NormalizedNode::with_children(NodeKind::Return, vec![]);
+    let score = similarity_score(&with_val, &without_val);
+    // with_val: Return + Int = 2 nodes; without_val: Return = 1 node
+    // matching: Return(1) + zip(empty) = 1
+    // score = 2*1 / (2+1) = 2/3
+    assert!((score - 2.0 / 3.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn same_discriminant_different_data_no_self_match() {
+    // BinaryOp(Add) vs BinaryOp(Sub) — same discriminant, different data
+    let a =
+        NormalizedNode::with_children(NodeKind::BinaryOp(BinOpKind::Add), vec![var(0), int_lit()]);
+    let b =
+        NormalizedNode::with_children(NodeKind::BinaryOp(BinOpKind::Sub), vec![var(0), int_lit()]);
+    let score = similarity_score(&a, &b);
+    // matching: BinOp self_match=0 (Add!=Sub) + var(1) + int(1) = 2
+    // nodes_a = 3, nodes_b = 3 => score = 4/6 = 0.667
+    assert!((score - 2.0 / 3.0).abs() < f64::EPSILON);
 }
 
 #[test]

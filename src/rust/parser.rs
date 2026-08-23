@@ -12,6 +12,9 @@ use crate::fingerprint::Fingerprint;
 use crate::node::NormalizedNode;
 
 use crate::rust::normalizer;
+use std::fs;
+use syn::parse_file as parse_syn_file;
+use syn::visit;
 
 pub use crate::code_unit::{CodeUnit, CodeUnitKind};
 
@@ -117,7 +120,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         // Continue visiting nested items (propagate test context)
         let prev = self.in_test_context;
         self.in_test_context = is_test;
-        syn::visit::visit_item_fn(self, node);
+        visit::visit_item_fn(self, node);
         self.in_test_context = prev;
     }
 
@@ -126,7 +129,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         if has_cfg_test_attr(&node.attrs) {
             self.in_test_context = true;
         }
-        syn::visit::visit_item_mod(self, node);
+        visit::visit_item_mod(self, node);
         self.in_test_context = prev;
     }
 
@@ -227,7 +230,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         }
 
         // Continue visiting nested closures
-        syn::visit::visit_expr_closure(self, node);
+        visit::visit_expr_closure(self, node);
     }
 }
 
@@ -257,8 +260,8 @@ pub fn parse_source(
     min_node_count: usize,
     min_line_count: usize,
 ) -> Result<Vec<CodeUnit>, String> {
-    let file = syn::parse_file(source)
-        .map_err(|e| format!("Failed to parse {}: {}", path.display(), e))?;
+    let file =
+        parse_syn_file(source).map_err(|e| format!("Failed to parse {}: {}", path.display(), e))?;
 
     let mut extractor = CodeUnitExtractor::new(path.to_path_buf(), min_node_count, min_line_count);
     extractor.visit_file(&file);
@@ -275,7 +278,7 @@ pub fn parse_file(
     min_node_count: usize,
     min_line_count: usize,
 ) -> Result<Vec<CodeUnit>, String> {
-    let content = std::fs::read_to_string(path)
+    let content = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
 
     parse_source(path, &content, min_node_count, min_line_count)

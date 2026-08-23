@@ -9,6 +9,7 @@ use dry4rust::grouper::{DuplicateGroup, DuplicationStats};
 use dry4rust::node::{NodeKind, NormalizedNode};
 use dry4rust::output::text::*;
 use dry4rust::output::{Reporter, display_path};
+use std::path::Path;
 use std::path::PathBuf;
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
@@ -28,28 +29,13 @@ fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> Code
 }
 
 #[test]
-fn text_report_stats() {
-    let reporter = TextReporter::new(None);
-    let stats = DuplicationStats {
-        total_code_units: 100,
-        total_lines: 1000,
-        exact_duplicate_groups: 5,
-        exact_duplicate_units: 12,
-        near_duplicate_groups: 3,
-        near_duplicate_units: 8,
-        exact_duplicate_lines: 60,
-        near_duplicate_lines: 40,
-        sub_exact_groups: 0,
-        sub_exact_units: 0,
-        sub_near_groups: 0,
-        sub_near_units: 0,
-    };
-    let mut buf = Vec::new();
-    reporter.report_stats(&stats, &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
-    assert!(output.contains("100"));
-    assert!(output.contains("5 groups"));
-    assert!(output.contains("3 groups"));
+fn relative_path_stripping() {
+    let base = PathBuf::from("/home/user/project");
+    let result = display_path(
+        Some(base.as_path()),
+        Path::new("/home/user/project/src/main.rs"),
+    );
+    assert_eq!(result, "src/main.rs");
 }
 
 #[test]
@@ -83,6 +69,15 @@ fn text_report_exact_with_groups() {
 }
 
 #[test]
+fn text_report_near_empty() {
+    let reporter = TextReporter::new(None);
+    let mut buf = Vec::new();
+    reporter.report_near(&[], &mut buf).unwrap();
+    let output = String::from_utf8(buf).unwrap();
+    assert!(output.contains("No near duplicates"));
+}
+
+#[test]
 fn text_report_near_with_groups() {
     let reporter = TextReporter::new(None);
     let fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
@@ -105,20 +100,26 @@ fn text_report_near_with_groups() {
 }
 
 #[test]
-fn text_report_near_empty() {
+fn text_report_stats() {
     let reporter = TextReporter::new(None);
+    let stats = DuplicationStats {
+        total_code_units: 100,
+        total_lines: 1000,
+        exact_duplicate_groups: 5,
+        exact_duplicate_units: 12,
+        near_duplicate_groups: 3,
+        near_duplicate_units: 8,
+        exact_duplicate_lines: 60,
+        near_duplicate_lines: 40,
+        sub_exact_groups: 0,
+        sub_exact_units: 0,
+        sub_near_groups: 0,
+        sub_near_units: 0,
+    };
     let mut buf = Vec::new();
-    reporter.report_near(&[], &mut buf).unwrap();
+    reporter.report_stats(&stats, &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
-    assert!(output.contains("No near duplicates"));
-}
-
-#[test]
-fn relative_path_stripping() {
-    let base = PathBuf::from("/home/user/project");
-    let result = display_path(
-        Some(base.as_path()),
-        std::path::Path::new("/home/user/project/src/main.rs"),
-    );
-    assert_eq!(result, "src/main.rs");
+    assert!(output.contains("100"));
+    assert!(output.contains("5 groups"));
+    assert!(output.contains("3 groups"));
 }

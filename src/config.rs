@@ -6,6 +6,8 @@
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
+use std::fs;
+use toml::from_str;
 
 /// The subset of configuration relevant to language-specific parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -125,8 +127,8 @@ impl Config {
         // Try Cargo.toml metadata first (lowest priority file config)
         let cargo_toml = root.join("Cargo.toml");
         if cargo_toml.exists()
-            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
-            && let Ok(cargo) = toml::from_str::<CargoMetadata>(&content)
+            && let Ok(content) = fs::read_to_string(&cargo_toml)
+            && let Ok(cargo) = from_str::<CargoMetadata>(&content)
             && let Some(pkg) = cargo.package
             && let Some(meta) = pkg.metadata
             && let Some(dupes) = meta.dupes
@@ -137,8 +139,8 @@ impl Config {
         // Try dupes.toml (higher priority)
         let dupes_toml = root.join("dupes.toml");
         if dupes_toml.exists()
-            && let Ok(content) = std::fs::read_to_string(&dupes_toml)
-            && let Ok(file_config) = toml::from_str::<FileConfig>(&content)
+            && let Ok(content) = fs::read_to_string(&dupes_toml)
+            && let Ok(file_config) = from_str::<FileConfig>(&content)
         {
             config.apply_file_config(&file_config);
         }

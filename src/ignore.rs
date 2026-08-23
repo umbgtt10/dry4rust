@@ -10,6 +10,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::fingerprint::Fingerprint;
 use crate::grouper::DuplicateGroup;
+use std::fs;
+use std::io::Error;
+use toml::from_str;
+use toml::to_string_pretty;
 
 const IGNORE_FILE_NAME: &str = ".dupes-ignore.toml";
 
@@ -46,18 +50,18 @@ pub fn load_ignore_file(root: &Path) -> IgnoreFile {
     if !path.exists() {
         return IgnoreFile::default();
     }
-    std::fs::read_to_string(&path).map_or_else(
+    fs::read_to_string(&path).map_or_else(
         |_| IgnoreFile::default(),
-        |content| toml::from_str(&content).unwrap_or_default(),
+        |content| from_str(&content).unwrap_or_default(),
     )
 }
 
 /// Save the ignore file to disk.
 pub fn save_ignore_file(root: &Path, ignore_file: &IgnoreFile) -> std::io::Result<()> {
     let path = ignore_file_path(root);
-    let content = toml::to_string_pretty(ignore_file)
-        .map_err(|e| std::io::Error::other(format!("Failed to serialize ignore file: {e}")))?;
-    std::fs::write(path, content)
+    let content = to_string_pretty(ignore_file)
+        .map_err(|e| Error::other(format!("Failed to serialize ignore file: {e}")))?;
+    fs::write(path, content)
 }
 
 /// Add an ignore entry for a fingerprint.

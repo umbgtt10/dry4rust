@@ -4,20 +4,59 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::{cargo_dry4rust, fixture_path};
+use predicate::str;
 use predicates::prelude::*;
+use std::fs;
+use tempfile::TempDir;
 
 #[test]
-fn ignore_workflow() {
-    let tmp = tempfile::TempDir::new().unwrap();
-    // Copy fixture files to temp dir
-    std::fs::create_dir_all(tmp.path().join("src")).unwrap();
-    std::fs::copy(
+fn cleanup_dry_run() {
+    let tmp = TempDir::new().unwrap();
+    fs::create_dir_all(tmp.path().join("src")).unwrap();
+    fs::copy(
         fixture_path("exact_dupes").join("src/lib.rs"),
         tmp.path().join("src/lib.rs"),
     )
     .unwrap();
 
-    // First, get the report to find a fingerprint
+    // Create an ignore file with a stale fingerprint only
+    let ignore_path = tmp.path().join(".dupes-ignore.toml");
+    fs::write(
+        &ignore_path,
+        "[[ignore]]\nfingerprint = \"deadbeefdeadbeef\"\nreason = \"stale\"\n",
+    )
+    .unwrap();
+
+    // Run cleanup with --dry-run
+    cargo_dry4rust()
+        .args([
+            "--path",
+            tmp.path().to_str().unwrap(),
+            "cleanup",
+            "--dry-run",
+        ])
+        .assert()
+        .success()
+        .stdout(str::contains("Stale entries (dry run)"))
+        .stdout(str::contains("deadbeefdeadbeef"))
+        .stdout(str::contains("would be removed"));
+
+    // Verify the file is unchanged
+    let content = fs::read_to_string(&ignore_path).unwrap();
+    assert!(content.contains("deadbeefdeadbeef"));
+}
+
+#[test]
+fn cleanup_removes_stale_entries() {
+    let tmp = TempDir::new().unwrap();
+    fs::create_dir_all(tmp.path().join("src")).unwrap();
+    fs::copy(
+        fixture_path("exact_dupes").join("src/lib.rs"),
+        tmp.path().join("src/lib.rs"),
+    )
+    .unwrap();
+
+    // Get a real fingerprint from the report
     let output = cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "report"])
         .assert()
@@ -27,8 +66,7 @@ fn ignore_workflow() {
         .clone();
     let text = String::from_utf8(output).unwrap();
 
-    // Extract a fingerprint from the output
-    let fp = text
+    let real_fp = text
         .lines()
         .find(|l| l.contains("fingerprint:"))
         .and_then(|l| {
@@ -36,50 +74,49 @@ fn ignore_workflow() {
             let end = l[start..].find(',')?;
             Some(l[start..start + end].to_string())
         })
-        .expect("Should find a fingerprint in the report");
+        .expect("Should find a fingerprint");
 
-    // Add it to ignore
+    // Ignore the real fingerprint
     cargo_dry4rust()
-        .args([
-            "--path",
-            tmp.path().to_str().unwrap(),
-            "ignore",
-            &fp,
-            "--reason",
-            "test ignore",
-        ])
+        .args(["--path", tmp.path().to_str().unwrap(), "ignore", &real_fp])
+        .assert()
+        .success();
+
+    // Add a fake/stale fingerprint manually
+    let ignore_path = tmp.path().join(".dupes-ignore.toml");
+    let content = fs::read_to_string(&ignore_path).unwrap();
+    let new_content = format!(
+        "{content}\n[[ignore]]\nfingerprint = \"deadbeefdeadbeef\"\nreason = \"stale entry\"\n"
+    );
+    fs::write(&ignore_path, new_content).unwrap();
+
+    // Run cleanup
+    cargo_dry4rust()
+        .args(["--path", tmp.path().to_str().unwrap(), "cleanup"])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Added"));
+        .stdout(str::contains("Removed stale entries"))
+        .stdout(str::contains("deadbeefdeadbeef"))
+        .stdout(str::contains("Removed 1 stale entries"));
 
-    // Verify it's listed
+    // Verify the real fingerprint is still in the ignore file
     cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "ignored"])
         .assert()
         .success()
-        .stdout(predicate::str::contains(&fp))
-        .stdout(predicate::str::contains("test ignore"));
+        .stdout(str::contains(&real_fp));
 
-    // Verify the report no longer shows that group
-    let output_after = cargo_dry4rust()
-        .args(["--path", tmp.path().to_str().unwrap(), "stats"])
-        .assert()
-        .success()
-        .get_output()
-        .stdout
-        .clone();
-    let text_after = String::from_utf8(output_after).unwrap();
-
-    // The ignored group should be filtered out
-    assert!(text_after.contains("Exact duplicates: 0 groups"));
+    // Verify the stale entry is gone
+    let final_content = fs::read_to_string(&ignore_path).unwrap();
+    assert!(!final_content.contains("deadbeefdeadbeef"));
 }
 
 #[test]
 fn ignore_near_duplicate_workflow() {
-    let tmp = tempfile::TempDir::new().unwrap();
+    let tmp = TempDir::new().unwrap();
     // Copy fixture files to temp dir
-    std::fs::create_dir_all(tmp.path().join("src")).unwrap();
-    std::fs::copy(
+    fs::create_dir_all(tmp.path().join("src")).unwrap();
+    fs::copy(
         fixture_path("near_dupes").join("src/lib.rs"),
         tmp.path().join("src/lib.rs"),
     )
@@ -124,7 +161,7 @@ fn ignore_near_duplicate_workflow() {
         ])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Added"));
+        .stdout(str::contains("Added"));
 
     // Verify the near-duplicate group is now filtered out
     let output_after = cargo_dry4rust()
@@ -145,16 +182,17 @@ fn ignore_near_duplicate_workflow() {
 }
 
 #[test]
-fn cleanup_removes_stale_entries() {
-    let tmp = tempfile::TempDir::new().unwrap();
-    std::fs::create_dir_all(tmp.path().join("src")).unwrap();
-    std::fs::copy(
+fn ignore_workflow() {
+    let tmp = TempDir::new().unwrap();
+    // Copy fixture files to temp dir
+    fs::create_dir_all(tmp.path().join("src")).unwrap();
+    fs::copy(
         fixture_path("exact_dupes").join("src/lib.rs"),
         tmp.path().join("src/lib.rs"),
     )
     .unwrap();
 
-    // Get a real fingerprint from the report
+    // First, get the report to find a fingerprint
     let output = cargo_dry4rust()
         .args(["--path", tmp.path().to_str().unwrap(), "report"])
         .assert()
@@ -164,7 +202,8 @@ fn cleanup_removes_stale_entries() {
         .clone();
     let text = String::from_utf8(output).unwrap();
 
-    let real_fp = text
+    // Extract a fingerprint from the output
+    let fp = text
         .lines()
         .find(|l| l.contains("fingerprint:"))
         .and_then(|l| {
@@ -172,76 +211,40 @@ fn cleanup_removes_stale_entries() {
             let end = l[start..].find(',')?;
             Some(l[start..start + end].to_string())
         })
-        .expect("Should find a fingerprint");
+        .expect("Should find a fingerprint in the report");
 
-    // Ignore the real fingerprint
-    cargo_dry4rust()
-        .args(["--path", tmp.path().to_str().unwrap(), "ignore", &real_fp])
-        .assert()
-        .success();
-
-    // Add a fake/stale fingerprint manually
-    let ignore_path = tmp.path().join(".dupes-ignore.toml");
-    let content = std::fs::read_to_string(&ignore_path).unwrap();
-    let new_content = format!(
-        "{content}\n[[ignore]]\nfingerprint = \"deadbeefdeadbeef\"\nreason = \"stale entry\"\n"
-    );
-    std::fs::write(&ignore_path, new_content).unwrap();
-
-    // Run cleanup
-    cargo_dry4rust()
-        .args(["--path", tmp.path().to_str().unwrap(), "cleanup"])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Removed stale entries"))
-        .stdout(predicate::str::contains("deadbeefdeadbeef"))
-        .stdout(predicate::str::contains("Removed 1 stale entries"));
-
-    // Verify the real fingerprint is still in the ignore file
-    cargo_dry4rust()
-        .args(["--path", tmp.path().to_str().unwrap(), "ignored"])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains(&real_fp));
-
-    // Verify the stale entry is gone
-    let final_content = std::fs::read_to_string(&ignore_path).unwrap();
-    assert!(!final_content.contains("deadbeefdeadbeef"));
-}
-
-#[test]
-fn cleanup_dry_run() {
-    let tmp = tempfile::TempDir::new().unwrap();
-    std::fs::create_dir_all(tmp.path().join("src")).unwrap();
-    std::fs::copy(
-        fixture_path("exact_dupes").join("src/lib.rs"),
-        tmp.path().join("src/lib.rs"),
-    )
-    .unwrap();
-
-    // Create an ignore file with a stale fingerprint only
-    let ignore_path = tmp.path().join(".dupes-ignore.toml");
-    std::fs::write(
-        &ignore_path,
-        "[[ignore]]\nfingerprint = \"deadbeefdeadbeef\"\nreason = \"stale\"\n",
-    )
-    .unwrap();
-
-    // Run cleanup with --dry-run
+    // Add it to ignore
     cargo_dry4rust()
         .args([
             "--path",
             tmp.path().to_str().unwrap(),
-            "cleanup",
-            "--dry-run",
+            "ignore",
+            &fp,
+            "--reason",
+            "test ignore",
         ])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Stale entries (dry run)"))
-        .stdout(predicate::str::contains("deadbeefdeadbeef"))
-        .stdout(predicate::str::contains("would be removed"));
+        .stdout(str::contains("Added"));
 
-    // Verify the file is unchanged
-    let content = std::fs::read_to_string(&ignore_path).unwrap();
-    assert!(content.contains("deadbeefdeadbeef"));
+    // Verify it's listed
+    cargo_dry4rust()
+        .args(["--path", tmp.path().to_str().unwrap(), "ignored"])
+        .assert()
+        .success()
+        .stdout(str::contains(&fp))
+        .stdout(str::contains("test ignore"));
+
+    // Verify the report no longer shows that group
+    let output_after = cargo_dry4rust()
+        .args(["--path", tmp.path().to_str().unwrap(), "stats"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let text_after = String::from_utf8(output_after).unwrap();
+
+    // The ignored group should be filtered out
+    assert!(text_after.contains("Exact duplicates: 0 groups"));
 }

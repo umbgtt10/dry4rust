@@ -8,8 +8,17 @@ use std::process;
 
 use clap::Parser;
 
+use cli::cmd_check;
+use cli::cmd_cleanup;
+use cli::cmd_ignore;
+use cli::cmd_ignored;
+use cli::cmd_report;
+use cli::cmd_stats;
+use cli::run_analysis;
 use dry4rust::cli::{self, CliOverrides, Command, OutputFormat};
 use dry4rust::rust::RustAnalyzer;
+use std::env;
+use std::io;
 
 #[derive(Parser)]
 #[command(
@@ -77,19 +86,18 @@ fn main() {
         ..
     } = Cli::parse();
 
-    let root =
-        path.unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+    let root = path.unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
     let command = command.unwrap_or(Command::Report);
-    let stdout = std::io::stdout();
+    let stdout = io::stdout();
     let mut writer = stdout.lock();
 
     let result = match &command {
         Command::Ignore {
             fingerprint,
             reason,
-        } => cli::cmd_ignore(&root, fingerprint, reason.clone(), &mut writer),
-        Command::Ignored => cli::cmd_ignored(&root, &mut writer),
+        } => cmd_ignore(&root, fingerprint, reason.clone(), &mut writer),
+        Command::Ignored => cmd_ignored(&root, &mut writer),
         _ => {
             let analyzer = RustAnalyzer::new();
             let overrides = CliOverrides {
@@ -101,7 +109,7 @@ fn main() {
                 sub_function: if sub_function { Some(true) } else { None },
                 min_sub_nodes,
             };
-            let output = match cli::run_analysis(&analyzer, &root, format, &overrides) {
+            let output = match run_analysis(&analyzer, &root, format, &overrides) {
                 Ok(o) => o,
                 Err(e) => {
                     eprintln!("Error: {e}");
@@ -116,14 +124,14 @@ fn main() {
             let reporter: &dyn dry4rust::output::Reporter = &*output.reporter;
 
             match &command {
-                Command::Stats => cli::cmd_stats(&output.result, reporter, &mut writer),
-                Command::Report => cli::cmd_report(&output.result, reporter, &mut writer),
+                Command::Stats => cmd_stats(&output.result, reporter, &mut writer),
+                Command::Report => cmd_report(&output.result, reporter, &mut writer),
                 Command::Check {
                     max_exact,
                     max_near,
                     max_exact_percent,
                     max_near_percent,
-                } => cli::cmd_check(
+                } => cmd_check(
                     &output.config,
                     &output.result,
                     reporter,
@@ -136,7 +144,7 @@ fn main() {
                     },
                 ),
                 Command::Cleanup { dry_run } => {
-                    cli::cmd_cleanup(&root, &output.result, &mut writer, *dry_run)
+                    cmd_cleanup(&root, &output.result, &mut writer, *dry_run)
                 }
                 Command::Ignore { .. } | Command::Ignored => unreachable!(),
             }

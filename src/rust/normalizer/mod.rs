@@ -21,7 +21,7 @@ pub fn normalize_signature(sig: &syn::Signature, ctx: &mut NormalizationContext)
     // FnSignature -> [return_type_or_None, param0, param1, ...]
     let return_type = match &sig.output {
         syn::ReturnType::Default => NormalizedNode::none(),
-        syn::ReturnType::Type(_, ty) => pat::normalize_type(ty, ctx),
+        syn::ReturnType::Type(_, ty) => normalize_type(ty, ctx),
     };
     let mut children = vec![return_type];
     children.extend(sig.inputs.iter().map(|arg| match arg {
@@ -41,8 +41,8 @@ pub fn normalize_signature(sig: &syn::Signature, ctx: &mut NormalizationContext)
             }
         }
         syn::FnArg::Typed(pt) => {
-            let pat = pat::normalize_pat(&pt.pat, ctx);
-            let ty = pat::normalize_type(&pt.ty, ctx);
+            let pat = normalize_pat(&pt.pat, ctx);
+            let ty = normalize_type(&pt.ty, ctx);
             NormalizedNode::with_children(NodeKind::FieldValue, vec![pat, ty])
         }
     }));
@@ -78,12 +78,7 @@ pub fn normalize_impl_item_fn(method: &syn::ImplItemFn) -> (NormalizedNode, Norm
 pub fn normalize_closure_expr(closure: &syn::ExprClosure) -> NormalizedNode {
     let mut ctx = NormalizationContext::new();
     let mut children = vec![normalize_expr(&closure.body, &mut ctx)];
-    children.extend(
-        closure
-            .inputs
-            .iter()
-            .map(|p| pat::normalize_pat(p, &mut ctx)),
-    );
+    children.extend(closure.inputs.iter().map(|p| normalize_pat(p, &mut ctx)));
     NormalizedNode::with_children(NodeKind::Closure, children)
 }
 

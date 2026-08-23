@@ -24,8 +24,16 @@ use std::path::PathBuf;
 use analyzer::LanguageAnalyzer;
 use code_unit::CodeUnit;
 use config::Config;
+use extractor::extract_sub_units;
 use fingerprint::Fingerprint;
+use grouper::compute_stats_with_sub;
+use grouper::find_near_duplicates;
+use grouper::group_exact_duplicates;
 use grouper::{DuplicateGroup, DuplicationStats};
+use ignore::filter_ignored;
+use ignore::load_ignore_file;
+use node::NormalizedNode;
+use std::fs;
 
 /// The result of a full analysis run.
 pub struct AnalysisResult {
@@ -54,7 +62,7 @@ pub fn analyze(
     let mut warnings = Vec::new();
 
     for path in files {
-        let source = match std::fs::read_to_string(path) {
+        let source = match fs::read_to_string(path) {
             Ok(s) => s,
             Err(e) => {
                 warnings.push(format!("Failed to read {}: {}", path.display(), e));
@@ -85,11 +93,11 @@ pub fn analyze_units(
     config: &Config,
 ) -> error::Result<AnalysisResult> {
     // 1. Group exact duplicates
-    let exact_groups = grouper::group_exact_duplicates(units);
+    let exact_groups = group_exact_duplicates(units);
 
     // 2. Find near-duplicates
     let exact_fps: Vec<_> = exact_groups.iter().map(|g| g.fingerprint).collect();
-    let near_groups = grouper::find_near_duplicates(units, config.similarity_threshold, &exact_fps);
+    let near_groups = find_near_duplicates(units, config.similarity_threshold, &exact_fps);
 
     // 3. Sub-function duplicate detection (opt-in)
     let (sub_exact_groups, sub_near_groups) = if config.sub_function {
@@ -97,16 +105,16 @@ pub fn analyze_units(
         let sub_units: Vec<CodeUnit> = units
             .iter()
             .flat_map(|unit| {
-                let sub_units = extractor::extract_sub_units(&unit.body, config.min_sub_nodes);
+                let sub_units = extract_sub_units(&unit.body, config.min_sub_nodes);
                 sub_units.into_iter().map(|su| CodeUnit {
                     kind: su.kind,
                     name: su.description,
                     file: unit.file.clone(),
                     line_start: unit.line_start,
                     line_end: unit.line_end,
-                    signature: node::NormalizedNode::leaf(node::NodeKind::Opaque),
+                    signature: NormalizedNode::leaf(node::NodeKind::Opaque),
                     body: su.node.clone(),
-                    fingerprint: fingerprint::Fingerprint::from_node(&su.node),
+                    fingerprint: Fingerprint::from_node(&su.node),
                     node_count: su.node_count,
                     parent_name: Some(unit.name.clone()),
                     is_test: unit.is_test,
@@ -114,10 +122,10 @@ pub fn analyze_units(
             })
             .collect();
 
-        let sub_exact = grouper::group_exact_duplicates(&sub_units);
+        let sub_exact = group_exact_duplicates(&sub_units);
         let sub_exact_fps: Vec<_> = sub_exact.iter().map(|g| g.fingerprint).collect();
         let sub_near =
-            grouper::find_near_duplicates(&sub_units, config.similarity_threshold, &sub_exact_fps);
+            find_near_duplicates(&sub_units, config.similarity_threshold, &sub_exact_fps);
         (sub_exact, sub_near)
     } else {
         (Vec::new(), Vec::new())
@@ -133,14 +141,14 @@ pub fn analyze_units(
         .collect();
 
     // 5. Apply ignore filtering
-    let ignore_file = ignore::load_ignore_file(&config.root);
-    let exact_groups = ignore::filter_ignored(exact_groups, &ignore_file);
-    let near_groups = ignore::filter_ignored(near_groups, &ignore_file);
-    let sub_exact_groups = ignore::filter_ignored(sub_exact_groups, &ignore_file);
-    let sub_near_groups = ignore::filter_ignored(sub_near_groups, &ignore_file);
+    let ignore_file = load_ignore_file(&config.root);
+    let exact_groups = filter_ignored(exact_groups, &ignore_file);
+    let near_groups = filter_ignored(near_groups, &ignore_file);
+    let sub_exact_groups = filter_ignored(sub_exact_groups, &ignore_file);
+    let sub_near_groups = filter_ignored(sub_near_groups, &ignore_file);
 
     // 6. Compute stats
-    let stats = grouper::compute_stats_with_sub(
+    let stats = compute_stats_with_sub(
         units,
         &exact_groups,
         &near_groups,

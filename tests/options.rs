@@ -4,38 +4,17 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::{cargo_dry4rust, fixture_path};
+use predicate::str;
 use predicates::prelude::*;
+use serde_json::from_str;
 
 #[test]
-fn min_nodes_option() {
-    // With very high min_nodes, nothing should be analyzed
+fn error_on_nonexistent_path() {
     cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--min-nodes",
-            "1000",
-            "stats",
-        ])
+        .args(["--path", "/nonexistent/path/that/does/not/exist", "stats"])
         .assert()
-        .success()
-        .stdout(predicate::str::contains("Exact duplicates: 0 groups"));
-}
-
-#[test]
-fn min_lines_option() {
-    // With very high min_lines, short functions should be excluded
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--min-lines",
-            "1000",
-            "stats",
-        ])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Exact duplicates: 0 groups"));
+        .code(2)
+        .stderr(str::contains("No source files"));
 }
 
 #[test]
@@ -51,7 +30,7 @@ fn exclude_option() {
         ])
         .assert()
         .code(2)
-        .stderr(predicate::str::contains("No source files"));
+        .stderr(str::contains("No source files"));
 }
 
 #[test]
@@ -70,8 +49,7 @@ fn exclude_tests_flag_reduces_duplicates() {
         .get_output()
         .stdout
         .clone();
-    let all: serde_json::Value =
-        serde_json::from_str(&String::from_utf8(output_all).unwrap()).unwrap();
+    let all: serde_json::Value = from_str(&String::from_utf8(output_all).unwrap()).unwrap();
     assert_eq!(all["exact_duplicate_units"].as_u64().unwrap(), 3);
 
     // With --exclude-tests: only 2 production units remain
@@ -89,8 +67,7 @@ fn exclude_tests_flag_reduces_duplicates() {
         .get_output()
         .stdout
         .clone();
-    let excl: serde_json::Value =
-        serde_json::from_str(&String::from_utf8(output_excl).unwrap()).unwrap();
+    let excl: serde_json::Value = from_str(&String::from_utf8(output_excl).unwrap()).unwrap();
     assert_eq!(excl["exact_duplicate_units"].as_u64().unwrap(), 2);
     assert_eq!(excl["total_code_units"].as_u64().unwrap(), 2);
 }
@@ -106,17 +83,8 @@ fn exclude_tests_text_report() {
         ])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Exact Duplicates"))
-        .stdout(predicate::str::contains("Group 1"));
-}
-
-#[test]
-fn error_on_nonexistent_path() {
-    cargo_dry4rust()
-        .args(["--path", "/nonexistent/path/that/does/not/exist", "stats"])
-        .assert()
-        .code(2)
-        .stderr(predicate::str::contains("No source files"));
+        .stdout(str::contains("Exact Duplicates"))
+        .stdout(str::contains("Group 1"));
 }
 
 #[test]
@@ -125,5 +93,37 @@ fn help_works() {
         .arg("--help")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Detect duplicate code"));
+        .stdout(str::contains("Detect duplicate code"));
+}
+
+#[test]
+fn min_lines_option() {
+    // With very high min_lines, short functions should be excluded
+    cargo_dry4rust()
+        .args([
+            "--path",
+            fixture_path("exact_dupes").to_str().unwrap(),
+            "--min-lines",
+            "1000",
+            "stats",
+        ])
+        .assert()
+        .success()
+        .stdout(str::contains("Exact duplicates: 0 groups"));
+}
+
+#[test]
+fn min_nodes_option() {
+    // With very high min_nodes, nothing should be analyzed
+    cargo_dry4rust()
+        .args([
+            "--path",
+            fixture_path("exact_dupes").to_str().unwrap(),
+            "--min-nodes",
+            "1000",
+            "stats",
+        ])
+        .assert()
+        .success()
+        .stdout(str::contains("Exact duplicates: 0 groups"));
 }

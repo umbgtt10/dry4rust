@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 /// Kinds of literals — preserves type but erases value.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -347,7 +348,7 @@ fn apply_reindex(
 #[must_use]
 pub fn reindex_placeholders(node: &NormalizedNode) -> NormalizedNode {
     let mut order = Vec::new();
-    let mut seen = std::collections::HashSet::new();
+    let mut seen = HashSet::new();
     collect_placeholder_order(node, &mut order, &mut seen);
 
     // Build mapping: (kind, old_index) -> new sequential index per kind
