@@ -11,7 +11,9 @@ use syn::visit::Visit;
 use crate::fingerprint::Fingerprint;
 use crate::node::NormalizedNode;
 
+use crate::node;
 use crate::rust::normalizer;
+use normalizer::normalize;
 use std::fs;
 use syn::parse_file as parse_syn_file;
 use syn::visit;
@@ -73,7 +75,7 @@ impl CodeUnitExtractor {
         body: NormalizedNode,
         is_test: bool,
     ) {
-        let node_count = normalizer::count_nodes(&sig) + normalizer::count_nodes(&body);
+        let node_count = node::count_nodes(&sig) + node::count_nodes(&body);
         if node_count < self.min_node_count {
             return;
         }
@@ -106,7 +108,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         let name = node.sig.ident.to_string();
         let line_start = node.sig.ident.span().start().line;
         let line_end = node.block.brace_token.span.close().end().line;
-        let (sig, body) = normalizer::normalize_item_fn(node);
+        let (sig, body) = normalize::normalize_item_fn(node);
         self.add_unit(
             CodeUnitKind::Function,
             name,
@@ -172,7 +174,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
                 let line_start = method.sig.ident.span().start().line;
                 let line_end = method.block.brace_token.span.close().end().line;
 
-                let (sig, body) = normalizer::normalize_impl_item_fn(method);
+                let (sig, body) = normalize::normalize_impl_item_fn(method);
                 let kind = if is_trait_impl {
                     CodeUnitKind::TraitImplBlock
                 } else {
@@ -206,8 +208,8 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
             }
         };
 
-        let normalized = normalizer::normalize_closure_expr(node);
-        let node_count = normalizer::count_nodes(&normalized);
+        let normalized = normalize::normalize_closure_expr(node);
+        let node_count = node::count_nodes(&normalized);
         let line_count = line_end.saturating_sub(line_start) + 1;
         if node_count >= self.min_node_count
             && (self.min_line_count == 0 || line_count >= self.min_line_count)
@@ -272,7 +274,7 @@ pub fn parse_source(
 /// Parse a single Rust file and extract code units.
 ///
 /// This is a lower-level convenience function. Prefer using [`crate::RustAnalyzer`]
-/// with [`crate::analyze`] for the full pipeline.
+/// with [`crate::analysis::analyze`] for the full pipeline.
 pub fn parse_file(
     path: &Path,
     min_node_count: usize,
@@ -287,7 +289,7 @@ pub fn parse_file(
 /// Parse multiple files and collect all code units, skipping files that fail to parse.
 ///
 /// This is a lower-level convenience function. Prefer using [`crate::RustAnalyzer`]
-/// with [`crate::analyze`] for the full pipeline.
+/// with [`crate::analysis::analyze`] for the full pipeline.
 #[must_use]
 pub fn parse_files(
     paths: &[PathBuf],

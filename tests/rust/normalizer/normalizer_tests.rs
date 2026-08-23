@@ -3,7 +3,15 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::rust::normalizer::*;
+use dry4rust::node::LiteralKind;
+use dry4rust::node::NodeKind;
+use dry4rust::node::NormalizationContext;
+use dry4rust::node::NormalizedNode;
+use dry4rust::node::count_nodes;
+use dry4rust::node::reindex_placeholders;
+use dry4rust::rust::normalizer::expr::normalize_expr;
+use dry4rust::rust::normalizer::normalize::normalize_impl_block;
+use dry4rust::rust::normalizer::normalize::normalize_item_fn;
 use syn::parse_str;
 
 fn normalize_code_expr(code: &str) -> NormalizedNode {

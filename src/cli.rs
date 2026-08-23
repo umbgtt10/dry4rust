@@ -6,14 +6,14 @@
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use crate::AnalysisResult;
-use crate::analyze;
+use crate::analysis::AnalysisResult;
+use crate::analysis::analyze;
 use crate::analyzer::LanguageAnalyzer;
 use crate::config::Config;
 use crate::fingerprint::Fingerprint;
 use crate::ignore::{self, IgnoreEntry};
-use crate::output::Reporter;
 use crate::output::json::JsonReporter;
+use crate::output::reporter::Reporter;
 use crate::output::text::TextReporter;
 use crate::scanner;
 use crate::scanner::ScanConfig;

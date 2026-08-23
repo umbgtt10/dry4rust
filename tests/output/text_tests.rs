@@ -7,8 +7,9 @@ use dry4rust::code_unit::{CodeUnit, CodeUnitKind};
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::grouper::{DuplicateGroup, DuplicationStats};
 use dry4rust::node::{NodeKind, NormalizedNode};
+use dry4rust::output::reporter::Reporter;
+use dry4rust::output::reporter::display_path;
 use dry4rust::output::text::*;
-use dry4rust::output::{Reporter, display_path};
 use std::path::Path;
 use std::path::PathBuf;
 

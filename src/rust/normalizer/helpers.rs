@@ -10,6 +10,7 @@ use syn::punctuated::Punctuated;
 
 use super::expr::normalize_expr;
 
+#[must_use]
 pub fn member_to_string(member: &syn::Member) -> String {
     match member {
         syn::Member::Named(ident) => ident.to_string(),

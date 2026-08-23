@@ -6,7 +6,8 @@
 use std::io;
 
 use crate::grouper::{DuplicateGroup, DuplicationStats};
-use crate::output::{Reporter, display_path};
+use crate::output::reporter::Reporter;
+use crate::output::reporter::display_path;
 
 fn format_with_commas(n: usize) -> String {
     let s = n.to_string();

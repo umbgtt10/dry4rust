@@ -14,7 +14,7 @@ use crate::config::AnalysisConfig;
 /// allowing `dupes-core` to work with any language.
 ///
 /// **Test code handling:** Analyzers should set [`CodeUnit::is_test`] to `true`
-/// for test functions, test modules, etc. The [`crate::analyze`] function will
+/// for test functions, test modules, etc. The [`crate::analysis::analyze`] function will
 /// filter them out when `Config::exclude_tests` is enabled, using [`is_test_code`].
 pub trait LanguageAnalyzer: Send + Sync {
     /// File extensions this analyzer handles (without the leading dot).
