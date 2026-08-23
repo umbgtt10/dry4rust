@@ -520,7 +520,10 @@ fn cmd_cleanup_outside_dry_run_writes_the_pruned_ignore_file() {
 
     // Assert
     let text = String::from_utf8(out).expect("utf-8");
-    assert!(!text.is_empty(), "cleanup should say what it did");
+    assert!(
+        text.contains("stale"),
+        "cleanup reports on stale entries by name, got: {text}"
+    );
 }
 
 #[test]

@@ -80,7 +80,10 @@ fn dispatch_with_cleanup_in_dry_run_succeeds_and_writes_a_report() {
 
     // Assert
     assert!(outcome.is_ok());
-    assert!(!text.is_empty(), "cleanup says what it would remove");
+    assert!(
+        text.contains("stale"),
+        "cleanup names what it found rather than merely producing output, got: {text}"
+    );
 }
 
 #[test]
@@ -135,7 +138,14 @@ fn dispatch_with_report_writes_the_full_report() {
 
     // Assert
     assert!(outcome.is_ok());
-    assert!(!text.is_empty(), "a report has content");
+    assert!(
+        text.contains("Exact Duplicates"),
+        "a report over a duplicated fixture lists the duplicates, got: {text}"
+    );
+    assert!(
+        text.contains("Exact duplicates: 1 groups"),
+        "and says how many; the fixture holds exactly one group"
+    );
 }
 
 #[test]
@@ -148,7 +158,14 @@ fn dispatch_with_stats_writes_a_summary() {
 
     // Assert
     assert!(outcome.is_ok());
-    assert!(!text.is_empty(), "a summary has content");
+    assert!(
+        text.contains("Duplication Statistics"),
+        "stats is the summary, not the listing, got: {text}"
+    );
+    assert!(
+        !text.contains("Exact Duplicates"),
+        "and it stops short of the per-group listing report gives"
+    );
 }
 
 #[test]
