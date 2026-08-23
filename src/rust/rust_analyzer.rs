@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-//! Rust language analyzer for the `dupes-core` duplicate detection framework.
+//! Rust language analyzer for the `dry4rust` duplicate detection framework.
 //!
 //! This crate provides [`RustAnalyzer`], which implements the
 //! [`crate::analyzer::LanguageAnalyzer`] trait using `syn` for AST parsing

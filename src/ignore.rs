@@ -15,7 +15,7 @@ use std::io::Error;
 use toml::from_str;
 use toml::to_string_pretty;
 
-const IGNORE_FILE_NAME: &str = ".dupes-ignore.toml";
+const IGNORE_FILE_NAME: &str = ".dry4rust-ignore.toml";
 
 /// An entry in the ignore file.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

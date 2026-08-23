@@ -18,7 +18,7 @@ pub struct AnalysisConfig {
     pub min_lines: usize,
 }
 
-/// Configuration for cargo-dupes analysis.
+/// Configuration for cargo-dry4rust analysis.
 #[derive(Debug, Clone)]
 pub struct Config {
     /// Minimum number of AST nodes for a code unit to be analyzed.
@@ -66,7 +66,7 @@ impl Default for Config {
     }
 }
 
-/// Config as stored in dupes.toml or Cargo.toml metadata.
+/// Config as stored in dry4rust.toml or Cargo.toml metadata.
 #[derive(Debug, Deserialize, Default)]
 #[serde(default)]
 struct FileConfig {
@@ -99,7 +99,7 @@ struct CargoPackage {
 #[derive(Debug, Deserialize)]
 struct CargoPackageMetadata {
     #[serde(default)]
-    dupes: Option<FileConfig>,
+    dry4rust: Option<FileConfig>,
 }
 
 impl Config {
@@ -114,8 +114,8 @@ impl Config {
 
     /// Load config with the following precedence:
     /// 1. CLI overrides (applied by the caller after this method)
-    /// 2. dupes.toml in the project root
-    /// 3. `[package.metadata.dupes]` in Cargo.toml
+    /// 2. dry4rust.toml in the project root
+    /// 3. `[package.metadata.dry4rust]` in Cargo.toml
     /// 4. Defaults
     #[must_use]
     pub fn load(root: &Path) -> Self {
@@ -131,15 +131,15 @@ impl Config {
             && let Ok(cargo) = from_str::<CargoMetadata>(&content)
             && let Some(pkg) = cargo.package
             && let Some(meta) = pkg.metadata
-            && let Some(dupes) = meta.dupes
+            && let Some(file_config) = meta.dry4rust
         {
-            config.apply_file_config(&dupes);
+            config.apply_file_config(&file_config);
         }
 
-        // Try dupes.toml (higher priority)
-        let dupes_toml = root.join("dupes.toml");
-        if dupes_toml.exists()
-            && let Ok(content) = fs::read_to_string(&dupes_toml)
+        // Try dry4rust.toml (higher priority)
+        let dry4rust_toml = root.join("dry4rust.toml");
+        if dry4rust_toml.exists()
+            && let Ok(content) = fs::read_to_string(&dry4rust_toml)
             && let Ok(file_config) = from_str::<FileConfig>(&content)
         {
             config.apply_file_config(&file_config);

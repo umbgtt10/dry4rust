@@ -3,9 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-//! Tests for dupes-core modules that require syn for test data construction.
+//! Tests for the analysis pipeline, which needs syn to build its test data.
 //! These tests exercise fingerprint, similarity, grouper, and extractor functionality
-//! using syn-parsed Rust code, so they live in dupes-rust (which depends on syn).
+//! Every case is driven from syn-parsed Rust source.
 
 use dry4rust::extractor;
 use dry4rust::fingerprint::Fingerprint;

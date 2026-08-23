@@ -126,7 +126,7 @@ pub enum OutputFormat {
     Json,
 }
 
-/// CLI subcommands shared between `cargo-dupes` and `code-dupes`.
+/// CLI subcommands for `cargo-dry4rust`.
 #[derive(Debug, Clone, clap::Subcommand)]
 pub enum Command {
     /// Show duplication statistics only.

@@ -10,8 +10,9 @@ It is a fork of [`cargo-dupes`](https://github.com/mpecan/cargo-dupes) by
 Matjaz Domen Pecan, MIT. The engine is his work; `LICENSE` carries both
 copyright notices and every source file repeats them. See `README.md`.
 
-Where it is going rather than where it came from is in
-`docs/dry4rust-dossier.md`.
+`docs/ADRs/` holds the decisions this repository has settled and what forced
+them. Where it is going rather than where it came from is in
+`docs/dry4rust-dossier.md`, which is research and not a record.
 
 ## Boundary Rule
 

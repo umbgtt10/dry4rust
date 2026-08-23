@@ -27,7 +27,7 @@ fn config_with_exclude_tests() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("dupes.toml"),
+        tmp.path().join("dry4rust.toml"),
         r#"
         exclude_tests = true
         "#,
@@ -44,7 +44,7 @@ fn config_with_min_lines() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("dupes.toml"),
+        tmp.path().join("dry4rust.toml"),
         r#"
         min_lines = 5
         "#,
@@ -61,7 +61,7 @@ fn config_with_percentage_thresholds() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("dupes.toml"),
+        tmp.path().join("dry4rust.toml"),
         r#"
         max_exact_percent = 5.0
         max_near_percent = 10.5
@@ -80,7 +80,7 @@ fn config_with_thresholds() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("dupes.toml"),
+        tmp.path().join("dry4rust.toml"),
         r#"
         max_exact_duplicates = 0
         max_near_duplicates = 5
@@ -106,7 +106,7 @@ fn default_returns_the_documented_thresholds() {
 }
 
 #[test]
-fn dupes_toml_overrides_cargo_toml() {
+fn dry4rust_toml_overrides_cargo_toml() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
@@ -117,13 +117,13 @@ fn dupes_toml_overrides_cargo_toml() {
         version = "0.1.0"
         edition = "2021"
 
-        [package.metadata.dupes]
+        [package.metadata.dry4rust]
         min_nodes = 15
         "#,
     )
     .unwrap();
     fs::write(
-        tmp.path().join("dupes.toml"),
+        tmp.path().join("dry4rust.toml"),
         r#"
         min_nodes = 25
         "#,
@@ -147,7 +147,7 @@ fn load_from_cargo_toml_metadata() {
         version = "0.1.0"
         edition = "2021"
 
-        [package.metadata.dupes]
+        [package.metadata.dry4rust]
         min_nodes = 15
         similarity_threshold = 0.75
         "#,
@@ -161,11 +161,11 @@ fn load_from_cargo_toml_metadata() {
 }
 
 #[test]
-fn load_from_dupes_toml() {
+fn load_from_dry4rust_toml() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("dupes.toml"),
+        tmp.path().join("dry4rust.toml"),
         r#"
         min_nodes = 20
         similarity_threshold = 0.9

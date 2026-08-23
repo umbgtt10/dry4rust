@@ -19,12 +19,12 @@ use dry4rust::rust::rust_analyzer::RustAnalyzer;
 
 #[derive(Parser)]
 #[command(
-    name = "cargo-dupes",
+    name = "cargo-dry4rust",
     version,
     about = "Detect duplicate code in Rust codebases"
 )]
 struct Cli {
-    /// When invoked as `cargo dupes`, cargo passes "dupes" as the first arg.
+    /// When invoked as `cargo dry4rust`, cargo passes "dry4rust" as the first arg.
     #[arg(hide = true, default_value = "")]
     _cargo_subcommand: String,
 

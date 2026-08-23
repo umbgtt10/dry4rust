@@ -211,7 +211,7 @@ fn cleanup_dry_run() {
     .unwrap();
 
     // Create an ignore file with a stale fingerprint only
-    let ignore_path = tmp.path().join(".dupes-ignore.toml");
+    let ignore_path = tmp.path().join(".dry4rust-ignore.toml");
     fs::write(
         &ignore_path,
         "[[ignore]]\nfingerprint = \"deadbeefdeadbeef\"\nreason = \"stale\"\n",
@@ -277,7 +277,7 @@ fn cleanup_removes_stale_entries() {
         .success();
 
     // Add a fake/stale fingerprint manually
-    let ignore_path = tmp.path().join(".dupes-ignore.toml");
+    let ignore_path = tmp.path().join(".dry4rust-ignore.toml");
     let content = fs::read_to_string(&ignore_path).unwrap();
     let new_content = format!(
         "{content}\n[[ignore]]\nfingerprint = \"deadbeefdeadbeef\"\nreason = \"stale entry\"\n"
@@ -491,7 +491,7 @@ fn cmd_cleanup_in_dry_run_leaves_the_ignore_file_alone() {
     cmd_cleanup(tmp.path(), &result, &mut out, true).expect("dry run succeeds");
 
     // Assert
-    assert!(!tmp.path().join(".dupes-ignore.toml").exists());
+    assert!(!tmp.path().join(".dry4rust-ignore.toml").exists());
 }
 
 #[test]

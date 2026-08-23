@@ -1,6 +1,9 @@
 # dry4rust
 
-**A `cargo` subcommand for detecting duplicated code patterns in Rust — DRY (Don't Repeat
+Created by **Matjaz Domen Pecan** as [`cargo-dupes`](https://github.com/mpecan/cargo-dupes),
+forked and extended by **Umberto Gotti** under the [MIT licence](LICENSE).
+
+**A `cargo` subcommand for detecting duplicated code patterns in Rust -- DRY (Don't Repeat
 Yourself) analysis.**
 
 ## Provenance
@@ -25,9 +28,11 @@ measures how much of it is needlessly repeated.
 
 ## Status
 
-**Fork in progress.** The engine is upstream's and works; the surrounding repository is being
-brought under this family's house rules and gates. Command names below are still upstream's
-`cargo dupes` and become `cargo dry4rust` when the rename lands.
+The engine is upstream's and works. The surrounding repository is under this family's house
+rules and gates: `cargo stern4rust` reports no offences with all twenty-one rules applied,
+`cargo crap4rust` finds no function at or above 15, and every source file has a mirrored
+test file. Commands below are `cargo dry4rust`; the upstream `cargo dry4rust` spelling is gone.
+
 
 ## Install
 
@@ -41,7 +46,7 @@ MIT — see [LICENSE](LICENSE), which carries both copyright notices.
 
 ## How It Works
 
-`cargo-dupes` parses Rust source files into ASTs using [syn](https://github.com/dtolnay/syn), then normalizes each function, method, and closure into a canonical form where:
+`dry4rust` parses Rust source files into ASTs using [syn](https://github.com/dtolnay/syn), then normalizes each function, method, and closure into a canonical form where:
 
 - **Identifiers are replaced** with positional placeholders (so `foo(x)` and `bar(y)` are identical)
 - **Literal values are erased** but types preserved (`42` and `99` are both "integer literal")
@@ -50,28 +55,10 @@ MIT — see [LICENSE](LICENSE), which carries both copyright notices.
 
 This normalized AST is hashed into a fingerprint for exact duplicate detection, and compared tree-by-tree using the Dice coefficient for near-duplicate detection.
 
-## Installation
-
-```sh
-cargo install --path .
-```
-
-Or, to run directly:
-
-```sh
-cargo run -- report
-```
-
-When installed, it's available as a cargo subcommand:
-
-```sh
-cargo dupes report
-```
-
 ## Usage
 
 ```
-cargo dupes [OPTIONS] [COMMAND]
+cargo dry4rust [OPTIONS] [COMMAND]
 
 Commands:
   stats    Show duplication statistics only
@@ -95,7 +82,7 @@ Options:
 **Full report:**
 
 ```sh
-$ cargo dupes report
+$ cargo dry4rust report
 Duplication Statistics
 =====================
 Total code units analyzed: 4
@@ -118,7 +105,7 @@ Group 1 (fingerprint: 2a182da9e04e9428, 2 members):
 **Statistics only:**
 
 ```sh
-$ cargo dupes stats
+$ cargo dry4rust stats
 Duplication Statistics
 =====================
 Total code units analyzed: 4
@@ -134,7 +121,7 @@ Duplication: 50.0% exact, 0.0% near (of 36 total lines)
 **JSON output:**
 
 ```sh
-$ cargo dupes --format json stats
+$ cargo dry4rust --format json stats
 {
   "total_code_units": 4,
   "total_lines": 36,
@@ -152,7 +139,7 @@ $ cargo dupes --format json stats
 **CI check (fail if any exact duplicates exist):**
 
 ```sh
-$ cargo dupes check --max-exact 0
+$ cargo dry4rust check --max-exact 0
 # Exits with code 1 if exact duplicate groups > 0
 # Exits with code 0 if within thresholds
 ```
@@ -160,32 +147,32 @@ $ cargo dupes check --max-exact 0
 **CI check with percentage thresholds (fail if >5% of lines are exact duplicates):**
 
 ```sh
-$ cargo dupes check --max-exact-percent 5.0
+$ cargo dry4rust check --max-exact-percent 5.0
 # Exits with code 1 if exact duplicate lines exceed 5% of total lines
 ```
 
 **Exclude test code (inline `#[cfg(test)]` modules and `#[test]` functions):**
 
 ```sh
-$ cargo dupes --exclude-tests report
+$ cargo dry4rust --exclude-tests report
 ```
 
 **Exclude test directories by path:**
 
 ```sh
-$ cargo dupes --exclude tests --exclude benches report
+$ cargo dry4rust --exclude tests --exclude benches report
 ```
 
 **Only report duplicates that are at least 10 lines long:**
 
 ```sh
-$ cargo dupes --min-lines 10 report
+$ cargo dry4rust --min-lines 10 report
 ```
 
 **Lower the similarity threshold:**
 
 ```sh
-$ cargo dupes --threshold 0.7 report
+$ cargo dry4rust --threshold 0.7 report
 ```
 
 ## Configuration
@@ -193,10 +180,10 @@ $ cargo dupes --threshold 0.7 report
 Configuration can be provided in three ways (in order of precedence):
 
 1. **CLI flags** (highest priority)
-2. **`dupes.toml`** in the project root
-3. **`Cargo.toml`** under `[package.metadata.dupes]`
+2. **`dry4rust.toml`** in the project root
+3. **`Cargo.toml`** under `[package.metadata.dry4rust]`
 
-### `dupes.toml`
+### `dry4rust.toml`
 
 ```toml
 min_nodes = 15
@@ -213,7 +200,7 @@ max_near_percent = 10.0
 ### `Cargo.toml`
 
 ```toml
-[package.metadata.dupes]
+[package.metadata.dry4rust]
 min_nodes = 15
 similarity_threshold = 0.85
 exclude = ["tests"]
@@ -239,20 +226,20 @@ Some duplicates are intentional (e.g., test helpers, trait implementations). You
 
 ```sh
 # Add a fingerprint to the ignore list
-$ cargo dupes ignore 2a182da9e04e9428 --reason "Intentional test helpers"
+$ cargo dry4rust ignore 2a182da9e04e9428 --reason "Intentional test helpers"
 Added 2a182da9e04e9428 to ignore list.
 
 # List ignored fingerprints
-$ cargo dupes ignored
+$ cargo dry4rust ignored
 Ignored fingerprints:
   2a182da9e04e9428 (reason: Intentional test helpers)
 
 # Ignored groups are automatically filtered from reports and checks
-$ cargo dupes report
+$ cargo dry4rust report
 # The ignored group will not appear
 ```
 
-The ignore list is stored in `.dupes-ignore.toml` in the project root.
+The ignore list is stored in `.dry4rust-ignore.toml` in the project root.
 
 ## CI Integration
 
@@ -261,7 +248,7 @@ Use the `check` subcommand in CI pipelines:
 ```yaml
 # GitHub Actions example
 - name: Check for code duplication
-  run: cargo dupes check --max-exact 0 --max-exact-percent 5.0
+  run: cargo dry4rust check --max-exact 0 --max-exact-percent 5.0
 ```
 
 Exit codes:
@@ -284,6 +271,14 @@ The scanner automatically:
 - Respects exclude patterns
 - Handles parse errors gracefully (skips unparseable files with a warning)
 
+## Documentation
+
+| Where | What |
+|---|---|
+| [docs/ADRs/](docs/ADRs/README.md) | The load-bearing decisions and why they were forced |
+| [docs/dry4rust-dossier.md](docs/dry4rust-dossier.md) | Research on where this tool is going, and what already holds the ground |
+
+
 ## Development
 
 **Requirements:** Rust 1.85+ (edition 2024)
@@ -296,7 +291,3 @@ cargo fmt --check    # Format check
 ```
 
 Pre-commit hooks (via `cargo-husky`) run clippy and rustfmt automatically.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).

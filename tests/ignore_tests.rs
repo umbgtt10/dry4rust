@@ -118,7 +118,7 @@ fn ignore_file_path_is_correct() {
     let path = ignore_file_path(Path::new("/project"));
 
     // Assert
-    assert_eq!(path, PathBuf::from("/project/.dupes-ignore.toml"));
+    assert_eq!(path, PathBuf::from("/project/.dry4rust-ignore.toml"));
 }
 
 #[test]

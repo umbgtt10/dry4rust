@@ -11,7 +11,7 @@ use crate::config::AnalysisConfig;
 /// Trait for language-specific code analysis.
 ///
 /// Implementors provide file-extension detection and parsing logic,
-/// allowing `dupes-core` to work with any language.
+/// allowing `dry4rust` to work with any language.
 ///
 /// **Test code handling:** Analyzers should set [`CodeUnit::is_test`] to `true`
 /// for test functions, test modules, etc. The [`crate::analysis::analyze`] function will
