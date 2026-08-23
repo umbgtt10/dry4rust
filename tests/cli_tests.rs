@@ -4,11 +4,81 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::helpers::{cargo_dry4rust, fixture_path};
+use dry4rust::analysis::AnalysisResult;
+use dry4rust::analysis::analyze;
+use dry4rust::analysis::analyze_units;
+use dry4rust::cli::CheckThresholds;
+use dry4rust::cli::CliError;
+use dry4rust::cli::CliOverrides;
+use dry4rust::cli::OutputFormat;
+use dry4rust::cli::apply_overrides;
+use dry4rust::cli::cmd_check;
+use dry4rust::cli::cmd_cleanup;
+use dry4rust::cli::cmd_ignore;
+use dry4rust::cli::cmd_ignored;
+use dry4rust::cli::cmd_report;
+use dry4rust::cli::cmd_stats;
+use dry4rust::cli::create_reporter;
+use dry4rust::cli::run_analysis;
+use dry4rust::config::Config;
+use dry4rust::rust::rust_analyzer::RustAnalyzer;
+use dry4rust::scanner::ScanConfig;
+use dry4rust::scanner::scan_files;
 use predicate::str;
 use predicates::prelude::*;
 use serde_json::from_str;
 use std::fs;
 use tempfile::TempDir;
+
+fn analysed(fixture: &str) -> (Config, AnalysisResult) {
+    let root = fixture_path(fixture);
+    let config = Config::load(&root);
+    let files = scan_files(&ScanConfig::new(root));
+    let result =
+        analyze(&RustAnalyzer::new(), &files, &config).expect("the fixture analyses cleanly");
+    (config, result)
+}
+
+#[test]
+fn analyze_over_a_duplicated_fixture_reports_exact_groups() {
+    // Arrange & Act
+    let (_, result) = analysed("exact_dupes");
+
+    // Assert
+    assert!(result.stats.total_code_units > 0);
+    assert!(!result.exact_groups.is_empty());
+}
+
+#[test]
+fn analyze_units_over_no_units_reports_nothing_duplicated() {
+    // Arrange
+    let config = Config::default();
+
+    // Act
+    let result = analyze_units(&[], Vec::new(), &config).expect("empty input is not an error");
+
+    // Assert
+    assert_eq!(result.stats.total_code_units, 0);
+    assert!(result.exact_groups.is_empty());
+}
+
+#[test]
+fn apply_overrides_replaces_only_the_values_that_were_given() {
+    // Arrange
+    let mut config = Config::default();
+    let baseline_threshold = config.similarity_threshold;
+    let overrides = CliOverrides {
+        min_nodes: Some(42),
+        ..CliOverrides::default()
+    };
+
+    // Act
+    apply_overrides(&mut config, &overrides);
+
+    // Assert
+    assert_eq!(config.min_nodes, 42);
+    assert!((config.similarity_threshold - baseline_threshold).abs() < f64::EPSILON);
+}
 
 #[test]
 fn check_absolute_passes_percentage_fails() {
@@ -238,6 +308,141 @@ fn cleanup_removes_stale_entries() {
 }
 
 #[test]
+fn cmd_check_with_a_zero_threshold_fails_on_duplicates() {
+    // Arrange
+    let (config, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+    let thresholds = CheckThresholds {
+        max_exact: Some(0),
+        ..CheckThresholds::default()
+    };
+
+    // Act
+    let outcome = cmd_check(&config, &result, reporter.as_ref(), &mut out, &thresholds);
+
+    // Assert
+    assert!(outcome.is_err());
+}
+
+#[test]
+fn cmd_check_without_thresholds_passes_even_with_duplicates() {
+    // Arrange
+    let (config, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+
+    // Act
+    let outcome = cmd_check(
+        &config,
+        &result,
+        reporter.as_ref(),
+        &mut out,
+        &CheckThresholds::default(),
+    );
+
+    // Assert
+    assert!(outcome.is_ok());
+}
+
+#[test]
+fn cmd_cleanup_in_dry_run_leaves_the_ignore_file_alone() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    let (_, result) = analysed("exact_dupes");
+    let mut out = Vec::new();
+
+    // Act
+    cmd_cleanup(tmp.path(), &result, &mut out, true).expect("dry run succeeds");
+
+    // Assert
+    assert!(!tmp.path().join(".dupes-ignore.toml").exists());
+}
+
+#[test]
+fn cmd_ignore_then_cmd_ignored_lists_what_was_added() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    let mut added = Vec::new();
+    let mut listed = Vec::new();
+
+    // Act
+    cmd_ignore(
+        tmp.path(),
+        "deadbeef12345678",
+        Some(String::from("known duplicate")),
+        &mut added,
+    )
+    .expect("a valid fingerprint is accepted");
+    cmd_ignored(tmp.path(), &mut listed).expect("listing succeeds");
+
+    // Assert
+    let listed = String::from_utf8(listed).expect("utf-8");
+    assert!(listed.contains("deadbeef12345678"), "{listed}");
+}
+
+#[test]
+fn cmd_ignore_with_a_malformed_fingerprint_is_rejected() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    let mut out = Vec::new();
+
+    // Act
+    let outcome = cmd_ignore(tmp.path(), "not-a-fingerprint", None, &mut out);
+
+    // Assert
+    assert!(outcome.is_err());
+}
+
+#[test]
+fn cmd_report_writes_both_the_stats_and_the_groups() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+
+    // Act
+    cmd_report(&result, reporter.as_ref(), &mut out).expect("reporting succeeds");
+
+    // Assert
+    let text = String::from_utf8(out).expect("utf-8");
+    assert!(text.contains("Duplication Statistics"), "{text}");
+    assert!(text.contains("Exact Duplicates"), "{text}");
+}
+
+#[test]
+fn cmd_stats_writes_the_summary_and_nothing_else() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Text, None);
+    let mut out = Vec::new();
+
+    // Act
+    cmd_stats(&result, reporter.as_ref(), &mut out).expect("reporting succeeds");
+
+    // Assert
+    let text = String::from_utf8(out).expect("utf-8");
+    assert!(text.contains("Duplication Statistics"), "{text}");
+    assert!(!text.contains("Exact Duplicates"), "{text}");
+}
+
+#[test]
+fn create_reporter_in_json_mode_writes_parseable_json() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let reporter = create_reporter(OutputFormat::Json, None);
+    let mut out = Vec::new();
+
+    // Act
+    cmd_stats(&result, reporter.as_ref(), &mut out).expect("reporting succeeds");
+
+    // Assert
+    let parsed: serde_json::Value =
+        from_str(&String::from_utf8(out).expect("utf-8")).expect("valid json");
+    assert!(parsed.is_object());
+}
+
+#[test]
 fn default_command_is_report() {
     // Arrange & Act & Assert
     // Running without a subcommand should behave like 'report'
@@ -332,6 +537,13 @@ fn exclude_tests_text_report() {
         .success()
         .stdout(str::contains("Exact Duplicates"))
         .stdout(str::contains("Group 1"));
+}
+
+#[test]
+fn exit_code_distinguishes_a_failed_check_from_an_internal_error() {
+    // Arrange & Act & Assert
+    assert_eq!(CliError::CheckFailed.exit_code(), 1);
+    assert_eq!(CliError::NoRecognizedFiles.exit_code(), 2);
 }
 
 #[test]
@@ -656,6 +868,25 @@ fn report_no_dupes_fixture() {
         .assert()
         .success()
         .stdout(str::contains("No exact duplicates"));
+}
+
+#[test]
+fn run_analysis_over_a_fixture_returns_config_and_result_together() {
+    // Arrange
+    let root = fixture_path("exact_dupes");
+
+    // Act
+    let output = run_analysis(
+        &RustAnalyzer::new(),
+        &root,
+        OutputFormat::Text,
+        &CliOverrides::default(),
+    )
+    .expect("the fixture analyses cleanly");
+
+    // Assert
+    assert!(output.result.stats.total_code_units > 0);
+    assert_eq!(output.config.min_nodes, Config::default().min_nodes);
 }
 
 #[test]

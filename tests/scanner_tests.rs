@@ -95,3 +95,17 @@ fn scan_skips_target_directory() {
     // Assert
     assert!(!files.iter().any(|f| f.to_string_lossy().contains("target")));
 }
+
+#[test]
+fn with_extensions_replaces_the_default_and_keeps_the_root() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    let config = ScanConfig::new(tmp.path().to_path_buf());
+
+    // Act
+    let config = config.with_extensions(vec![String::from("toml"), String::from("md")]);
+
+    // Assert
+    assert_eq!(config.extensions, vec!["toml", "md"]);
+    assert_eq!(config.root, tmp.path());
+}

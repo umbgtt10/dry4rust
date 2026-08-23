@@ -3,9 +3,25 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::config::Config;
 use dry4rust::config::*;
 use std::fs;
 use tempfile::TempDir;
+
+#[test]
+fn analysis_config_carries_the_parsing_thresholds_across() {
+    // Arrange
+    let mut config = Config::default();
+    config.min_nodes = 7;
+    config.min_lines = 3;
+
+    // Act
+    let analysis = config.analysis_config();
+
+    // Assert
+    assert_eq!(analysis.min_nodes, 7);
+    assert_eq!(analysis.min_lines, 3);
+}
 
 #[test]
 fn config_with_exclude_tests() {

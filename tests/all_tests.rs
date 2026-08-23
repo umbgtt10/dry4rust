@@ -5,12 +5,15 @@
 
 pub mod analysis_tests;
 pub mod cli_tests;
+pub mod code_unit_tests;
 pub mod common;
 pub mod config_tests;
+pub mod extractor_tests;
 pub mod fingerprint_tests;
 pub mod grouper_tests;
 pub mod ignore_tests;
 pub mod node_tests;
+pub mod normalization_context_tests;
 pub mod output;
 pub mod rust;
 pub mod scanner_tests;

@@ -4,4 +4,5 @@
 // SPDX-License-Identifier: MIT
 
 pub mod json_tests;
+pub mod reporter_tests;
 pub mod text_tests;

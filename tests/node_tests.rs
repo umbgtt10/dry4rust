@@ -92,6 +92,27 @@ fn count_nodes_skips_none_sentinels() {
 }
 
 #[test]
+fn opt_with_a_value_returns_that_value() {
+    // Arrange
+    let inner = NormalizedNode::leaf(NodeKind::None);
+
+    // Act
+    let node = NormalizedNode::opt(Some(inner.clone()));
+
+    // Assert
+    assert_eq!(node, inner);
+}
+
+#[test]
+fn opt_without_a_value_returns_the_none_sentinel() {
+    // Arrange & Act
+    let node = NormalizedNode::opt(None);
+
+    // Assert
+    assert!(node.is_none());
+}
+
+#[test]
 fn reindex_handles_multiple_placeholder_kinds() {
     // Arrange & Act
     let node = NormalizedNode::with_children(

@@ -10,8 +10,11 @@ use dry4rust::node::count_nodes;
 use dry4rust::node::reindex_placeholders;
 use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::expr::normalize_expr;
+use dry4rust::rust::normalizer::normalize::normalize_closure_expr;
 use dry4rust::rust::normalizer::normalize::normalize_impl_block;
+use dry4rust::rust::normalizer::normalize::normalize_impl_item_fn;
 use dry4rust::rust::normalizer::normalize::normalize_item_fn;
+use dry4rust::rust::normalizer::normalize::normalize_signature;
 use syn::parse_str;
 
 fn normalize_code_expr(code: &str) -> NormalizedNode {
@@ -309,6 +312,20 @@ fn node_counting_works() {
 }
 
 #[test]
+fn normalize_closure_expr_ignores_the_parameter_names() {
+    // Arrange
+    let a: syn::ExprClosure = parse_str("|x: i32| x + 1").expect("parses");
+    let b: syn::ExprClosure = parse_str("|y: i32| y + 1").expect("parses");
+
+    // Act
+    let na = normalize_closure_expr(&a);
+    let nb = normalize_closure_expr(&b);
+
+    // Assert
+    assert_eq!(na, nb);
+}
+
+#[test]
 fn normalize_closures_ignores_the_parameter_names() {
     // Arrange & Act
     let code1 = "|x| x + 1";
@@ -321,6 +338,23 @@ fn normalize_closures_ignores_the_parameter_names() {
 }
 
 #[test]
+fn normalize_impl_item_fn_splits_a_method_into_signature_and_body() {
+    // Arrange
+    let item: syn::ItemImpl =
+        parse_str("impl Foo { fn bar(&self, x: i32) -> i32 { x + 1 } }").expect("parses");
+    let syn::ImplItem::Fn(method) = item.items.first().expect("one method").clone() else {
+        panic!("expected a method");
+    };
+
+    // Act
+    let (sig, body) = normalize_impl_item_fn(&method);
+
+    // Assert
+    assert_ne!(sig, body);
+    assert_ne!(sig.kind, NodeKind::None);
+}
+
+#[test]
 fn normalize_loop_produces_a_loop_node() {
     // Arrange & Act
     let code = "loop { break; }";
@@ -328,6 +362,20 @@ fn normalize_loop_produces_a_loop_node() {
 
     // Assert
     assert_eq!(n.kind, NodeKind::Loop);
+}
+
+#[test]
+fn normalize_signature_gives_alpha_equivalent_signatures_the_same_node() {
+    // Arrange
+    let a: syn::ItemFn = parse_str("fn f(x: i32) -> i32 { x }").expect("parses");
+    let b: syn::ItemFn = parse_str("fn g(y: i32) -> i32 { y }").expect("parses");
+
+    // Act
+    let na = normalize_signature(&a.sig, &mut NormalizationContext::new());
+    let nb = normalize_signature(&b.sig, &mut NormalizationContext::new());
+
+    // Assert
+    assert_eq!(na, nb);
 }
 
 #[test]
