@@ -3,4 +3,21 @@
 # The header rule is the one rule that cannot hold until it is told what the
 # header says. Naming the file here rather than on the command line means a
 # hand-run checks exactly what a gate would.
+#
+# Four lines here, where every other repository in this family carries three.
+# The extra one is not decoration and not drift: this repository is a fork of
+# cargo-dupes, MIT, and MIT requires the original copyright notice to travel
+# with the code. Upstream's line comes first because upstream came first.
+#
+#   // Copyright (c) 2026 Matjaz Domen Pecan
+#   // Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+#   // Licensed under the MIT License
+#   // SPDX-License-Identifier: MIT
+#
+# Upstream carries no per-file headers at all -- its notice lives only in
+# LICENSE, which is a perfectly ordinary way to satisfy MIT. So the obligation
+# is already discharged by LICENSE carrying both names; stamping every file is
+# this family's own rule, and it repeats the attribution rather than creating
+# it. Files written from scratch here carry the same four lines, because a
+# header rule that compares against one file needs one header.
 header-file = "docs/header.txt"

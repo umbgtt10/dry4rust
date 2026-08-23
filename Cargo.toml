@@ -1,27 +1,41 @@
-[package]
-name = "cargo-dry4rust"
-version = "0.1.0"
+[workspace]
+members = ["dupes-core", "dupes-treesitter", "dupes-python", "dupes-rust", "cargo-dupes", "code-dupes"]
+resolver = "3"
+
+[workspace.package]
+version = "0.2.0"
 edition = "2024"
-description = "Cargo subcommand for detecting duplicated code patterns in Rust (DRY analysis) — early placeholder release"
-authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]
 license = "MIT"
-readme = "README.md"
 repository = "https://github.com/umbgtt10/dry4rust"
-keywords = ["cargo", "subcommand", "duplication", "dry", "cli"]
-categories = ["development-tools::cargo-plugins", "command-line-utilities"]
+authors = [
+    "Matjaz Domen Pecan <matjaz.pecan@gmail.com>",
+    "Umberto Gotti <umberto.gotti@umbertogotti.dev>",
+]
+rust-version = "1.91"
 
-autotests = false
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+# Allow impractical pedantic lints
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+doc_markdown = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+cast_possible_truncation = "allow"
+too_long_first_doc_paragraph = "allow"
+cognitive_complexity = "warn"
+module_name_repetitions = "allow"
+implicit_hasher = "allow"
+option_if_let_else = "allow"
+useless_let_if_seq = "allow"
 
-[lib]
-name = "dry4rust"
-
-[[test]]
-name = "all_tests"
-path = "tests/all_tests.rs"
-
-[dependencies]
-anyhow = "1"
-
-[dev-dependencies]
-assert_cmd = "2"
-predicates = "3"
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+walkdir = "2"
+thiserror = "2"
+tempfile = "3"
+tree-sitter = "0.25"
+tree-sitter-python = "0.25"
