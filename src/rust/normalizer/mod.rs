@@ -103,6 +103,3 @@ pub fn normalize_impl_block(imp: &syn::ItemImpl) -> Vec<(String, NormalizedNode,
         })
         .collect()
 }
-
-#[cfg(test)]
-mod tests;

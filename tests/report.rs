@@ -3,9 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-mod common;
-
-use common::{cargo_dry4rust, fixture_path};
+use crate::common::{cargo_dry4rust, fixture_path};
 use predicates::prelude::*;
 
 #[test]

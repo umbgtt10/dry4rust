@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use super::*;
+use dry4rust::rust::normalizer::*;
 
 fn parse_expr(code: &str) -> syn::Expr {
     syn::parse_str::<syn::Expr>(code).unwrap()
