@@ -7,12 +7,16 @@ use dry4rust::grouper::*;
 
 #[test]
 fn empty_input_no_groups() {
+    // Arrange & Act
     let groups = group_exact_duplicates(&[]);
+
+    // Assert
     assert!(groups.is_empty());
 }
 
 #[test]
 fn percentage_helpers() {
+    // Arrange & Act
     let stats = DuplicationStats {
         total_code_units: 10,
         total_lines: 200,
@@ -27,12 +31,15 @@ fn percentage_helpers() {
         sub_near_groups: 0,
         sub_near_units: 0,
     };
+
+    // Assert
     assert!((stats.exact_duplicate_percent() - 25.0).abs() < f64::EPSILON);
     assert!((stats.near_duplicate_percent() - 15.0).abs() < f64::EPSILON);
 }
 
 #[test]
 fn percentage_helpers_zero_total() {
+    // Arrange & Act
     let stats = DuplicationStats {
         total_code_units: 0,
         total_lines: 0,
@@ -47,6 +54,8 @@ fn percentage_helpers_zero_total() {
         sub_near_groups: 0,
         sub_near_units: 0,
     };
+
+    // Assert
     assert!((stats.exact_duplicate_percent() - 0.0).abs() < f64::EPSILON);
     assert!((stats.near_duplicate_percent() - 0.0).abs() < f64::EPSILON);
 }

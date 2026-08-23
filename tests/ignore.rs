@@ -11,6 +11,7 @@ use tempfile::TempDir;
 
 #[test]
 fn cleanup_dry_run() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::create_dir_all(tmp.path().join("src")).unwrap();
     fs::copy(
@@ -43,11 +44,14 @@ fn cleanup_dry_run() {
 
     // Verify the file is unchanged
     let content = fs::read_to_string(&ignore_path).unwrap();
+
+    // Assert
     assert!(content.contains("deadbeefdeadbeef"));
 }
 
 #[test]
 fn cleanup_removes_stale_entries() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::create_dir_all(tmp.path().join("src")).unwrap();
     fs::copy(
@@ -108,11 +112,14 @@ fn cleanup_removes_stale_entries() {
 
     // Verify the stale entry is gone
     let final_content = fs::read_to_string(&ignore_path).unwrap();
+
+    // Assert
     assert!(!final_content.contains("deadbeefdeadbeef"));
 }
 
 #[test]
 fn ignore_near_duplicate_workflow() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     // Copy fixture files to temp dir
     fs::create_dir_all(tmp.path().join("src")).unwrap();
@@ -178,11 +185,14 @@ fn ignore_near_duplicate_workflow() {
         .stdout
         .clone();
     let text_after = String::from_utf8(output_after).unwrap();
+
+    // Assert
     assert!(text_after.contains("Near duplicates:  0 groups"));
 }
 
 #[test]
 fn ignore_workflow() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     // Copy fixture files to temp dir
     fs::create_dir_all(tmp.path().join("src")).unwrap();
@@ -246,5 +256,7 @@ fn ignore_workflow() {
     let text_after = String::from_utf8(output_after).unwrap();
 
     // The ignored group should be filtered out
+
+    // Assert
     assert!(text_after.contains("Exact duplicates: 0 groups"));
 }

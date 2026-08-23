@@ -18,6 +18,7 @@ fn write_and_parse(code: &str, min_nodes: usize) -> Vec<CodeUnit> {
 
 #[test]
 fn cfg_test_impl_blocks_tagged_as_test() {
+    // Arrange & Act & Assert
     let code = r#"
         struct Foo;
 
@@ -55,6 +56,7 @@ fn cfg_test_impl_blocks_tagged_as_test() {
 
 #[test]
 fn cfg_test_module_functions_tagged_as_test() {
+    // Arrange & Act
     let code = r#"
         fn production(x: i32) -> i32 {
             let y = x + 1;
@@ -74,6 +76,7 @@ fn cfg_test_module_functions_tagged_as_test() {
     let prod: Vec<_> = units.iter().filter(|u| u.name == "production").collect();
     let helper: Vec<_> = units.iter().filter(|u| u.name == "helper").collect();
 
+    // Assert
     assert_eq!(prod.len(), 1);
     assert!(!prod[0].is_test);
     assert_eq!(helper.len(), 1);
@@ -82,6 +85,7 @@ fn cfg_test_module_functions_tagged_as_test() {
 
 #[test]
 fn code_unit_has_line_numbers() {
+    // Arrange & Act
     let units = write_and_parse(
         r#"
 fn first() {
@@ -94,6 +98,8 @@ let y = 2;
         "#,
         1,
     );
+
+    // Assert
     assert!(units.len() >= 2);
     // First function starts at line 2
     assert!(units[0].line_start > 0);
@@ -102,6 +108,7 @@ let y = 2;
 
 #[test]
 fn code_unit_kind_display() {
+    // Arrange & Act & Assert
     assert_eq!(CodeUnitKind::Function.to_string(), "function");
     assert_eq!(CodeUnitKind::Method.to_string(), "method");
     assert_eq!(CodeUnitKind::Closure.to_string(), "closure");
@@ -109,6 +116,7 @@ fn code_unit_kind_display() {
 
 #[test]
 fn different_functions_different_fingerprint() {
+    // Arrange & Act
     let units = write_and_parse(
         r#"
         fn add(x: i32) -> i32 {
@@ -124,12 +132,16 @@ fn different_functions_different_fingerprint() {
         .iter()
         .filter(|u| u.kind == CodeUnitKind::Function)
         .collect();
+
+    // Assert
+
     assert_eq!(fns.len(), 2);
     assert_ne!(fns[0].fingerprint, fns[1].fingerprint);
 }
 
 #[test]
 fn duplicate_functions_same_fingerprint() {
+    // Arrange & Act
     let units = write_and_parse(
         r#"
         fn foo(x: i32) -> i32 {
@@ -147,12 +159,16 @@ fn duplicate_functions_same_fingerprint() {
         .iter()
         .filter(|u| u.kind == CodeUnitKind::Function)
         .collect();
+
+    // Assert
+
     assert_eq!(fns.len(), 2);
     assert_eq!(fns[0].fingerprint, fns[1].fingerprint);
 }
 
 #[test]
 fn extracts_closures() {
+    // Arrange & Act
     let units = write_and_parse(
         r#"
         fn foo() {
@@ -169,11 +185,15 @@ fn extracts_closures() {
         .iter()
         .filter(|u| u.kind == CodeUnitKind::Closure)
         .collect();
+
+    // Assert
+
     assert!(!closures.is_empty());
 }
 
 #[test]
 fn extracts_methods_from_impl() {
+    // Arrange & Act
     let units = write_and_parse(
         r#"
         struct Foo;
@@ -192,6 +212,9 @@ fn extracts_methods_from_impl() {
         .iter()
         .filter(|u| u.kind == CodeUnitKind::Method)
         .collect();
+
+    // Assert
+
     assert_eq!(methods.len(), 2);
     assert!(methods[0].name.contains("Foo::bar"));
     assert!(methods[1].name.contains("Foo::baz"));
@@ -199,6 +222,7 @@ fn extracts_methods_from_impl() {
 
 #[test]
 fn extracts_top_level_functions() {
+    // Arrange & Act
     let units = write_and_parse(
         r#"
         fn foo(x: i32) -> i32 {
@@ -215,6 +239,9 @@ fn extracts_top_level_functions() {
         .iter()
         .filter(|u| u.kind == CodeUnitKind::Function)
         .collect();
+
+    // Assert
+
     assert_eq!(fns.len(), 2);
     assert_eq!(fns[0].name, "foo");
     assert_eq!(fns[1].name, "bar");
@@ -222,6 +249,7 @@ fn extracts_top_level_functions() {
 
 #[test]
 fn extracts_trait_impl_methods() {
+    // Arrange & Act
     let units = write_and_parse(
         r#"
         struct Foo;
@@ -241,6 +269,8 @@ fn extracts_trait_impl_methods() {
         .iter()
         .filter(|u| u.kind == CodeUnitKind::TraitImplBlock)
         .collect();
+
+    // Assert
     assert_eq!(trait_impls.len(), 1);
     assert!(trait_impls[0].name.contains("Foo"));
     assert!(trait_impls[0].name.contains("MyTrait"));
@@ -249,15 +279,20 @@ fn extracts_trait_impl_methods() {
 
 #[test]
 fn handles_parse_errors_gracefully() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     let file = tmp.path().join("broken.rs");
     fs::write(&file, "fn broken( { }").unwrap();
     let result = parse_file(&file, 1, 0);
+
+    // Assert
+
     assert!(result.is_err());
 }
 
 #[test]
 fn min_line_count_filters_short_functions() {
+    // Arrange & Act
     let code = r#"
 fn short(x: i32) -> i32 {
 x + 1
@@ -277,6 +312,9 @@ a + b + c + d
 
     // With min_line_count=0, both functions should appear
     let units_all = parse_file(&file, 1, 0).unwrap();
+
+    // Assert
+
     assert!(units_all.len() >= 2);
 
     // With min_line_count=5, only the longer function should pass
@@ -290,6 +328,7 @@ a + b + c + d
 
 #[test]
 fn non_test_code_not_tagged() {
+    // Arrange & Act
     let code = r#"
         fn production(x: i32) -> i32 {
             let y = x + 1;
@@ -305,33 +344,45 @@ fn non_test_code_not_tagged() {
 
     let units = write_and_parse(code, 1);
     let non_test: Vec<_> = units.iter().filter(|u| !u.is_test).collect();
+
+    // Assert
+
     assert!(!non_test.is_empty());
     assert!(non_test.iter().all(|u| u.name != "my_test"));
 }
 
 #[test]
 fn parse_files_collects_warnings() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     let good = tmp.path().join("good.rs");
     let bad = tmp.path().join("bad.rs");
     fs::write(&good, "fn good() { let x = 1; }").unwrap();
     fs::write(&bad, "fn bad( {").unwrap();
     let (units, warnings) = parse_files(&[good, bad], 1, 0);
+
+    // Assert
+
     assert!(!units.is_empty());
     assert_eq!(warnings.len(), 1);
 }
 
 #[test]
 fn parse_source_works() {
+    // Arrange & Act
     let path = Path::new("test.rs");
     let source = "fn foo(x: i32) -> i32 { x + 1 }";
     let units = parse_source(path, source, 1, 0).unwrap();
+
+    // Assert
+
     assert_eq!(units.len(), 1);
     assert_eq!(units[0].name, "foo");
 }
 
 #[test]
 fn respects_min_node_count() {
+    // Arrange & Act
     let units_low = write_and_parse(
         r#"
         fn tiny() -> i32 { 1 }
@@ -354,11 +405,15 @@ fn respects_min_node_count() {
         "#,
         20,
     );
+
+    // Assert
+
     assert!(units_low.len() >= units_high.len());
 }
 
 #[test]
 fn test_functions_tagged_as_test() {
+    // Arrange & Act
     let code = r#"
         fn production(x: i32) -> i32 {
             let y = x + 1;
@@ -376,6 +431,8 @@ fn test_functions_tagged_as_test() {
     let prod: Vec<_> = units.iter().filter(|u| u.name == "production").collect();
     let test: Vec<_> = units.iter().filter(|u| u.name == "my_test").collect();
 
+    // Assert
+
     assert_eq!(prod.len(), 1);
     assert!(!prod[0].is_test);
     assert_eq!(test.len(), 1);
@@ -384,6 +441,7 @@ fn test_functions_tagged_as_test() {
 
 #[test]
 fn test_has_cfg_test_attr() {
+    // Arrange & Act
     let file: syn::File = parse_str(
         r#"
         #[cfg(test)]
@@ -394,6 +452,8 @@ fn test_has_cfg_test_attr() {
     .unwrap();
 
     let items = &file.items;
+
+    // Assert
     if let syn::Item::Mod(m) = &items[0] {
         assert!(has_cfg_test_attr(&m.attrs));
     } else {
@@ -408,6 +468,7 @@ fn test_has_cfg_test_attr() {
 
 #[test]
 fn test_has_test_attr() {
+    // Arrange & Act
     let file: syn::File = parse_str(
         r#"
         #[test]
@@ -418,6 +479,8 @@ fn test_has_test_attr() {
     .unwrap();
 
     let items = &file.items;
+
+    // Assert
     if let syn::Item::Fn(f) = &items[0] {
         assert!(has_test_attr(&f.attrs));
     } else {

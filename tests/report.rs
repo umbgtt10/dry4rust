@@ -10,6 +10,7 @@ use serde_json::from_str;
 
 #[test]
 fn default_command_is_report() {
+    // Arrange & Act & Assert
     // Running without a subcommand should behave like 'report'
     cargo_dry4rust()
         .args(["--path", fixture_path("exact_dupes").to_str().unwrap()])
@@ -21,6 +22,7 @@ fn default_command_is_report() {
 
 #[test]
 fn json_format_report() {
+    // Arrange & Act
     let output = cargo_dry4rust()
         .args([
             "--path",
@@ -37,6 +39,8 @@ fn json_format_report() {
     let text = String::from_utf8(output).unwrap();
     // JSON report outputs stats object then groups array, separated by newlines
     let parts: Vec<&str> = text.splitn(2, "\n\n").collect();
+
+    // Assert
     assert!(parts.len() >= 2, "expected stats + groups sections");
     let stats: serde_json::Value = from_str(parts[0]).unwrap();
     assert!(stats["total_code_units"].as_u64().unwrap() > 0);
@@ -49,6 +53,7 @@ fn json_format_report() {
 
 #[test]
 fn json_format_stats() {
+    // Arrange & Act
     let output = cargo_dry4rust()
         .args([
             "--path",
@@ -64,11 +69,14 @@ fn json_format_stats() {
         .clone();
     let text = String::from_utf8(output).unwrap();
     let parsed: serde_json::Value = from_str(&text).unwrap();
+
+    // Assert
     assert!(parsed["total_code_units"].as_u64().unwrap() > 0);
 }
 
 #[test]
 fn json_stats_includes_line_counts() {
+    // Arrange & Act
     let output = cargo_dry4rust()
         .args([
             "--path",
@@ -84,12 +92,15 @@ fn json_stats_includes_line_counts() {
         .clone();
     let text = String::from_utf8(output).unwrap();
     let parsed: serde_json::Value = from_str(&text).unwrap();
+
+    // Assert
     assert!(parsed["exact_duplicate_lines"].is_u64());
     assert!(parsed["near_duplicate_lines"].is_u64());
 }
 
 #[test]
 fn near_dupes_detected() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -107,6 +118,7 @@ fn near_dupes_detected() {
 
 #[test]
 fn report_exact_dupes_fixture() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -121,6 +133,7 @@ fn report_exact_dupes_fixture() {
 
 #[test]
 fn report_mixed_fixture() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args(["--path", fixture_path("mixed").to_str().unwrap(), "report"])
         .assert()
@@ -131,6 +144,7 @@ fn report_mixed_fixture() {
 
 #[test]
 fn report_no_dupes_fixture() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -144,6 +158,7 @@ fn report_no_dupes_fixture() {
 
 #[test]
 fn stats_shows_duplicate_lines() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -158,6 +173,7 @@ fn stats_shows_duplicate_lines() {
 
 #[test]
 fn stats_shows_summary() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",

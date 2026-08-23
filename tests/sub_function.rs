@@ -10,6 +10,7 @@ use serde_json::from_str;
 
 #[test]
 fn sub_function_detects_duplicate_branches() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -27,6 +28,7 @@ fn sub_function_detects_duplicate_branches() {
 
 #[test]
 fn sub_function_json_stats() {
+    // Arrange & Act
     let output = cargo_dry4rust()
         .args([
             "--path",
@@ -43,12 +45,15 @@ fn sub_function_json_stats() {
         .clone();
     let text = String::from_utf8(output).unwrap();
     let parsed: serde_json::Value = from_str(&text).unwrap();
+
+    // Assert
     assert_eq!(parsed["sub_exact_groups"].as_u64().unwrap(), 3);
     assert_eq!(parsed["sub_exact_units"].as_u64().unwrap(), 6);
 }
 
 #[test]
 fn sub_function_min_sub_nodes_filters() {
+    // Arrange & Act & Assert
     // With very high min-sub-nodes, no sub-function units should be found,
     // so the sub-function stats line is not printed at all
     cargo_dry4rust()
@@ -67,6 +72,7 @@ fn sub_function_min_sub_nodes_filters() {
 
 #[test]
 fn sub_function_shows_parent_names() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -84,6 +90,7 @@ fn sub_function_shows_parent_names() {
 
 #[test]
 fn sub_function_stats_shown() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -98,6 +105,7 @@ fn sub_function_stats_shown() {
 
 #[test]
 fn without_sub_function_flag_no_sub_sections() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -112,6 +120,7 @@ fn without_sub_function_flag_no_sub_sections() {
 
 #[test]
 fn without_sub_function_json_no_sub_fields() {
+    // Arrange & Act
     let output = cargo_dry4rust()
         .args([
             "--path",
@@ -128,6 +137,8 @@ fn without_sub_function_json_no_sub_fields() {
     let text = String::from_utf8(output).unwrap();
     let parsed: serde_json::Value = from_str(&text).unwrap();
     // Without --sub-function, sub fields should be absent (skip_serializing_if = "is_zero")
+
+    // Assert
     assert!(parsed.get("sub_exact_groups").is_none());
     assert!(parsed.get("sub_near_groups").is_none());
 }

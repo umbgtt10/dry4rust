@@ -17,15 +17,19 @@ fn test_fingerprint() -> Fingerprint {
 
 #[test]
 fn add_ignore_deduplicates() {
+    // Arrange & Act
     let fp = test_fingerprint();
     let mut ignore = IgnoreFile::default();
     add_ignore(&mut ignore, &fp, None, vec![]);
     add_ignore(&mut ignore, &fp, None, vec![]);
+
+    // Assert
     assert_eq!(ignore.ignore.len(), 1);
 }
 
 #[test]
 fn filter_ignored_keeps_near_duplicates_without_matching_entry() {
+    // Arrange & Act
     let fp = test_fingerprint();
     let other_fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
     let mut ignore = IgnoreFile::default();
@@ -38,11 +42,14 @@ fn filter_ignored_keeps_near_duplicates_without_matching_entry() {
     }];
 
     let filtered = filter_ignored(groups, &ignore);
+
+    // Assert
     assert_eq!(filtered.len(), 1);
 }
 
 #[test]
 fn filter_ignored_removes_matching_groups() {
+    // Arrange & Act
     let fp = test_fingerprint();
     let mut ignore = IgnoreFile::default();
     add_ignore(&mut ignore, &fp, None, vec![]);
@@ -61,11 +68,14 @@ fn filter_ignored_removes_matching_groups() {
     ];
 
     let filtered = filter_ignored(groups, &ignore);
+
+    // Assert
     assert_eq!(filtered.len(), 1);
 }
 
 #[test]
 fn filter_ignored_removes_near_duplicates_with_matching_fingerprint() {
+    // Arrange & Act
     let fp = test_fingerprint();
     let mut ignore = IgnoreFile::default();
     add_ignore(&mut ignore, &fp, None, vec![]);
@@ -77,11 +87,14 @@ fn filter_ignored_removes_near_duplicates_with_matching_fingerprint() {
     }];
 
     let filtered = filter_ignored(groups, &ignore);
+
+    // Assert
     assert!(filtered.is_empty());
 }
 
 #[test]
 fn find_stale_entries_identifies_stale_vs_live() {
+    // Arrange & Act
     let live_fp = test_fingerprint();
     let stale_fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
 
@@ -93,20 +106,28 @@ fn find_stale_entries_identifies_stale_vs_live() {
     live_set.insert(live_fp);
 
     let stale = find_stale_entries(&ignore, &live_set);
+
+    // Assert
     assert_eq!(stale.len(), 1);
     assert_eq!(stale[0].reason, Some("stale".to_string()));
 }
 
 #[test]
 fn ignore_file_path_is_correct() {
+    // Arrange & Act
     let path = ignore_file_path(Path::new("/project"));
+
+    // Assert
     assert_eq!(path, PathBuf::from("/project/.dupes-ignore.toml"));
 }
 
 #[test]
 fn is_ignored_works() {
+    // Arrange & Act
     let fp = test_fingerprint();
     let mut ignore = IgnoreFile::default();
+
+    // Assert
     assert!(!is_ignored(&ignore, &fp));
     add_ignore(&mut ignore, &fp, None, vec![]);
     assert!(is_ignored(&ignore, &fp));
@@ -114,28 +135,38 @@ fn is_ignored_works() {
 
 #[test]
 fn load_nonexistent_returns_default() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     let ignore = load_ignore_file(tmp.path());
+
+    // Assert
     assert!(ignore.ignore.is_empty());
 }
 
 #[test]
 fn remove_ignore_works() {
+    // Arrange & Act
     let fp = test_fingerprint();
     let mut ignore = IgnoreFile::default();
     add_ignore(&mut ignore, &fp, None, vec![]);
+
+    // Assert
     assert!(remove_ignore(&mut ignore, &fp.to_hex()));
     assert!(ignore.ignore.is_empty());
 }
 
 #[test]
 fn remove_nonexistent_returns_false() {
+    // Arrange & Act
     let mut ignore = IgnoreFile::default();
+
+    // Assert
     assert!(!remove_ignore(&mut ignore, "nonexistent"));
 }
 
 #[test]
 fn remove_stale_entries_removes_only_stale() {
+    // Arrange & Act
     let live_fp = test_fingerprint();
     let stale_fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
 
@@ -147,6 +178,8 @@ fn remove_stale_entries_removes_only_stale() {
     live_set.insert(live_fp);
 
     let removed = remove_stale_entries(&mut ignore, &live_set);
+
+    // Assert
     assert_eq!(removed.len(), 1);
     assert_eq!(removed[0].reason, Some("stale".to_string()));
     assert_eq!(ignore.ignore.len(), 1);
@@ -155,6 +188,7 @@ fn remove_stale_entries_removes_only_stale() {
 
 #[test]
 fn roundtrip_save_and_load() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     let fp = test_fingerprint();
     let mut ignore = IgnoreFile::default();
@@ -169,5 +203,7 @@ fn roundtrip_save_and_load() {
     assert_eq!(loaded.ignore.len(), 1);
     assert_eq!(loaded.ignore[0].fingerprint, fp.to_hex());
     assert_eq!(loaded.ignore[0].reason, Some("test reason".to_string()));
+
+    // Assert
     assert_eq!(loaded.ignore[0].members, vec!["foo", "bar"]);
 }

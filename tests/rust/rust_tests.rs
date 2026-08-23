@@ -10,6 +10,7 @@ use std::path::PathBuf;
 
 #[test]
 fn rust_analyzer_through_trait() {
+    // Arrange & Act
     let analyzer = RustAnalyzer::new();
     let config = AnalysisConfig {
         min_nodes: 1,
@@ -31,6 +32,8 @@ fn rust_analyzer_through_trait() {
     let units = analyzer.parse_file(&path, source, &config).unwrap();
 
     // Both units should be present (filtering is done by analyze())
+
+    // Assert
     assert!(units.len() >= 2);
 
     // Production code should not be tagged as test

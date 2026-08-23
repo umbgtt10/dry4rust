@@ -62,21 +62,28 @@ fn parse_fn(code: &str) -> syn::ItemFn {
 
 #[test]
 fn closure_similarity() {
+    // Arrange & Act
     let score = expr_similarity("|x| x + 1", "|y| y + 1");
+
+    // Assert
     assert!((score - 1.0).abs() < f64::EPSILON);
 }
 
 #[test]
 fn completely_different_trees_score_low() {
+    // Arrange & Act
     let score = fn_body_similarity(
         "fn foo(x: i32) -> i32 { x + 1 }",
         "fn bar(x: bool) { if x { loop { break; } } }",
     );
+
+    // Assert
     assert!(score < 0.3);
 }
 
 #[test]
 fn different_functions_different_fingerprint() {
+    // Arrange & Act
     let code1 = "fn foo(x: i32) -> i32 { x + 1 }";
     let code2 = "fn foo(x: i32) -> i32 { x * 2 }";
     let f1 = parse_fn(code1);
@@ -85,17 +92,23 @@ fn different_functions_different_fingerprint() {
     let (sig2, body2) = normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
+
+    // Assert
     assert_ne!(fp1, fp2);
 }
 
 #[test]
 fn different_macro_names_score_zero() {
+    // Arrange & Act
     let score = expr_similarity("println!(\"hello\")", "eprintln!(\"hello\")");
+
+    // Assert
     assert!(score < f64::EPSILON);
 }
 
 #[test]
 fn duplicate_group_has_fingerprint() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn a(x: i32) -> i32 { x + 1 }
@@ -103,18 +116,24 @@ fn duplicate_group_has_fingerprint() {
         "#,
     );
     let groups = grouper::group_exact_duplicates(&units);
+
+    // Assert
     assert_eq!(groups.len(), 1);
     assert_ne!(groups[0].fingerprint.value(), 0);
 }
 
 #[test]
 fn empty_trees_score_one() {
+    // Arrange & Act
     let score = fn_body_similarity("fn foo() {}", "fn bar() {}");
+
+    // Assert
     assert!((score - 1.0).abs() < f64::EPSILON);
 }
 
 #[test]
 fn exact_duplicates_grouped() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn foo(x: i32) -> i32 {
@@ -131,6 +150,8 @@ fn exact_duplicates_grouped() {
         "#,
     );
     let groups = grouper::group_exact_duplicates(&units);
+
+    // Assert
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0].members.len(), 2);
     assert!((groups[0].similarity - 1.0).abs() < f64::EPSILON);
@@ -138,6 +159,7 @@ fn exact_duplicates_grouped() {
 
 #[test]
 fn exact_groups_sorted_by_size() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn a1(x: i32) -> i32 { x + 1 }
@@ -148,12 +170,15 @@ fn exact_groups_sorted_by_size() {
         "#,
     );
     let groups = grouper::group_exact_duplicates(&units);
+
+    // Assert
     assert_eq!(groups.len(), 2);
     assert!(groups[0].members.len() >= groups[1].members.len());
 }
 
 #[test]
 fn extracts_bare_loop_bodies() {
+    // Arrange & Act
     let body = parse_and_extract_body(
         "fn foo(x: i32) -> i32 { let mut i = 0; loop { i += 1; if i > x { break i; } } }",
     );
@@ -162,12 +187,15 @@ fn extracts_bare_loop_bodies() {
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
         .collect();
+
+    // Assert
     assert_eq!(loops.len(), 1);
     assert_eq!(loops[0].description, "loop body");
 }
 
 #[test]
 fn extracts_closure_bodies() {
+    // Arrange & Act
     let body = parse_and_extract_body(
         r#"fn foo(data: Vec<i32>) -> Vec<i32> {
             data.iter().map(|x| {
@@ -182,11 +210,14 @@ fn extracts_closure_bodies() {
         .iter()
         .filter(|s| s.kind == CodeUnitKind::Block && s.description == "closure body")
         .collect();
+
+    // Assert
     assert_eq!(closures.len(), 1);
 }
 
 #[test]
 fn extracts_if_branches() {
+    // Arrange & Act
     let body = parse_and_extract_body(
         "fn foo(x: i32) -> i32 { if x > 0 { let y = x + 1; y * 2 } else { let z = x - 1; z * 3 } }",
     );
@@ -195,11 +226,14 @@ fn extracts_if_branches() {
         .iter()
         .filter(|s| s.kind == CodeUnitKind::IfBranch)
         .collect();
+
+    // Assert
     assert_eq!(if_branches.len(), 2);
 }
 
 #[test]
 fn extracts_loop_bodies() {
+    // Arrange & Act
     let body =
         parse_and_extract_body("fn foo(x: i32) { for i in 0..10 { let y = i + x; let _ = y; } }");
     let subs = extractor::extract_sub_units(&body, 1);
@@ -207,11 +241,14 @@ fn extracts_loop_bodies() {
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
         .collect();
+
+    // Assert
     assert_eq!(loops.len(), 1);
 }
 
 #[test]
 fn extracts_match_arms() {
+    // Arrange & Act
     let body = parse_and_extract_body(
         r#"fn foo(x: i32) -> i32 {
             match x {
@@ -226,11 +263,14 @@ fn extracts_match_arms() {
         .iter()
         .filter(|s| s.kind == CodeUnitKind::MatchArm)
         .collect();
+
+    // Assert
     assert_eq!(match_arms.len(), 3);
 }
 
 #[test]
 fn extracts_while_loop_bodies() {
+    // Arrange & Act
     let body = parse_and_extract_body(
         "fn foo(x: i32) { let mut i = 0; while i < x { let y = i + 1; i = y; } }",
     );
@@ -239,18 +279,23 @@ fn extracts_while_loop_bodies() {
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
         .collect();
+
+    // Assert
     assert_eq!(loops.len(), 1);
     assert_eq!(loops[0].description, "while body");
 }
 
 #[test]
 fn fingerprint_discriminates_operators() {
+    // Arrange & Act
     let code1 = "fn f(x: i32) -> i32 { x + 1 }";
     let code2 = "fn f(x: i32) -> i32 { x - 1 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
     let (s1, b1) = normalize_item_fn(&f1);
     let (s2, b2) = normalize_item_fn(&f2);
+
+    // Assert
     assert_ne!(
         Fingerprint::from_sig_and_body(&s1, &b1),
         Fingerprint::from_sig_and_body(&s2, &b2)
@@ -259,21 +304,27 @@ fn fingerprint_discriminates_operators() {
 
 #[test]
 fn fingerprint_from_node() {
+    // Arrange & Act
     let expr = parse_expr("x + 1");
     let mut ctx = NormalizationContext::new();
     let node = normalize_expr(&expr, &mut ctx);
     let fp = Fingerprint::from_node(&node);
+
+    // Assert
     assert_ne!(fp.value(), 0);
 }
 
 #[test]
 fn fingerprint_ignores_variable_names() {
+    // Arrange & Act
     let code1 = "fn compute(value: i32) -> i32 { value * value + value }";
     let code2 = "fn calculate(num: i32) -> i32 { num * num + num }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
     let (s1, b1) = normalize_item_fn(&f1);
     let (s2, b2) = normalize_item_fn(&f2);
+
+    // Assert
     assert_eq!(
         Fingerprint::from_sig_and_body(&s1, &b1),
         Fingerprint::from_sig_and_body(&s2, &b2)
@@ -282,17 +333,21 @@ fn fingerprint_ignores_variable_names() {
 
 #[test]
 fn fingerprint_stability() {
+    // Arrange & Act
     let code = "fn foo(x: i32) -> i32 { x + 1 }";
     let f = parse_fn(code);
     let (sig1, body1) = normalize_item_fn(&f);
     let (sig2, body2) = normalize_item_fn(&f);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
+
+    // Assert
     assert_eq!(fp1, fp2);
 }
 
 #[test]
 fn identical_branches_from_different_functions_match() {
+    // Arrange & Act
     let body1 = parse_and_extract_body(
         "fn foo(unused: i32, x: i32) -> i32 { if x > 0 { let y = x + 1; y * 2 } else { x } }",
     );
@@ -312,11 +367,13 @@ fn identical_branches_from_different_functions_match() {
         .find(|s| s.description == "if-then branch")
         .unwrap();
 
+    // Assert
     assert_eq!(then1.node, then2.node);
 }
 
 #[test]
 fn identical_functions_same_fingerprint() {
+    // Arrange & Act
     let code1 = "fn foo(x: i32) -> i32 { x + 1 }";
     let code2 = "fn bar(a: i32) -> i32 { a + 1 }";
     let f1 = parse_fn(code1);
@@ -325,29 +382,38 @@ fn identical_functions_same_fingerprint() {
     let (sig2, body2) = normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
+
+    // Assert
     assert_eq!(fp1, fp2);
 }
 
 #[test]
 fn identical_trees_score_one() {
+    // Arrange & Act
     let score = fn_body_similarity(
         "fn foo(x: i32) -> i32 { x + 1 }",
         "fn bar(a: i32) -> i32 { a + 1 }",
     );
+
+    // Assert
     assert!((score - 1.0).abs() < f64::EPSILON);
 }
 
 #[test]
 fn if_vs_match_low_similarity() {
+    // Arrange & Act
     let score = expr_similarity(
         "if x > 0 { x } else { -x }",
         "match x > 0 { true => x, false => -x }",
     );
+
+    // Assert
     assert!(score < 0.5);
 }
 
 #[test]
 fn let_else_diverge_blocks_differ() {
+    // Arrange & Act
     // Two functions with same init but different diverge blocks should NOT be exact duplicates
     let f1 = parse_fn("fn foo(x: Option<i32>) -> i32 { let Some(v) = x else { return 0; }; v }");
     let f2 = parse_fn("fn bar(x: Option<i32>) -> i32 { let Some(v) = x else { panic!(); }; v }");
@@ -355,6 +421,8 @@ fn let_else_diverge_blocks_differ() {
     let (sig2, body2) = normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
+
+    // Assert
     assert_ne!(
         fp1, fp2,
         "different let-else diverge blocks should produce different fingerprints"
@@ -363,6 +431,7 @@ fn let_else_diverge_blocks_differ() {
 
 #[test]
 fn let_else_same_diverge_blocks_match() {
+    // Arrange & Act
     // Two functions with identical structure including diverge block should match
     let f1 = parse_fn("fn foo(x: Option<i32>) -> i32 { let Some(v) = x else { return 0; }; v }");
     let f2 = parse_fn("fn bar(y: Option<i32>) -> i32 { let Some(w) = y else { return 0; }; w }");
@@ -370,6 +439,8 @@ fn let_else_same_diverge_blocks_match() {
     let (sig2, body2) = normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
+
+    // Assert
     assert_eq!(
         fp1, fp2,
         "identical let-else structures with renamed vars should match"
@@ -378,12 +449,16 @@ fn let_else_same_diverge_blocks_match() {
 
 #[test]
 fn method_call_similarity() {
+    // Arrange & Act
     let score = expr_similarity("x.foo(y, z)", "a.foo(b, c)");
+
+    // Assert
     assert!((score - 1.0).abs() < f64::EPSILON);
 }
 
 #[test]
 fn multiple_exact_groups() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn a1(x: i32) -> i32 { x + 1 }
@@ -393,11 +468,14 @@ fn multiple_exact_groups() {
         "#,
     );
     let groups = grouper::group_exact_duplicates(&units);
+
+    // Assert
     assert_eq!(groups.len(), 2);
 }
 
 #[test]
 fn near_duplicate_complex_fn() {
+    // Arrange & Act
     let score = fn_body_similarity(
         r#"
         fn process(data: Vec<i32>) -> i32 {
@@ -422,11 +500,14 @@ fn near_duplicate_complex_fn() {
         }
         "#,
     );
+
+    // Assert
     assert!((score - 1.0).abs() < f64::EPSILON);
 }
 
 #[test]
 fn near_duplicates_exclude_exact() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn a(x: i32) -> i32 { x + 1 }
@@ -436,11 +517,14 @@ fn near_duplicates_exclude_exact() {
     let exact = grouper::group_exact_duplicates(&units);
     let exact_fps: Vec<_> = exact.iter().map(|g| g.fingerprint).collect();
     let near = grouper::find_near_duplicates(&units, 0.7, &exact_fps);
+
+    // Assert
     assert!(near.is_empty());
 }
 
 #[test]
 fn near_duplicates_found() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn process(data: i32) -> i32 {
@@ -460,11 +544,14 @@ fn near_duplicates_found() {
     let exact = grouper::group_exact_duplicates(&units);
     let exact_fps: Vec<_> = exact.iter().map(|g| g.fingerprint).collect();
     let near = grouper::find_near_duplicates(&units, 0.7, &exact_fps);
+
+    // Assert
     assert!(exact.len() + near.len() >= 1);
 }
 
 #[test]
 fn nested_structures_extracted_recursively() {
+    // Arrange & Act
     let body = parse_and_extract_body(
         r#"fn foo(x: i32) -> i32 {
             if x > 0 {
@@ -487,12 +574,15 @@ fn nested_structures_extracted_recursively() {
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
         .collect();
+
+    // Assert
     assert_eq!(if_branches.len(), 2);
     assert_eq!(loops.len(), 1);
 }
 
 #[test]
 fn no_duplicates_no_groups() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn add(x: i32) -> i32 { x + 1 }
@@ -501,34 +591,46 @@ fn no_duplicates_no_groups() {
         "#,
     );
     let groups = grouper::group_exact_duplicates(&units);
+
+    // Assert
     assert!(groups.is_empty());
 }
 
 #[test]
 fn respects_min_node_count() {
+    // Arrange & Act
     let body =
         parse_and_extract_body("fn foo(x: i32) -> i32 { if x > 0 { x + 1 } else { x - 1 } }");
     let subs_low = extractor::extract_sub_units(&body, 1);
     let subs_high = extractor::extract_sub_units(&body, 100);
+
+    // Assert
     assert!(!subs_low.is_empty());
     assert!(subs_high.is_empty());
 }
 
 #[test]
 fn same_macro_different_arg_count_partial_similarity() {
+    // Arrange & Act
     let score = expr_similarity("println!(\"a\")", "println!(\"a\", \"b\")");
+
+    // Assert
     assert!(score > 0.0);
     assert!(score < 1.0);
 }
 
 #[test]
 fn same_macro_same_args_score_one() {
+    // Arrange & Act
     let score = expr_similarity("println!(\"hello\")", "println!(\"world\")");
+
+    // Assert
     assert!((score - 1.0).abs() < f64::EPSILON);
 }
 
 #[test]
 fn similarity_is_symmetric() {
+    // Arrange & Act
     let score1 = fn_body_similarity(
         "fn foo(x: i32) -> i32 { x + 1 }",
         "fn bar(x: i32) -> i32 { x * 2 + 1 }",
@@ -537,40 +639,55 @@ fn similarity_is_symmetric() {
         "fn bar(x: i32) -> i32 { x * 2 + 1 }",
         "fn foo(x: i32) -> i32 { x + 1 }",
     );
+
+    // Assert
     assert!((score1 - score2).abs() < f64::EPSILON);
 }
 
 #[test]
 fn simple_expr_different_op() {
+    // Arrange & Act
     let score = expr_similarity("x + 1", "x - 1");
+
+    // Assert
     assert!(score > 0.5);
     assert!(score < 1.0);
 }
 
 #[test]
 fn simple_expr_identical() {
+    // Arrange & Act
     let score = expr_similarity("x + 1", "y + 1");
+
+    // Assert
     assert!((score - 1.0).abs() < f64::EPSILON);
 }
 
 #[test]
 fn single_expression_difference_high_score() {
+    // Arrange & Act
     let score = fn_body_similarity(
         "fn foo(x: i32) -> i32 { let a = x + 1; let b = a * 2; a + b }",
         "fn bar(x: i32) -> i32 { let a = x + 1; let b = a * 3; a + b }",
     );
+
+    // Assert
     assert!(score > 0.8);
 }
 
 #[test]
 fn single_unit_no_groups() {
+    // Arrange & Act
     let units = make_units("fn solo(x: i32) -> i32 { x + 1 }");
     let groups = grouper::group_exact_duplicates(&units);
+
+    // Assert
     assert!(groups.is_empty());
 }
 
 #[test]
 fn stats_computation() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn a(x: i32) -> i32 { x + 1 }
@@ -580,6 +697,8 @@ fn stats_computation() {
     );
     let exact = grouper::group_exact_duplicates(&units);
     let stats = grouper::compute_stats(&units, &exact, &[]);
+
+    // Assert
     assert_eq!(stats.total_code_units, 3);
     assert_eq!(stats.exact_duplicate_groups, 1);
     assert_eq!(stats.exact_duplicate_units, 2);
@@ -588,6 +707,7 @@ fn stats_computation() {
 
 #[test]
 fn stats_includes_line_counts() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn foo(x: i32) -> i32 {
@@ -602,12 +722,15 @@ fn stats_includes_line_counts() {
     );
     let exact = grouper::group_exact_duplicates(&units);
     let stats = grouper::compute_stats(&units, &exact, &[]);
+
+    // Assert
     assert!(stats.exact_duplicate_lines > 0);
     assert_eq!(stats.near_duplicate_lines, 0);
 }
 
 #[test]
 fn stats_total_lines_computed() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn foo(x: i32) -> i32 {
@@ -621,11 +744,14 @@ fn stats_total_lines_computed() {
         "#,
     );
     let stats = grouper::compute_stats(&units, &[], &[]);
+
+    // Assert
     assert!(stats.total_lines > 0);
 }
 
 #[test]
 fn stats_with_near_duplicates() {
+    // Arrange & Act
     let units = make_units(
         r#"
         fn a(x: i32) -> i32 { x + 1 }
@@ -641,21 +767,27 @@ fn stats_with_near_duplicates() {
         similarity: 0.85,
     };
     let stats = grouper::compute_stats(&units, &[], &[near_group]);
+
+    // Assert
     assert_eq!(stats.total_code_units, units.len());
     assert_eq!(stats.near_duplicate_groups, 1);
 }
 
 #[test]
 fn structural_difference_low_score() {
+    // Arrange & Act
     let score = fn_body_similarity(
         "fn foo(x: i32) -> i32 { x + 1 }",
         "fn bar(x: i32) -> i32 { if x > 0 { x + 1 } else { x - 1 } }",
     );
+
+    // Assert
     assert!(score < 0.7);
 }
 
 #[test]
 fn sub_units_are_reindexed() {
+    // Arrange & Act
     let body = parse_and_extract_body(
         "fn foo(a: i32, b: i32, c: i32) -> i32 { if c > 0 { let d = c + 1; d } else { c } }",
     );
@@ -671,5 +803,7 @@ fn sub_units_are_reindexed() {
         &mut ctx,
     );
     let reindexed_fresh = reindex_placeholders(&fresh_expr);
+
+    // Assert
     assert_eq!(then_branch.node, reindexed_fresh);
 }

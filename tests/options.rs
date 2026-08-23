@@ -10,6 +10,7 @@ use serde_json::from_str;
 
 #[test]
 fn error_on_nonexistent_path() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args(["--path", "/nonexistent/path/that/does/not/exist", "stats"])
         .assert()
@@ -19,6 +20,7 @@ fn error_on_nonexistent_path() {
 
 #[test]
 fn exclude_option() {
+    // Arrange & Act & Assert
     // When all files are excluded, the tool reports no source files found
     cargo_dry4rust()
         .args([
@@ -35,6 +37,7 @@ fn exclude_option() {
 
 #[test]
 fn exclude_tests_flag_reduces_duplicates() {
+    // Arrange & Act
     // Without --exclude-tests: 3 units in 1 group (2 production + 1 in #[cfg(test)] mod)
     let output_all = cargo_dry4rust()
         .args([
@@ -50,6 +53,8 @@ fn exclude_tests_flag_reduces_duplicates() {
         .stdout
         .clone();
     let all: serde_json::Value = from_str(&String::from_utf8(output_all).unwrap()).unwrap();
+
+    // Assert
     assert_eq!(all["exact_duplicate_units"].as_u64().unwrap(), 3);
 
     // With --exclude-tests: only 2 production units remain
@@ -74,6 +79,7 @@ fn exclude_tests_flag_reduces_duplicates() {
 
 #[test]
 fn exclude_tests_text_report() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -89,6 +95,7 @@ fn exclude_tests_text_report() {
 
 #[test]
 fn help_works() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .arg("--help")
         .assert()
@@ -98,6 +105,7 @@ fn help_works() {
 
 #[test]
 fn min_lines_option() {
+    // Arrange & Act & Assert
     // With very high min_lines, short functions should be excluded
     cargo_dry4rust()
         .args([
@@ -114,6 +122,7 @@ fn min_lines_option() {
 
 #[test]
 fn min_nodes_option() {
+    // Arrange & Act & Assert
     // With very high min_nodes, nothing should be analyzed
     cargo_dry4rust()
         .args([

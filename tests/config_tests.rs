@@ -9,6 +9,7 @@ use tempfile::TempDir;
 
 #[test]
 fn config_with_exclude_tests() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dupes.toml"),
@@ -18,11 +19,14 @@ fn config_with_exclude_tests() {
     )
     .unwrap();
     let config = Config::load(tmp.path());
+
+    // Assert
     assert!(config.exclude_tests);
 }
 
 #[test]
 fn config_with_min_lines() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dupes.toml"),
@@ -32,11 +36,14 @@ fn config_with_min_lines() {
     )
     .unwrap();
     let config = Config::load(tmp.path());
+
+    // Assert
     assert_eq!(config.min_lines, 5);
 }
 
 #[test]
 fn config_with_percentage_thresholds() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dupes.toml"),
@@ -47,12 +54,15 @@ fn config_with_percentage_thresholds() {
     )
     .unwrap();
     let config = Config::load(tmp.path());
+
+    // Assert
     assert_eq!(config.max_exact_percent, Some(5.0));
     assert_eq!(config.max_near_percent, Some(10.5));
 }
 
 #[test]
 fn config_with_thresholds() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dupes.toml"),
@@ -63,13 +73,18 @@ fn config_with_thresholds() {
     )
     .unwrap();
     let config = Config::load(tmp.path());
+
+    // Assert
     assert_eq!(config.max_exact_duplicates, Some(0));
     assert_eq!(config.max_near_duplicates, Some(5));
 }
 
 #[test]
 fn default_config() {
+    // Arrange & Act
     let config = Config::default();
+
+    // Assert
     assert_eq!(config.min_nodes, 10);
     assert!((config.similarity_threshold - 0.9).abs() < f64::EPSILON);
     assert!(config.exclude.is_empty());
@@ -77,6 +92,7 @@ fn default_config() {
 
 #[test]
 fn dupes_toml_overrides_cargo_toml() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("Cargo.toml"),
@@ -99,11 +115,14 @@ fn dupes_toml_overrides_cargo_toml() {
     )
     .unwrap();
     let config = Config::load(tmp.path());
+
+    // Assert
     assert_eq!(config.min_nodes, 25);
 }
 
 #[test]
 fn load_from_cargo_toml_metadata() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("Cargo.toml"),
@@ -120,12 +139,15 @@ fn load_from_cargo_toml_metadata() {
     )
     .unwrap();
     let config = Config::load(tmp.path());
+
+    // Assert
     assert_eq!(config.min_nodes, 15);
     assert!((config.similarity_threshold - 0.75).abs() < f64::EPSILON);
 }
 
 #[test]
 fn load_from_dupes_toml() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dupes.toml"),
@@ -137,6 +159,8 @@ fn load_from_dupes_toml() {
     )
     .unwrap();
     let config = Config::load(tmp.path());
+
+    // Assert
     assert_eq!(config.min_nodes, 20);
     assert!((config.similarity_threshold - 0.9).abs() < f64::EPSILON);
     assert_eq!(config.exclude, vec!["tests".to_string()]);
@@ -144,7 +168,10 @@ fn load_from_dupes_toml() {
 
 #[test]
 fn load_no_config_files() {
+    // Arrange & Act
     let tmp = TempDir::new().unwrap();
     let config = Config::load(tmp.path());
+
+    // Assert
     assert_eq!(config.min_nodes, 10); // default
 }

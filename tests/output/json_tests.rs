@@ -30,6 +30,7 @@ fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> Code
 
 #[test]
 fn json_is_valid() {
+    // Arrange & Act
     let reporter = JsonReporter::new(Some(PathBuf::from("/project")));
     let group = DuplicateGroup {
         fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
@@ -40,11 +41,14 @@ fn json_is_valid() {
     reporter.report_exact(&[group], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
     // Should be valid JSON
+
+    // Assert
     assert!(from_str::<serde_json::Value>(&output).is_ok());
 }
 
 #[test]
 fn json_relative_paths() {
+    // Arrange & Act
     let reporter = JsonReporter::new(Some(PathBuf::from("/home/user/project")));
     let fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
     let group = DuplicateGroup {
@@ -55,22 +59,28 @@ fn json_relative_paths() {
     let mut buf = Vec::new();
     reporter.report_near(&[group], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
+
+    // Assert
     assert!(output.contains("src/main.rs"));
     assert!(!output.contains("/home/user/project"));
 }
 
 #[test]
 fn json_report_exact_empty() {
+    // Arrange & Act
     let reporter = JsonReporter::new(None);
     let mut buf = Vec::new();
     reporter.report_exact(&[], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
     let parsed: serde_json::Value = from_str(&output).unwrap();
+
+    // Assert
     assert!(parsed.as_array().unwrap().is_empty());
 }
 
 #[test]
 fn json_report_exact_with_groups() {
+    // Arrange & Act
     let reporter = JsonReporter::new(Some(PathBuf::from("/project")));
     let group = DuplicateGroup {
         fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
@@ -85,6 +95,8 @@ fn json_report_exact_with_groups() {
     let output = String::from_utf8(buf).unwrap();
     let parsed: serde_json::Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
+
+    // Assert
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0]["members"].as_array().unwrap().len(), 2);
     assert_eq!(groups[0]["similarity"], 1.0);
@@ -93,6 +105,7 @@ fn json_report_exact_with_groups() {
 
 #[test]
 fn json_report_near_with_groups() {
+    // Arrange & Act
     let reporter = JsonReporter::new(None);
     let fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
     let group = DuplicateGroup {
@@ -108,6 +121,8 @@ fn json_report_near_with_groups() {
     let output = String::from_utf8(buf).unwrap();
     let parsed: serde_json::Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
+
+    // Assert
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0]["fingerprint"].as_str().unwrap(), fp.to_hex());
     assert_eq!(groups[0]["similarity"], 0.85);
@@ -115,6 +130,7 @@ fn json_report_near_with_groups() {
 
 #[test]
 fn json_report_stats() {
+    // Arrange & Act
     let reporter = JsonReporter::new(None);
     let stats = DuplicationStats {
         total_code_units: 50,
@@ -134,6 +150,8 @@ fn json_report_stats() {
     reporter.report_stats(&stats, &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
     let parsed: serde_json::Value = from_str(&output).unwrap();
+
+    // Assert
     assert_eq!(parsed["total_code_units"], 50);
     assert_eq!(parsed["exact_duplicate_groups"], 3);
 }

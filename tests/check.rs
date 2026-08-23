@@ -9,6 +9,7 @@ use predicates::prelude::*;
 
 #[test]
 fn check_absolute_passes_percentage_fails() {
+    // Arrange & Act & Assert
     // Absolute threshold is generous (passes), but percentage is strict (fails)
     cargo_dry4rust()
         .args([
@@ -27,6 +28,7 @@ fn check_absolute_passes_percentage_fails() {
 
 #[test]
 fn check_fails_with_duplicates() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -42,6 +44,7 @@ fn check_fails_with_duplicates() {
 
 #[test]
 fn check_fails_with_percentage_threshold_exceeded() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -60,6 +63,7 @@ fn check_fails_with_percentage_threshold_exceeded() {
 
 #[test]
 fn check_no_dupes_passes() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -75,6 +79,7 @@ fn check_no_dupes_passes() {
 
 #[test]
 fn check_no_thresholds_passes_with_duplicates() {
+    // Arrange & Act & Assert
     // With no thresholds set, check should pass even when duplicates exist
     cargo_dry4rust()
         .args([
@@ -89,6 +94,7 @@ fn check_no_thresholds_passes_with_duplicates() {
 
 #[test]
 fn check_passes_with_generous_percentage_threshold() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",
@@ -106,6 +112,7 @@ fn check_passes_with_generous_percentage_threshold() {
 
 #[test]
 fn check_passes_with_high_threshold() {
+    // Arrange & Act & Assert
     cargo_dry4rust()
         .args([
             "--path",

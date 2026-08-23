@@ -30,25 +30,32 @@ fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> Code
 
 #[test]
 fn relative_path_stripping() {
+    // Arrange & Act
     let base = PathBuf::from("/home/user/project");
     let result = display_path(
         Some(base.as_path()),
         Path::new("/home/user/project/src/main.rs"),
     );
+
+    // Assert
     assert_eq!(result, "src/main.rs");
 }
 
 #[test]
 fn text_report_exact_empty() {
+    // Arrange & Act
     let reporter = TextReporter::new(None);
     let mut buf = Vec::new();
     reporter.report_exact(&[], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
+
+    // Assert
     assert!(output.contains("No exact duplicates"));
 }
 
 #[test]
 fn text_report_exact_with_groups() {
+    // Arrange & Act
     let reporter = TextReporter::new(Some(PathBuf::from("/project")));
     let group = DuplicateGroup {
         fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
@@ -61,6 +68,8 @@ fn text_report_exact_with_groups() {
     let mut buf = Vec::new();
     reporter.report_exact(&[group], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
+
+    // Assert
     assert!(output.contains("Group 1"));
     assert!(output.contains("foo"));
     assert!(output.contains("bar"));
@@ -70,15 +79,19 @@ fn text_report_exact_with_groups() {
 
 #[test]
 fn text_report_near_empty() {
+    // Arrange & Act
     let reporter = TextReporter::new(None);
     let mut buf = Vec::new();
     reporter.report_near(&[], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
+
+    // Assert
     assert!(output.contains("No near duplicates"));
 }
 
 #[test]
 fn text_report_near_with_groups() {
+    // Arrange & Act
     let reporter = TextReporter::new(None);
     let fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
     let group = DuplicateGroup {
@@ -92,6 +105,8 @@ fn text_report_near_with_groups() {
     let mut buf = Vec::new();
     reporter.report_near(&[group], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
+
+    // Assert
     assert!(output.contains("fingerprint:"));
     assert!(output.contains(&fp.to_hex()));
     assert!(output.contains("85%"));
@@ -101,6 +116,7 @@ fn text_report_near_with_groups() {
 
 #[test]
 fn text_report_stats() {
+    // Arrange & Act
     let reporter = TextReporter::new(None);
     let stats = DuplicationStats {
         total_code_units: 100,
@@ -119,6 +135,8 @@ fn text_report_stats() {
     let mut buf = Vec::new();
     reporter.report_stats(&stats, &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
+
+    // Assert
     assert!(output.contains("100"));
     assert!(output.contains("5 groups"));
     assert!(output.contains("3 groups"));
