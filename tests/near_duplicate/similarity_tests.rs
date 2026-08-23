@@ -3,9 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::near_duplicate::similarity::*;
 use dry4rust::node::{BinOpKind, LiteralKind, PlaceholderKind};
 use dry4rust::node::{NodeKind, NormalizedNode};
-use dry4rust::similarity::*;
 
 fn int_lit() -> NormalizedNode {
     NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Int))

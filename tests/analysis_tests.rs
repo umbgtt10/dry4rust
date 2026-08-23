@@ -10,13 +10,13 @@
 use dry4rust::extractor;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::grouper;
+use dry4rust::near_duplicate::similarity::similarity_score;
 use dry4rust::node::reindex_placeholders;
 use dry4rust::node::{NodeKind, NormalizedNode};
 use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::expr::normalize_expr;
 use dry4rust::rust::normalizer::normalize::normalize_item_fn;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
-use dry4rust::similarity::similarity_score;
 use parser::parse_file;
 use std::fs;
 use syn::parse_str;

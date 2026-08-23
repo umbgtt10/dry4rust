@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::similarity_pair::SimilarityPair;
+use dry4rust::near_duplicate::similarity_pair::SimilarityPair;
 
 #[test]
 fn key_is_the_same_whichever_way_round_the_pair_was_built() {

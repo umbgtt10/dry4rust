@@ -42,6 +42,15 @@ upstream's history kept as an ancestor rather than a credit line.
   import names where the symbol lives
 - `NormalizationContext` moved out of `node.rs` into its own file
 
+**Corrected in the engine**
+
+- The size pre-filter is now the exact bound the threshold implies, rather
+  than `floor(log2(n))` bucketing. The old filter never compared units 7 and 8
+  nodes apart -- a pair able to score `0.933` against a threshold of `0.8` --
+  because a bucket boundary fell between them, while comparing pairs nearly
+  twice apart that could not clear the bar. Codebases that reported no near
+  duplicates may now report some, and those findings were always there.
+
 **Corrected while restructuring**
 
 - Candidate indices no longer recovered through `HashMap<*const CodeUnit, usize>`

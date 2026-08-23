@@ -71,35 +71,37 @@ neither can separate a pair the scorer would have accepted:
 
 **Kind.** A `Function` is never compared with a `MatchArm`.
 
-**Size band.** Units are bucketed by
+**Size.** `matching` can never exceed the smaller tree's node count, so a
+pair's score is bounded before either tree is examined:
 
 ```
-  band(n) = floor(log2(n))      for n > 0
-  band(0) = 0
+                        2 * min(|a|, |b|)
+  ceiling(a, b) = ---------------------------
+                        |a| + |b|
 ```
 
-and only units sharing a band are compared.
+A pair is scored only when `ceiling >= t`. This is exact: every pair it
+discards provably cannot reach the threshold, and every pair that could is
+kept. Rearranged, it is a ratio bound of `(2 - t) / t` -- `1.5` at the default
+`0.8` -- but the ceiling form is what the code computes, because it needs no
+special case for a zero-size unit.
 
-This is *not* the same as "within a factor of two", and the difference matters
-in both directions. Sharing a band does imply a ratio below two, but a ratio
-below two does not imply sharing a band: 7 nodes and 8 nodes are one node
-apart and fall either side of a boundary, so they are never compared even
-though their Dice ceiling is `0.933`. Meanwhile 8 and 15 nodes share a band
-and are compared, with a ceiling of `0.696` -- below the default threshold, so
-the work cannot pay off.
+Candidates are sorted by node count within each kind, so once a partner is too
+large the ceiling only falls further and the remainder of the list is skipped.
+The filter therefore costs one comparison per pair examined and nothing per
+pair avoided.
 
-The filter is therefore both too strict and too loose, and what it discards
-are false negatives the report does not mention. What a size filter *should*
-express, for a threshold `t`, is
+The comparison leans towards keeping. `similarity_score` admits a score equal
+to the threshold, so a pair whose ceiling lands exactly on it must survive the
+filter; an epsilon of slack stops floating-point rounding from discarding one.
+Comparing one pair too many costs a score. Comparing one too few loses a
+finding silently, and silence is the expensive failure.
 
-```
-  |a| / |b| <= (2 - t) / t
-```
-
-which is a ratio of `1.5` at `t = 0.8`. Banding by `log2` does not implement
-that bound; it approximates it with a grid whose edges fall in arbitrary
-places. [OPEN_POINTS.md](OPEN_POINTS.md) records this as the correctness
-defect it is.
+This replaces a `floor(log2(n))` banding inherited from upstream, which
+discarded pairs one node apart when they straddled a power of two -- 7 against
+8, ceiling `0.933`, never compared -- while comparing pairs nearly twice apart
+that could not clear the bar. See
+[ADR-SizeFilterIsAProvableBound](ADRs/ADR-SizeFilterIsAProvableBound.md).
 
 ## From pairs to groups
 

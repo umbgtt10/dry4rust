@@ -7,12 +7,11 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 use crate::code_unit::CodeUnit;
-use crate::code_unit::CodeUnitKind;
 use crate::fingerprint::Fingerprint;
 use crate::grouper::DuplicateGroup;
-use crate::similarity::similarity_score;
-use crate::similarity_pair::SimilarityPair;
-use crate::union_find::UnionFind;
+use crate::near_duplicate::pair_scanner::PairScanner;
+use crate::near_duplicate::similarity_pair::SimilarityPair;
+use crate::near_duplicate::union_find::UnionFind;
 
 /// Finds groups of units that are similar without being identical.
 ///
@@ -44,7 +43,7 @@ impl NearDuplicateFinder {
         if candidates.len() < 2 {
             return Vec::new();
         }
-        let pairs = self.scored_pairs(&candidates);
+        let pairs = PairScanner::new(self.threshold).scan(&candidates);
         let groups = self.build_groups(&candidates, &pairs);
         Self::ranked(groups)
     }
@@ -59,52 +58,6 @@ impl NearDuplicateFinder {
             .iter()
             .filter(|unit| !exact.contains(&unit.fingerprint))
             .collect()
-    }
-
-    /// Index the candidates by kind and size band, so that the pairwise
-    /// comparison below never leaves a bucket.
-    ///
-    /// Buckets hold indices rather than references: the caller needs indices
-    /// back to build pairs, and carrying them through is cheaper and plainer
-    /// than recovering them afterwards from pointer identity.
-    fn buckets(candidates: &[&CodeUnit]) -> HashMap<(CodeUnitKind, usize), Vec<usize>> {
-        let mut buckets: HashMap<(CodeUnitKind, usize), Vec<usize>> = HashMap::new();
-        for (index, unit) in candidates.iter().enumerate() {
-            let key = (unit.kind.clone(), Self::size_band(unit.node_count));
-            buckets.entry(key).or_default().push(index);
-        }
-        buckets
-    }
-
-    /// Units land in the same band when they are within a factor of two of
-    /// each other, which is the coarsest filter that never separates a pair
-    /// the scorer would have accepted.
-    fn size_band(node_count: usize) -> usize {
-        if node_count == 0 {
-            return 0;
-        }
-        (node_count as f64).log2().floor() as usize
-    }
-
-    fn scored_pairs(&self, candidates: &[&CodeUnit]) -> Vec<SimilarityPair> {
-        Self::buckets(candidates)
-            .values()
-            .filter(|bucket| bucket.len() > 1)
-            .flat_map(|bucket| self.pairs_within(candidates, bucket))
-            .collect()
-    }
-
-    fn pairs_within(&self, candidates: &[&CodeUnit], bucket: &[usize]) -> Vec<SimilarityPair> {
-        let mut pairs = Vec::new();
-        for (offset, &left) in bucket.iter().enumerate() {
-            for &right in bucket.iter().skip(offset + 1) {
-                let score = similarity_score(&candidates[left].body, &candidates[right].body);
-                if score >= self.threshold {
-                    pairs.push(SimilarityPair::new(left, right, score));
-                }
-            }
-        }
-        pairs
     }
 
     fn build_groups(

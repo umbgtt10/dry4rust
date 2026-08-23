@@ -9,7 +9,9 @@ matches and compared tree-to-tree for near ones. Nothing is inferred from
 names, comments or formatting, because all three are exactly what a copied
 block changes first.
 
-33 source files, roughly 4,000 lines.
+34 source files, roughly 4,000 lines. Near-duplicate detection lives in
+`src/near_duplicate/` -- five modules that only `grouper` reaches, grouped
+together because they answer one question between them.
 
 ## Pipeline
 
@@ -32,7 +34,8 @@ block changes first.
      v
   grouper
      |  group_exact_duplicates    equal fingerprints
-     |  NearDuplicateFinder       Dice score above threshold
+     |  NearDuplicateFinder       PairScanner picks the pairs worth scoring,
+     |                            UnionFind closes them into groups
      v
   ignore         drop fingerprints listed in .dry4rust-ignore.toml
      |
@@ -55,12 +58,13 @@ bodies as further units, which then travel the same path.
 | `normalization_context` | The placeholder counters. Two identifiers map to the same placeholder only within one context. |
 | `node` | `NormalizedNode` and `NodeKind` -- the normalised tree, plus `count_nodes` and `reindex_placeholders`. |
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
-| `similarity` | The Dice score between two normalised trees. |
 | `extractor` / `sub_unit_extractor` | Compound structures inside a body, as further comparable units. |
 | `grouper` | `DuplicateGroup`, `DuplicationStats`, exact grouping. |
-| `near_duplicate_finder` | Candidate filtering, bucketing, pairwise scoring, transitive closure. |
-| `union_find` | Disjoint-set forest turning similar-pairs into groups. |
-| `similarity_pair` | One scored pair, and the ordered key a symmetric lookup needs. |
+| `near_duplicate::near_duplicate_finder` | Candidate filtering and transitive closure into groups. |
+| `near_duplicate::pair_scanner` | Which pairs are worth scoring, and their scores. |
+| `near_duplicate::similarity` | The Dice score between two normalised trees. |
+| `near_duplicate::union_find` | Disjoint-set forest turning similar-pairs into groups. |
+| `near_duplicate::similarity_pair` | One scored pair, and the ordered key a symmetric lookup needs. |
 | `ignore` | The suppression file: read, write, filter. |
 | `config` | Defaults, `dry4rust.toml`, `[package.metadata.dry4rust]`, CLI overrides. |
 | `analysis` | `analyze` and `analyze_units` -- the pipeline as one call. |

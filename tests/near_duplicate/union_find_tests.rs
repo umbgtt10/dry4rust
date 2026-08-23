@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::union_find::UnionFind;
+use dry4rust::near_duplicate::union_find::UnionFind;
 
 #[test]
 fn find_after_a_chain_of_unions_reports_one_root_for_the_whole_chain() {

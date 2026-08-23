@@ -75,13 +75,12 @@ every comparison after it. A longest-common-subsequence over children, or a
 tree-edit distance, would make the score measure content rather than
 alignment. This is the highest-value correctness work available.
 
-**4. Replace the size band with a real bound.** Bucketing by
-`floor(log2(n))` drops pairs one node apart when they straddle a power of two
--- 7 against 8 could score `0.933` and is never compared -- while comparing
-pairs nearly twice apart that cannot clear the threshold. The bound the
-threshold actually implies is `|a| / |b| <= (2 - t) / t`, which a sliding
-window over units sorted by node count gives directly. Silent false negatives,
-so it ranks above anything cosmetic.
+**4. Decide whether kind should restrict near-duplicate detection.** Exact
+detection ignores `CodeUnitKind`; near detection groups by it, so a free
+function and a method that are identical are reported and the same pair
+differing by one statement is not. Removing the restriction is probably right
+for `Function` / `Method` / `Closure` and probably noise for sub-function
+kinds. See [OPEN_POINTS.md](OPEN_POINTS.md).
 
 **5. Semantic redundancy detection.** The direction above. Two functions with
 the same behaviour and different structure -- a `for` loop accumulating a sum

@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use crate::code_unit::CodeUnit;
 use crate::fingerprint::Fingerprint;
-use crate::near_duplicate_finder::NearDuplicateFinder;
+use crate::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
 
 /// A group of duplicate code units.
 #[derive(Debug, Clone)]

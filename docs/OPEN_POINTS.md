@@ -40,36 +40,28 @@ The fix is a hasher this repository controls rather than one it borrows. It
 has not been done because it invalidates every existing suppression file once,
 and doing that deliberately is better than doing it twice.
 
-## The size band drops near-duplicates that straddle a power of two
+## Near-duplicate detection is restricted by kind; exact detection is not
 
-Candidates are bucketed by `floor(log2(node_count))` and only compared within
-a bucket. This is usually described as "within a factor of two", and that
-description is wrong in the direction that costs findings.
+`group_exact_duplicates` compares fingerprints and nothing else, so a free
+function and a method with identical normalised signature and body are
+reported as exact duplicates.
 
-Sharing a bucket implies a size ratio below two. The converse does not hold,
-and the gap is where real duplicates are lost:
+`NearDuplicateFinder` groups candidates by `CodeUnitKind` first and never
+compares across groups. The same free function and method, differing by one
+statement, are never compared at all.
 
-| pair | ratio | same bucket | Dice ceiling |
-|---|---|---|---|
-| 7 and 8 nodes | 1.14 | **no** | **0.933** |
-| 8 and 15 nodes | 1.88 | yes | 0.696 |
+So the two halves of the tool disagree about whether kind matters. Identical
+across kinds is a finding; nearly identical across kinds is invisible. Nothing
+in the output distinguishes "no near duplicates" from "no near duplicates
+within a kind".
 
-A 7-node unit and an 8-node unit are one node apart and could score `0.933`,
-far above the default threshold of `0.8`. They are never compared, because
-`log2` puts a boundary between them. An 8-node and a 15-node unit are nearly
-twice apart, cannot reach `0.8`, and are compared anyway.
+Whether the restriction should go is a real question rather than an obvious
+fix. Removing it compares `Function` against `Method` against `Closure`, which
+is likely wanted, and under sub-function analysis also compares `IfBranch`
+against `MatchArm` against `LoopBody`, which may be noise. The size filter now
+bounds the extra work, so cost is not the objection it once was.
 
-So the filter misses pairs it should catch and evaluates pairs it cannot
-benefit from, and the misses are silent -- a report that says "no near
-duplicates" does not distinguish "none exist" from "none survived bucketing".
-
-What a size filter should express, for threshold `t`, is
-`|a| / |b| <= (2 - t) / t` -- a ratio of `1.5` at `t = 0.8`. A sliding
-comparison over units sorted by node count implements that directly and costs
-no more.
-
-This is a correctness defect rather than a tuning question, and it is the
-second thing to fix after positional alignment. Neither has a flag.
+Unresolved deliberately. It changes what the tool reports.
 
 ## A group with no directly scored pair reports the threshold, not a measurement
 
