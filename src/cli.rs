@@ -19,6 +19,7 @@ use crate::output::reporter::Reporter;
 use crate::output::text::TextReporter;
 use crate::scanner;
 use crate::scanner::ScanConfig;
+use crate::stale_report::StaleReport;
 use ignore::add_ignore;
 use ignore::find_stale_entries;
 use ignore::load_ignore_file;
@@ -427,31 +428,28 @@ pub fn cmd_cleanup(
     dry_run: bool,
 ) -> CliResult {
     let mut ignore_file = load_ignore_file(root);
+    let taken;
 
-    if dry_run {
-        let stale = find_stale_entries(&ignore_file, &result.all_fingerprints);
-        if stale.is_empty() {
-            writeln!(writer, "No stale entries found.")?;
-        } else {
-            writeln!(writer, "Stale entries (dry run):")?;
-            for entry in &stale {
-                write_ignore_entry(writer, entry)?;
-            }
-            writeln!(writer, "\n{} stale entries would be removed.", stale.len())?;
-        }
+    let report = if dry_run {
+        StaleReport::dry_run(find_stale_entries(&ignore_file, &result.all_fingerprints))
     } else {
-        let removed = remove_stale_entries(&mut ignore_file, &result.all_fingerprints);
-        if removed.is_empty() {
-            writeln!(writer, "No stale entries found.")?;
-        } else {
+        taken = remove_stale_entries(&mut ignore_file, &result.all_fingerprints);
+        if !taken.is_empty() {
             save_ignore_file(root, &ignore_file)?;
-            writeln!(writer, "Removed stale entries:")?;
-            for entry in &removed {
-                write_ignore_entry(writer, entry)?;
-            }
-            writeln!(writer, "\nRemoved {} stale entries.", removed.len())?;
         }
+        StaleReport::removed(taken.iter().collect())
+    };
+
+    if report.is_empty() {
+        writeln!(writer, "No stale entries found.")?;
+        return Ok(());
     }
+
+    writeln!(writer, "{}", report.heading())?;
+    for entry in report.entries() {
+        write_ignore_entry(writer, entry)?;
+    }
+    writeln!(writer, "{}", report.summary())?;
     Ok(())
 }
 

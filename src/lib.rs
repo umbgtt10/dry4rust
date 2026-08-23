@@ -23,4 +23,5 @@ pub mod output;
 pub mod rust;
 pub mod scanner;
 pub mod stable_hasher;
+pub mod stale_report;
 pub mod sub_unit_extractor;
