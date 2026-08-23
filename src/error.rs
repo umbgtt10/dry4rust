@@ -15,6 +15,13 @@ pub enum Error {
     #[error("No source files found in {0}")]
     NoSourceFiles(PathBuf),
 
+    #[error("{field} must be {expected}, got {value}")]
+    InvalidConfig {
+        field: &'static str,
+        value: String,
+        expected: &'static str,
+    },
+
     #[error("{0}")]
     Other(String),
 }

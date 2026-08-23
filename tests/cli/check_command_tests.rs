@@ -9,6 +9,7 @@ use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_error::CliResult;
 use dry4rust::cli::output_format::OutputFormat;
+use dry4rust::threshold::Threshold;
 use predicate::str;
 use predicates::prelude::*;
 
@@ -20,6 +21,10 @@ fn checked(fixture: &str, thresholds: &CheckThresholds) -> (CliResult, String) {
     let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds).run(&mut out);
 
     (outcome, String::from_utf8(out).expect("utf-8"))
+}
+
+fn percent(value: f64) -> Threshold {
+    Threshold::percent("a ceiling", value).expect("the test states a share of a hundred")
 }
 
 #[test]
@@ -140,6 +145,24 @@ fn check_passes_with_high_threshold() {
 }
 
 #[test]
+fn check_with_a_percentage_ceiling_above_a_hundred_is_rejected() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .args([
+            "--path",
+            fixture_path("exact_dupes").to_str().unwrap(),
+            "check",
+            "--max-exact-percent",
+            "150",
+        ])
+        .assert()
+        .code(2)
+        .stderr(str::contains(
+            "--max-exact-percent must be a percentage between 0.0 and 100.0, got 150",
+        ));
+}
+
+#[test]
 fn main_dispatches_the_check_subcommand_and_exits_one_when_a_ceiling_is_breached() {
     // Arrange & Act & Assert
     cargo_dry4rust()
@@ -171,8 +194,8 @@ fn run_over_a_clean_fixture_passes_with_every_ceiling_at_zero() {
     let thresholds = CheckThresholds {
         max_exact: Some(0),
         max_near: Some(0),
-        max_exact_percent: Some(0.0),
-        max_near_percent: Some(0.0),
+        max_exact_percent: Some(percent(0.0)),
+        max_near_percent: Some(percent(0.0)),
     };
 
     // Act
@@ -187,8 +210,8 @@ fn run_over_a_clean_fixture_passes_with_every_ceiling_at_zero() {
 fn run_with_a_generous_percentage_ceiling_passes() {
     // Arrange
     let thresholds = CheckThresholds {
-        max_exact_percent: Some(100.0),
-        max_near_percent: Some(100.0),
+        max_exact_percent: Some(percent(100.0)),
+        max_near_percent: Some(percent(100.0)),
         ..CheckThresholds::default()
     };
 
@@ -230,7 +253,7 @@ fn run_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
     let reporter = OutputFormat::Text.reporter(None);
     let mut out = Vec::new();
     let thresholds = CheckThresholds {
-        max_near_percent: Some(0.0),
+        max_near_percent: Some(percent(0.0)),
         ..CheckThresholds::default()
     };
 
@@ -250,7 +273,7 @@ fn run_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
 fn run_with_a_percentage_ceiling_of_zero_fails_on_any_duplication() {
     // Arrange
     let thresholds = CheckThresholds {
-        max_exact_percent: Some(0.0),
+        max_exact_percent: Some(percent(0.0)),
         ..CheckThresholds::default()
     };
 
@@ -298,8 +321,8 @@ fn run_with_every_ceiling_set_reports_each_breach_it_finds() {
     let thresholds = CheckThresholds {
         max_exact: Some(0),
         max_near: Some(0),
-        max_exact_percent: Some(0.0),
-        max_near_percent: Some(0.0),
+        max_exact_percent: Some(percent(0.0)),
+        max_near_percent: Some(percent(0.0)),
     };
 
     // Act

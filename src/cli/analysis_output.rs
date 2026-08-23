@@ -34,15 +34,19 @@ impl AnalysisOutput {
     ///
     /// # Errors
     ///
-    /// Returns [`CliError::NoSourceFiles`] when the scan finds nothing to
-    /// analyse, and [`CliError::Analysis`] when the pipeline itself fails.
+    /// Returns [`CliError::InvalidConfig`] when the configuration states a
+    /// value the tool cannot run under, [`CliError::NoSourceFiles`] when the
+    /// scan finds nothing to analyse, and [`CliError::Analysis`] when the
+    /// pipeline itself fails.
     pub fn produce(
         analyzer: &dyn LanguageAnalyzer,
         root: &Path,
         format: OutputFormat,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
-        let config = overrides.apply_to(Config::load(root));
+        let config = Config::load(root)
+            .and_then(|config| overrides.apply_to(config))
+            .map_err(|e| CliError::InvalidConfig(e.to_string()))?;
 
         let scan_config = ScanConfig::new(config.root.clone())
             .with_excludes(config.exclude.clone())

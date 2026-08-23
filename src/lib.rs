@@ -23,3 +23,4 @@ pub mod rust;
 pub mod scanner;
 pub mod stable_hasher;
 pub mod sub_unit_extractor;
+pub mod threshold;

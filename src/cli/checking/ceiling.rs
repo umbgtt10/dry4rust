@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::threshold::Threshold;
+
 /// One limit `check` measures a result against, and the sentence it produces
 /// when the result exceeds it.
 ///
@@ -31,9 +33,9 @@ impl Ceiling {
 
     /// A ceiling on a share of duplicated lines.
     #[must_use]
-    pub const fn percent(limit: Option<f64>, actual: f64, subject: &'static str) -> Self {
+    pub fn percent(limit: Option<Threshold>, actual: f64, subject: &'static str) -> Self {
         Self {
-            limit,
+            limit: limit.map(Threshold::as_percent),
             actual,
             subject,
             percentage: true,

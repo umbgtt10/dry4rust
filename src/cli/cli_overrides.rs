@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: MIT
 
 use crate::config::Config;
+use crate::error::Result;
+use crate::threshold::Threshold;
 
 /// Optional CLI overrides applied on top of file-based config.
 #[derive(Debug, Clone, Default)]
@@ -23,8 +25,12 @@ impl CliOverrides {
     /// An absent override leaves the loaded value alone; `exclude` is the one
     /// exception, and is *appended* to the config-file excludes rather than
     /// replacing them.
-    #[must_use]
-    pub fn apply_to(&self, config: Config) -> Config {
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::error::Error::InvalidConfig`] when `--threshold` is
+    /// outside the range a similarity score can occupy.
+    pub fn apply_to(&self, config: Config) -> Result<Config> {
         let mut config = config;
         if let Some(min_nodes) = self.min_nodes {
             config.min_nodes = min_nodes;
@@ -33,7 +39,7 @@ impl CliOverrides {
             config.min_lines = min_lines;
         }
         if let Some(threshold) = self.threshold {
-            config.similarity_threshold = threshold;
+            config.similarity_threshold = Threshold::fraction("--threshold", threshold)?;
         }
         if !self.exclude.is_empty() {
             config.exclude.extend(self.exclude.iter().cloned());
@@ -47,6 +53,6 @@ impl CliOverrides {
         if let Some(min_sub_nodes) = self.min_sub_nodes {
             config.min_sub_nodes = min_sub_nodes;
         }
-        config
+        Ok(config)
     }
 }

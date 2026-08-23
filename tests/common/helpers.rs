@@ -16,7 +16,7 @@ use std::path::PathBuf;
 /// Run the analysis pipeline over a fixture crate, as the CLI would.
 pub fn analysed(fixture: &str) -> (Config, AnalysisResult) {
     let root = fixture_path(fixture);
-    let config = Config::load(&root);
+    let config = Config::load(&root).expect("the fixture configuration is in range");
     let files = scan_files(&ScanConfig::new(root));
     let result =
         analyze(&RustAnalyzer::new(), &files, &config).expect("the fixture analyses cleanly");

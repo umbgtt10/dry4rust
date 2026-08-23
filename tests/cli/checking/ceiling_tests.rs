@@ -4,6 +4,11 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::cli::checking::ceiling::Ceiling;
+use dry4rust::threshold::Threshold;
+
+fn percent(value: f64) -> Threshold {
+    Threshold::percent("a ceiling", value).expect("the test states a share of a hundred")
+}
 
 #[test]
 fn breach_of_a_count_exactly_on_its_limit_reports_nothing() {
@@ -62,7 +67,7 @@ fn breach_of_a_count_with_no_limit_reports_nothing_however_large() {
 #[test]
 fn breach_of_a_percentage_over_its_limit_reports_one_decimal_place() {
     // Arrange
-    let ceiling = Ceiling::percent(Some(5.0), 17.649, "exact duplicate lines");
+    let ceiling = Ceiling::percent(Some(percent(5.0)), 17.649, "exact duplicate lines");
 
     // Act
     let message = ceiling.breach();
@@ -87,7 +92,7 @@ fn breach_of_a_percentage_with_no_limit_reports_nothing() {
 #[test]
 fn breach_of_a_zero_percentage_limit_reports_any_duplication_at_all() {
     // Arrange
-    let ceiling = Ceiling::percent(Some(0.0), 0.1, "near duplicate lines");
+    let ceiling = Ceiling::percent(Some(percent(0.0)), 0.1, "near duplicate lines");
 
     // Act
     let message = ceiling.breach();
@@ -104,7 +109,7 @@ fn breach_of_a_zero_percentage_limit_reports_any_duplication_at_all() {
 fn count_and_percent_format_the_same_number_differently() {
     // Arrange
     let counted = Ceiling::count(Some(1), 4, "groups");
-    let shared = Ceiling::percent(Some(1.0), 4.0, "lines");
+    let shared = Ceiling::percent(Some(percent(1.0)), 4.0, "lines");
 
     // Act
     let (from_count, from_percent) = (counted.breach(), shared.breach());

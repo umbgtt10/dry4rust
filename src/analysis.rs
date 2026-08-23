@@ -83,7 +83,8 @@ pub fn analyze_units(
 
     // 2. Find near-duplicates
     let exact_fps: Vec<_> = exact_groups.iter().map(|g| g.fingerprint).collect();
-    let near_groups = find_near_duplicates(units, config.similarity_threshold, &exact_fps);
+    let near_groups =
+        find_near_duplicates(units, config.similarity_threshold.as_fraction(), &exact_fps);
 
     // 3. Sub-function duplicate detection (opt-in)
     let (sub_exact_groups, sub_near_groups) = if config.sub_function {
@@ -110,8 +111,11 @@ pub fn analyze_units(
 
         let sub_exact = group_exact_duplicates(&sub_units);
         let sub_exact_fps: Vec<_> = sub_exact.iter().map(|g| g.fingerprint).collect();
-        let sub_near =
-            find_near_duplicates(&sub_units, config.similarity_threshold, &sub_exact_fps);
+        let sub_near = find_near_duplicates(
+            &sub_units,
+            config.similarity_threshold.as_fraction(),
+            &sub_exact_fps,
+        );
         (sub_exact, sub_near)
     } else {
         (Vec::new(), Vec::new())

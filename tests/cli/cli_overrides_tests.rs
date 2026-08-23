@@ -24,7 +24,9 @@ fn apply_to_appends_excludes_rather_than_replacing_the_configured_ones() {
     };
 
     // Act
-    let config = overrides.apply_to(config);
+    let config = overrides
+        .apply_to(config)
+        .expect("the overrides are in range");
 
     // Assert
     assert_eq!(
@@ -38,18 +40,20 @@ fn apply_to_appends_excludes_rather_than_replacing_the_configured_ones() {
 fn apply_to_replaces_only_the_values_that_were_given() {
     // Arrange
     let config = Config::default();
-    let untouched_threshold = config.similarity_threshold;
+    let untouched_threshold = config.similarity_threshold.as_fraction();
     let overrides = CliOverrides {
         min_nodes: Some(42),
         ..CliOverrides::default()
     };
 
     // Act
-    let config = overrides.apply_to(config);
+    let config = overrides
+        .apply_to(config)
+        .expect("the overrides are in range");
 
     // Assert
     assert_eq!(config.min_nodes, 42);
-    assert!((config.similarity_threshold - untouched_threshold).abs() < f64::EPSILON);
+    assert!((config.similarity_threshold.as_fraction() - untouched_threshold).abs() < f64::EPSILON);
 }
 
 #[test]
@@ -65,7 +69,9 @@ fn apply_to_with_nothing_set_leaves_every_field_as_it_was() {
     };
 
     // Act
-    let config = CliOverrides::default().apply_to(config);
+    let config = CliOverrides::default()
+        .apply_to(config)
+        .expect("no override is always in range");
 
     // Assert
     assert_eq!(config.min_nodes, 7);
@@ -177,4 +183,22 @@ fn min_nodes_option() {
         .assert()
         .success()
         .stdout(str::contains("Exact duplicates: 0 groups"));
+}
+
+#[test]
+fn threshold_above_one_is_rejected_rather_than_silently_finding_nothing() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .args([
+            "--path",
+            fixture_path("near_dupes").to_str().unwrap(),
+            "--threshold",
+            "5",
+            "report",
+        ])
+        .assert()
+        .code(2)
+        .stderr(str::contains(
+            "--threshold must be a fraction between 0.0 and 1.0, got 5",
+        ));
 }

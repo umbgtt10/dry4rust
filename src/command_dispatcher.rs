@@ -11,6 +11,7 @@ use crate::cli::analysis_output::AnalysisOutput;
 use crate::cli::check_command::CheckCommand;
 use crate::cli::checking::check_thresholds::CheckThresholds;
 use crate::cli::cleanup_command::CleanupCommand;
+use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::cli_overrides::CliOverrides;
 use crate::cli::command::Command;
@@ -96,18 +97,16 @@ impl<'a> CommandDispatcher<'a> {
                 max_near,
                 max_exact_percent,
                 max_near_percent,
-            } => CheckCommand::new(
-                &output.config,
-                &output.result,
-                reporter,
-                &CheckThresholds {
-                    max_exact: *max_exact,
-                    max_near: *max_near,
-                    max_exact_percent: *max_exact_percent,
-                    max_near_percent: *max_near_percent,
-                },
-            )
-            .run(writer),
+            } => {
+                let thresholds = CheckThresholds::new(
+                    *max_exact,
+                    *max_near,
+                    *max_exact_percent,
+                    *max_near_percent,
+                )
+                .map_err(|e| CliError::InvalidConfig(e.to_string()))?;
+                CheckCommand::new(&output.config, &output.result, reporter, &thresholds).run(writer)
+            }
             Command::Cleanup { dry_run } => {
                 CleanupCommand::new(self.root, &output.result, *dry_run).run(writer)
             }

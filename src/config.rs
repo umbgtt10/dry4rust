@@ -9,6 +9,9 @@ use serde::Deserialize;
 use std::fs;
 use toml::from_str;
 
+use crate::error::Result;
+use crate::threshold::Threshold;
+
 /// The subset of configuration relevant to language-specific parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnalysisConfig {
@@ -19,12 +22,18 @@ pub struct AnalysisConfig {
 }
 
 /// Configuration for cargo-dry4rust analysis.
+///
+/// The fields are public and settable, and the ones with a range carry it in
+/// their type: a [`Threshold`] cannot be built out of range, so a `Config`
+/// cannot hold a similarity threshold of five however it was assembled. The
+/// counts are `usize` and have no upper bound to state -- a floor of zero
+/// nodes admits everything, which is a choice rather than a mistake.
 #[derive(Debug, Clone)]
 pub struct Config {
     /// Minimum number of AST nodes for a code unit to be analyzed.
     pub min_nodes: usize,
-    /// Similarity threshold for near-duplicates (0.0 to 1.0).
-    pub similarity_threshold: f64,
+    /// Similarity threshold for near-duplicates.
+    pub similarity_threshold: Threshold,
     /// Path patterns to exclude from scanning.
     pub exclude: Vec<String>,
     /// Exit code threshold: fail if exact duplicate count exceeds this.
@@ -32,9 +41,9 @@ pub struct Config {
     /// Exit code threshold: fail if near duplicate count exceeds this.
     pub max_near_duplicates: Option<usize>,
     /// Exit code threshold: fail if exact duplicate percentage exceeds this.
-    pub max_exact_percent: Option<f64>,
+    pub max_exact_percent: Option<Threshold>,
     /// Exit code threshold: fail if near duplicate percentage exceeds this.
-    pub max_near_percent: Option<f64>,
+    pub max_near_percent: Option<Threshold>,
     /// Minimum number of source lines for a code unit to be analyzed.
     pub min_lines: usize,
     /// Exclude test code (#[test] functions and #[cfg(test)] modules).
@@ -51,7 +60,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             min_nodes: 10,
-            similarity_threshold: 0.9,
+            similarity_threshold: Threshold::DEFAULT_SIMILARITY,
             exclude: Vec::new(),
             max_exact_duplicates: None,
             max_near_duplicates: None,
@@ -117,8 +126,18 @@ impl Config {
     /// 2. dry4rust.toml in the project root
     /// 3. `[package.metadata.dry4rust]` in Cargo.toml
     /// 4. Defaults
-    #[must_use]
-    pub fn load(root: &Path) -> Self {
+    ///
+    /// A file that cannot be read or parsed is passed over, because a project
+    /// with no configuration is the ordinary case and looks the same. A file
+    /// that parses and then states an impossible value is not passed over:
+    /// the caller asked for something the tool cannot do, and saying so is
+    /// the only way they find out.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::error::Error::InvalidConfig`] naming the first field
+    /// whose value falls outside the range it allows.
+    pub fn load(root: &Path) -> Result<Self> {
         let mut config = Self {
             root: root.to_path_buf(),
             ..Default::default()
@@ -133,7 +152,7 @@ impl Config {
             && let Some(meta) = pkg.metadata
             && let Some(file_config) = meta.dry4rust
         {
-            config.apply_file_config(&file_config);
+            config = config.with_file_config(&file_config)?;
         }
 
         // Try dry4rust.toml (higher priority)
@@ -142,45 +161,47 @@ impl Config {
             && let Ok(content) = fs::read_to_string(&dry4rust_toml)
             && let Ok(file_config) = from_str::<FileConfig>(&content)
         {
-            config.apply_file_config(&file_config);
+            config = config.with_file_config(&file_config)?;
         }
 
-        config
+        Ok(config)
     }
 
-    fn apply_file_config(&mut self, fc: &FileConfig) {
+    fn with_file_config(self, fc: &FileConfig) -> Result<Self> {
+        let mut config = self;
         if let Some(v) = fc.min_nodes {
-            self.min_nodes = v;
+            config.min_nodes = v;
         }
         if let Some(v) = fc.similarity_threshold {
-            self.similarity_threshold = v;
+            config.similarity_threshold = Threshold::fraction("similarity_threshold", v)?;
         }
         if let Some(ref v) = fc.exclude {
-            self.exclude.clone_from(v);
+            config.exclude.clone_from(v);
         }
         if let Some(v) = fc.max_exact_duplicates {
-            self.max_exact_duplicates = Some(v);
+            config.max_exact_duplicates = Some(v);
         }
         if let Some(v) = fc.max_near_duplicates {
-            self.max_near_duplicates = Some(v);
+            config.max_near_duplicates = Some(v);
         }
         if let Some(v) = fc.max_exact_percent {
-            self.max_exact_percent = Some(v);
+            config.max_exact_percent = Some(Threshold::percent("max_exact_percent", v)?);
         }
         if let Some(v) = fc.max_near_percent {
-            self.max_near_percent = Some(v);
+            config.max_near_percent = Some(Threshold::percent("max_near_percent", v)?);
         }
         if let Some(v) = fc.min_lines {
-            self.min_lines = v;
+            config.min_lines = v;
         }
         if let Some(v) = fc.exclude_tests {
-            self.exclude_tests = v;
+            config.exclude_tests = v;
         }
         if let Some(v) = fc.sub_function {
-            self.sub_function = v;
+            config.sub_function = v;
         }
         if let Some(v) = fc.min_sub_nodes {
-            self.min_sub_nodes = v;
+            config.min_sub_nodes = v;
         }
+        Ok(config)
     }
 }
