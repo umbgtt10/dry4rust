@@ -6,8 +6,15 @@ Two numbers decide everything this tool reports: a fingerprint, which answers
 ## The exact case
 
 ```
-fingerprint(unit) = hash(normalised_signature, normalised_body)
+fingerprint(unit) = FNV-1a-64( encode(signature) ++ encode(body) )
 ```
+
+`encode` writes each node as its variant *name*, then its payload, then its
+child count, then its children. Names rather than positions, so reordering
+`NodeKind` leaves fingerprints alone; child counts, so `[[a], b]` and
+`[a, [b]]` differ; big-endian fixed-width integers, so machines of different
+word size agree. Both the algorithm and the format live in this repository --
+see [ADR-TheFingerprintFormatIsOwned](ADRs/ADR-TheFingerprintFormatIsOwned.md).
 
 Two units are exact duplicates when their fingerprints are equal. There is no
 threshold and no tolerance -- normalisation has already absorbed everything
@@ -53,16 +60,21 @@ disagreement on a branch:
 - otherwise the node contributes `1` if the kinds are fully equal, and the
   walk continues into children, pairwise, in order
 
-The pairwise descent is positional. Children are zipped, so the third child of
-`a` is only ever compared with the third child of `b`, and a tree with more
-children than the other simply runs out of pairs.
+How the descent pairs children depends on what those children are.
 
-This is the property most worth knowing before trusting a score. Two blocks
-that differ by one inserted statement do not score "one statement apart" --
-everything after the insertion is compared against its neighbour and disagrees.
-The measure is sensitive to alignment, not just to content.
-[OPEN_POINTS.md](OPEN_POINTS.md) records this as a known limitation rather
-than a setting.
+`Block`, `Tuple` and `Array` hold homogeneous lists, so their children are
+**aligned**: the pairing chosen is the one maximising the total match over any
+order-preserving assignment, weighted by how well each candidate pair itself
+matches. Two blocks differing by one inserted statement therefore score as one
+statement apart rather than as wholly different.
+
+Every other kind holds children in **named slots** -- an `If` is
+`[condition, then, else]` -- and those are compared position for position, so
+a then-branch is never matched against an else-branch. See
+[ADR-SequenceChildrenAreAligned](ADRs/ADR-SequenceChildrenAreAligned.md).
+
+Either way each child is used at most once, so `matching` stays bounded by the
+smaller tree -- which is what makes the size ceiling below valid.
 
 ## Why the score is not computed for every pair
 

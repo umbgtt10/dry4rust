@@ -7,39 +7,6 @@ stands, not a wish list -- what to build next is
 None of these is a bug in the sense of "the code does not do what it says".
 They are places where what it says is narrower than a reader might assume.
 
-## Child comparison is positional, so an inserted statement misaligns the rest
-
-`similarity::count_matching` descends two trees together and zips their
-children. The third child of `a` is only ever compared with the third child of
-`b`.
-
-The consequence is that the score measures alignment as much as content. Two
-blocks that differ by one inserted statement near the top do not score "one
-statement apart": everything after the insertion is compared against its
-neighbour, disagrees, and contributes nothing. A pair a human would call
-obviously duplicated can score below the threshold because of where the
-difference sits rather than how large it is.
-
-This is the single most consequential limitation in the tool, and the one a
-tree-edit distance or a longest-common-subsequence over children would
-address. It is not a setting -- there is no flag that changes it.
-
-## Fingerprints are not guaranteed stable across Rust releases
-
-`Fingerprint` hashes with `std::collections::hash_map::DefaultHasher`. That
-type is deterministic within a toolchain -- it is seeded with fixed keys, not
-random ones -- but the standard library explicitly does not guarantee the
-algorithm across Rust versions.
-
-Fingerprints are persisted. `.dry4rust-ignore.toml` records them, and a
-suppression written under one toolchain may silently stop matching under
-another: the entry stays in the file, the duplicate reappears in the report,
-and nothing explains why.
-
-The fix is a hasher this repository controls rather than one it borrows. It
-has not been done because it invalidates every existing suppression file once,
-and doing that deliberately is better than doing it twice.
-
 ## A group with no directly scored pair reports the threshold, not a measurement
 
 Groups are built by transitive closure, so `A~B` and `B~C` puts `A`, `B` and

@@ -3,9 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::hash_map::DefaultHasher;
+use crate::node_encoder::NodeEncoder;
+use crate::stable_hasher::StableHasher;
 use std::fmt;
-use std::hash::{Hash, Hasher};
 
 use crate::node::NormalizedNode;
 
@@ -24,18 +24,18 @@ impl Fingerprint {
     /// Compute a fingerprint from a normalized node.
     #[must_use]
     pub fn from_node(node: &NormalizedNode) -> Self {
-        let mut hasher = DefaultHasher::new();
-        node.hash(&mut hasher);
-        Self(hasher.finish())
+        let mut encoder = NodeEncoder::new();
+        encoder.encode(node);
+        Self(encoder.finish())
     }
 
     /// Compute a fingerprint from a signature + body pair.
     #[must_use]
     pub fn from_sig_and_body(sig: &NormalizedNode, body: &NormalizedNode) -> Self {
-        let mut hasher = DefaultHasher::new();
-        sig.hash(&mut hasher);
-        body.hash(&mut hasher);
-        Self(hasher.finish())
+        let mut encoder = NodeEncoder::new();
+        encoder.encode(sig);
+        encoder.encode(body);
+        Self(encoder.finish())
     }
 
     /// Compute a composite fingerprint from a set of fingerprints.
@@ -44,9 +44,9 @@ impl Fingerprint {
     pub fn from_fingerprints(fps: &[Self]) -> Self {
         let mut sorted: Vec<u64> = fps.iter().map(|fp| fp.0).collect();
         sorted.sort_unstable();
-        let mut hasher = DefaultHasher::new();
-        for v in &sorted {
-            v.hash(&mut hasher);
+        let mut hasher = StableHasher::new();
+        for value in &sorted {
+            hasher.write_u64(*value);
         }
         Self(hasher.finish())
     }

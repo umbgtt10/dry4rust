@@ -29,7 +29,7 @@ together because they answer one question between them.
                  control flow, preserved exactly
                  macros      -> opaque nodes keyed by name
      |
-     +--> fingerprint      hash the normalised node
+     +--> node_encoder --> stable_hasher      the fingerprint
      |
      v
   grouper
@@ -58,6 +58,8 @@ bodies as further units, which then travel the same path.
 | `normalization_context` | The placeholder counters. Two identifiers map to the same placeholder only within one context. |
 | `node` | `NormalizedNode` and `NodeKind` -- the normalised tree, plus `count_nodes` and `reindex_placeholders`. |
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
+| `node_encoder` | The byte format a fingerprint is computed over -- variants by name, children counted. |
+| `stable_hasher` | FNV-1a 64, defined here so a fingerprint survives a toolchain upgrade. |
 | `extractor` / `sub_unit_extractor` | Compound structures inside a body, as further comparable units. |
 | `grouper` | `DuplicateGroup`, `DuplicationStats`, exact grouping. |
 | `near_duplicate::near_duplicate_finder` | Candidate filtering and transitive closure into groups. |

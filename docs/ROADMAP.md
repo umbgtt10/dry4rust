@@ -60,22 +60,12 @@ first release with an engine in it and has not been published.
 
 ## What is left
 
-**1. Publish 0.2.0.** The manifest is ready and the name is held. Worth doing
-once there is a reason beyond "the fork is tidy" -- a cleaned fork with no new
-capability does not earn a crates.io entry.
+**1. Publish 0.2.0.** The manifest is ready and the name is held. It now has
+a reason beyond "the fork is tidy": three correctness fixes the incumbent does
+not have -- an exact size bound, aligned sequence children, and a fingerprint
+format that survives a toolchain upgrade.
 
-**2. Own the hasher.** `DefaultHasher` is not guaranteed stable across Rust
-releases, and fingerprints are written to suppression files. This invalidates
-every existing suppression once, so it should happen before there are many.
-See [OPEN_POINTS.md](OPEN_POINTS.md).
-
-**3. Fix positional child alignment.** The largest gap between what the score
-means and what a reader assumes. An inserted statement currently misaligns
-every comparison after it. A longest-common-subsequence over children, or a
-tree-edit distance, would make the score measure content rather than
-alignment. This is the highest-value correctness work available.
-
-**4. Semantic redundancy detection.** The direction above. Two functions with
+**2. Semantic redundancy detection.** The direction above. Two functions with
 the same behaviour and different structure -- a `for` loop accumulating a sum
 against an `iter().sum()`, a hand-rolled `match` against an `unwrap_or`. This
 is the work the fork exists for, and it is deliberately last, because it

@@ -7,6 +7,13 @@ use dry4rust::near_duplicate::similarity::*;
 use dry4rust::node::{BinOpKind, LiteralKind, PlaceholderKind};
 use dry4rust::node::{NodeKind, NormalizedNode};
 
+fn block_of(kinds: &[NodeKind]) -> NormalizedNode {
+    NormalizedNode::with_children(
+        NodeKind::Block,
+        kinds.iter().cloned().map(NormalizedNode::leaf).collect(),
+    )
+}
+
 fn int_lit() -> NormalizedNode {
     NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Int))
 }
@@ -185,4 +192,110 @@ fn similarity_is_symmetric() {
 
     // Assert
     assert!((similarity_score(&a, &b) - similarity_score(&b, &a)).abs() < f64::EPSILON);
+}
+
+#[test]
+fn similarity_score_between_blocks_differing_by_one_inserted_statement_stays_high() {
+    // Arrange
+    let original = block_of(&[
+        NodeKind::Return,
+        NodeKind::Break,
+        NodeKind::Continue,
+        NodeKind::Await,
+    ]);
+    let with_insertion = block_of(&[
+        NodeKind::Try,
+        NodeKind::Return,
+        NodeKind::Break,
+        NodeKind::Continue,
+        NodeKind::Await,
+    ]);
+
+    // Act
+    let score = similarity_score(&original, &with_insertion);
+
+    // Assert
+    assert!(
+        (score - 10.0 / 11.0).abs() < 1e-9,
+        "five of eleven nodes differ by one insertion, so ten match; a \
+         positional comparison scored this 2/11 because every statement after \
+         the insertion lined up against its neighbour, got {score}"
+    );
+}
+
+#[test]
+fn similarity_score_between_blocks_with_a_statement_removed_stays_high() {
+    // Arrange
+    let original = block_of(&[NodeKind::Return, NodeKind::Break, NodeKind::Continue]);
+    let shortened = block_of(&[NodeKind::Return, NodeKind::Continue]);
+
+    // Act
+    let score = similarity_score(&original, &shortened);
+
+    // Assert
+    assert!(
+        (score - 6.0 / 7.0).abs() < 1e-9,
+        "the surviving statements align across the gap, got {score}"
+    );
+}
+
+#[test]
+fn similarity_score_between_tuples_differing_by_one_inserted_element_stays_high() {
+    // Arrange
+    let pair = NormalizedNode::with_children(
+        NodeKind::Tuple,
+        vec![
+            NormalizedNode::leaf(NodeKind::Return),
+            NormalizedNode::leaf(NodeKind::Await),
+        ],
+    );
+    let triple = NormalizedNode::with_children(
+        NodeKind::Tuple,
+        vec![
+            NormalizedNode::leaf(NodeKind::Try),
+            NormalizedNode::leaf(NodeKind::Return),
+            NormalizedNode::leaf(NodeKind::Await),
+        ],
+    );
+
+    // Act
+    let score = similarity_score(&pair, &triple);
+
+    // Assert
+    assert!(
+        (score - 6.0 / 7.0).abs() < 1e-9,
+        "a tuple is a list too, got {score}"
+    );
+}
+
+#[test]
+fn similarity_score_never_matches_a_then_branch_against_an_else_branch() {
+    // Arrange
+    let then_only = NormalizedNode::with_children(
+        NodeKind::If,
+        vec![
+            NormalizedNode::leaf(NodeKind::Return),
+            NormalizedNode::leaf(NodeKind::Await),
+            NormalizedNode::none(),
+        ],
+    );
+    let else_only = NormalizedNode::with_children(
+        NodeKind::If,
+        vec![
+            NormalizedNode::leaf(NodeKind::Return),
+            NormalizedNode::none(),
+            NormalizedNode::leaf(NodeKind::Await),
+        ],
+    );
+
+    // Act
+    let score = similarity_score(&then_only, &else_only);
+
+    // Assert
+    assert!(
+        (score - 2.0 / 3.0).abs() < 1e-9,
+        "an If holds named slots, so only the condition and the If itself \
+         match; free alignment would have paired a then-branch against an \
+         else-branch and called these two identical, got {score}"
+    );
 }

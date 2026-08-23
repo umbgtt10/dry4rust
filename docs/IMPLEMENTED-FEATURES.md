@@ -44,6 +44,19 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Corrected in the engine**
 
+- The fingerprint format is defined in this repository rather than inherited
+  from `DefaultHasher`, derived `Hash` and native-endian integers. Variants are
+  written by name, so reordering `NodeKind` no longer invalidates every
+  suppression in every consuming repository. This changed all existing
+  fingerprints once; the fifty entries in this repository's own ignore file
+  went stale and were pruned in the same commit.
+- `Block`, `Tuple` and `Array` children are aligned by weighted
+  longest-common-subsequence instead of zipped. Two blocks differing by one
+  inserted statement scored `2/11` and now score `10/11`, against a default
+  threshold of `0.8`. Kinds whose children are named slots keep positional
+  comparison, so an `If` with a then-branch is still not a match for an `If`
+  with an else-branch.
+
 - `CodeUnitKind` no longer restricts near-duplicate detection.
   `group_exact_duplicates` had always ignored kind, so a free function and a
   method with identical bodies were reported as exact duplicates while the
