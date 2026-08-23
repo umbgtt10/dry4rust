@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use crate::analyzer::LanguageAnalyzer;
 use crate::code_unit::CodeUnit;
 use crate::config::Config;
+use crate::error::Result;
 use crate::extractor::extract_sub_units;
 use crate::fingerprint::Fingerprint;
 use crate::grouper::compute_stats_with_sub;
@@ -41,7 +42,7 @@ pub fn analyze(
     analyzer: &dyn LanguageAnalyzer,
     files: &[PathBuf],
     config: &Config,
-) -> crate::error::Result<AnalysisResult> {
+) -> Result<AnalysisResult> {
     let analysis_config = config.analysis_config();
     let mut units = Vec::new();
     let mut warnings = Vec::new();
@@ -76,7 +77,7 @@ pub fn analyze_units(
     units: &[CodeUnit],
     warnings: Vec<String>,
     config: &Config,
-) -> crate::error::Result<AnalysisResult> {
+) -> Result<AnalysisResult> {
     // 1. Group exact duplicates
     let exact_groups = group_exact_duplicates(units);
 

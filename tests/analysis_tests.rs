@@ -19,6 +19,8 @@ use dry4rust::rust::normalizer::normalize::normalize_item_fn;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
 use parser::parse_file;
 use std::fs;
+use syn::Expr;
+use syn::ItemFn;
 use syn::parse_str;
 use tempfile::TempDir;
 
@@ -53,12 +55,12 @@ fn parse_and_extract_body(code: &str) -> NormalizedNode {
     body
 }
 
-fn parse_expr(code: &str) -> syn::Expr {
-    parse_str::<syn::Expr>(code).unwrap()
+fn parse_expr(code: &str) -> Expr {
+    parse_str::<Expr>(code).unwrap()
 }
 
-fn parse_fn(code: &str) -> syn::ItemFn {
-    parse_str::<syn::ItemFn>(code).unwrap()
+fn parse_fn(code: &str) -> ItemFn {
+    parse_str::<ItemFn>(code).unwrap()
 }
 
 #[test]
@@ -800,7 +802,7 @@ fn sub_units_are_reindexed() {
 
     let mut ctx = NormalizationContext::new();
     let fresh_expr = normalize_expr(
-        &parse_str::<syn::Expr>("{ let d = c + 1; d }").unwrap(),
+        &parse_str::<Expr>("{ let d = c + 1; d }").unwrap(),
         &mut ctx,
     );
     let reindexed_fresh = reindex_placeholders(&fresh_expr);

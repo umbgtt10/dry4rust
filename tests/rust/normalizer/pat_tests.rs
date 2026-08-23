@@ -6,11 +6,13 @@
 use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::pat::normalize_pat;
 use dry4rust::rust::normalizer::pat::normalize_type;
+use syn::Pat;
+use syn::Type;
 use syn::parse::Parser;
 use syn::parse_str;
 
 fn pat_of(source: &str) -> String {
-    let pat = syn::Pat::parse_single
+    let pat = Pat::parse_single
         .parse_str(source)
         .expect("the pattern parses");
     let mut ctx = NormalizationContext::new();
@@ -18,7 +20,7 @@ fn pat_of(source: &str) -> String {
 }
 
 fn type_of(source: &str) -> String {
-    let ty: syn::Type = parse_str(source).expect("the type parses");
+    let ty: Type = parse_str(source).expect("the type parses");
     let mut ctx = NormalizationContext::new();
     format!("{:?}", normalize_type(&ty, &mut ctx))
 }
@@ -45,8 +47,8 @@ fn normalize_pat_gives_a_tuple_struct_the_same_kind_as_a_braced_struct() {
 #[test]
 fn normalize_pat_gives_differently_named_bindings_the_same_node() {
     // Arrange
-    let a: syn::Pat = syn::Pat::parse_single.parse_str("x").expect("parses");
-    let b: syn::Pat = syn::Pat::parse_single.parse_str("y").expect("parses");
+    let a: Pat = Pat::parse_single.parse_str("x").expect("parses");
+    let b: Pat = Pat::parse_single.parse_str("y").expect("parses");
 
     // Act
     let na = normalize_pat(&a, &mut NormalizationContext::new());
@@ -119,7 +121,7 @@ fn normalize_pat_over_a_struct_pattern_yields_a_struct_node() {
 #[test]
 fn normalize_pat_over_an_alternation_yields_an_or_node() {
     // Arrange
-    let pat = syn::Pat::parse_multi
+    let pat = Pat::parse_multi
         .parse_str("Red | Green | Blue")
         .expect("an alternation needs parse_multi; parse_single rejects it");
     let mut ctx = NormalizationContext::new();
@@ -136,8 +138,8 @@ fn normalize_type_gives_distinct_types_distinct_placeholders_in_one_context() {
     // Arrange -- types become positional placeholders, so telling two apart is
     // only meaningful within a single context. In separate contexts the first
     // type of each is deliberately the same node.
-    let a: syn::Type = parse_str("i32").expect("parses");
-    let b: syn::Type = parse_str("Vec<String>").expect("parses");
+    let a: Type = parse_str("i32").expect("parses");
+    let b: Type = parse_str("Vec<String>").expect("parses");
     let mut ctx = NormalizationContext::new();
 
     // Act
@@ -151,8 +153,8 @@ fn normalize_type_gives_distinct_types_distinct_placeholders_in_one_context() {
 #[test]
 fn normalize_type_gives_the_same_type_the_same_node() {
     // Arrange
-    let a: syn::Type = parse_str("i32").expect("parses");
-    let b: syn::Type = parse_str("i32").expect("parses");
+    let a: Type = parse_str("i32").expect("parses");
+    let b: Type = parse_str("i32").expect("parses");
 
     // Act
     let mut ctx = NormalizationContext::new();
@@ -186,7 +188,7 @@ fn normalize_type_handles_every_type_form_it_claims_to() {
     let nodes: Vec<_> = forms
         .iter()
         .map(|src| {
-            let ty: syn::Type = parse_str(src).unwrap_or_else(|e| panic!("{src} parses: {e}"));
+            let ty: Type = parse_str(src).unwrap_or_else(|e| panic!("{src} parses: {e}"));
             normalize_type(&ty, &mut ctx)
         })
         .collect();
@@ -198,8 +200,8 @@ fn normalize_type_handles_every_type_form_it_claims_to() {
 #[test]
 fn normalize_type_keeps_never_and_infer_apart() {
     // Arrange
-    let never: syn::Type = parse_str("!").expect("parses");
-    let infer: syn::Type = parse_str("_").expect("parses");
+    let never: Type = parse_str("!").expect("parses");
+    let infer: Type = parse_str("_").expect("parses");
 
     // Act
     let mut ctx = NormalizationContext::new();
@@ -273,8 +275,8 @@ fn normalize_type_over_the_unit_type_yields_a_unit_node() {
 #[test]
 fn normalize_type_sees_through_parentheses_to_the_inner_type() {
     // Arrange
-    let bare: syn::Type = parse_str("i32").expect("parses");
-    let parenthesised: syn::Type = parse_str("(i32)").expect("parses");
+    let bare: Type = parse_str("i32").expect("parses");
+    let parenthesised: Type = parse_str("(i32)").expect("parses");
 
     // Act
     let a = normalize_type(&bare, &mut NormalizationContext::new());

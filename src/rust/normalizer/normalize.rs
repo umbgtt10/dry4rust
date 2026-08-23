@@ -9,8 +9,14 @@ use crate::normalization_context::NormalizationContext;
 
 use super::expr::{normalize_block, normalize_expr};
 use super::pat::{normalize_pat, normalize_type};
+use syn::Block;
+use syn::ExprClosure;
+use syn::ImplItemFn;
+use syn::ItemFn;
+use syn::ItemImpl;
+use syn::Signature;
 
-pub fn normalize_signature(sig: &syn::Signature, ctx: &mut NormalizationContext) -> NormalizedNode {
+pub fn normalize_signature(sig: &Signature, ctx: &mut NormalizationContext) -> NormalizedNode {
     // FnSignature -> [return_type_or_None, param0, param1, ...]
     let return_type = match &sig.output {
         syn::ReturnType::Default => NormalizedNode::none(),
@@ -44,10 +50,7 @@ pub fn normalize_signature(sig: &syn::Signature, ctx: &mut NormalizationContext)
 
 // -- Public entry points ------------------------------------------------------
 
-fn normalize_fn_parts(
-    sig: &syn::Signature,
-    block: &syn::Block,
-) -> (NormalizedNode, NormalizedNode) {
+fn normalize_fn_parts(sig: &Signature, block: &Block) -> (NormalizedNode, NormalizedNode) {
     let mut ctx = NormalizationContext::new();
     let sig = normalize_signature(sig, &mut ctx);
     let body = normalize_block(block, &mut ctx);
@@ -56,19 +59,19 @@ fn normalize_fn_parts(
 
 /// Normalize a top-level function.
 #[must_use]
-pub fn normalize_item_fn(func: &syn::ItemFn) -> (NormalizedNode, NormalizedNode) {
+pub fn normalize_item_fn(func: &ItemFn) -> (NormalizedNode, NormalizedNode) {
     normalize_fn_parts(&func.sig, &func.block)
 }
 
 /// Normalize a method within an impl block.
 #[must_use]
-pub fn normalize_impl_item_fn(method: &syn::ImplItemFn) -> (NormalizedNode, NormalizedNode) {
+pub fn normalize_impl_item_fn(method: &ImplItemFn) -> (NormalizedNode, NormalizedNode) {
     normalize_fn_parts(&method.sig, &method.block)
 }
 
 /// Normalize a closure expression.
 #[must_use]
-pub fn normalize_closure_expr(closure: &syn::ExprClosure) -> NormalizedNode {
+pub fn normalize_closure_expr(closure: &ExprClosure) -> NormalizedNode {
     let mut ctx = NormalizationContext::new();
     let mut children = vec![normalize_expr(&closure.body, &mut ctx)];
     children.extend(closure.inputs.iter().map(|p| normalize_pat(p, &mut ctx)));
@@ -77,7 +80,7 @@ pub fn normalize_closure_expr(closure: &syn::ExprClosure) -> NormalizedNode {
 
 /// Normalize an impl block -- normalizes each method body.
 #[must_use]
-pub fn normalize_impl_block(imp: &syn::ItemImpl) -> Vec<(String, NormalizedNode, NormalizedNode)> {
+pub fn normalize_impl_block(imp: &ItemImpl) -> Vec<(String, NormalizedNode, NormalizedNode)> {
     imp.items
         .iter()
         .filter_map(|item| {

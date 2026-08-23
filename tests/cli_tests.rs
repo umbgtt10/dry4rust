@@ -26,6 +26,7 @@ use dry4rust::scanner::ScanConfig;
 use dry4rust::scanner::scan_files;
 use predicate::str;
 use predicates::prelude::*;
+use serde_json::Value;
 use serde_json::from_str;
 use std::fs;
 use tempfile::TempDir;
@@ -600,8 +601,7 @@ fn create_reporter_in_json_mode_writes_parseable_json() {
     cmd_stats(&result, reporter.as_ref(), &mut out).expect("reporting succeeds");
 
     // Assert
-    let parsed: serde_json::Value =
-        from_str(&String::from_utf8(out).expect("utf-8")).expect("valid json");
+    let parsed: Value = from_str(&String::from_utf8(out).expect("utf-8")).expect("valid json");
     assert!(parsed.is_object());
 }
 
@@ -661,7 +661,7 @@ fn exclude_tests_flag_reduces_duplicates() {
         .get_output()
         .stdout
         .clone();
-    let all: serde_json::Value = from_str(&String::from_utf8(output_all).unwrap()).unwrap();
+    let all: Value = from_str(&String::from_utf8(output_all).unwrap()).unwrap();
 
     // Assert
     assert_eq!(all["exact_duplicate_units"].as_u64().unwrap(), 3);
@@ -681,7 +681,7 @@ fn exclude_tests_flag_reduces_duplicates() {
         .get_output()
         .stdout
         .clone();
-    let excl: serde_json::Value = from_str(&String::from_utf8(output_excl).unwrap()).unwrap();
+    let excl: Value = from_str(&String::from_utf8(output_excl).unwrap()).unwrap();
     assert_eq!(excl["exact_duplicate_units"].as_u64().unwrap(), 2);
     assert_eq!(excl["total_code_units"].as_u64().unwrap(), 2);
 }
@@ -885,10 +885,10 @@ fn json_format_report() {
 
     // Assert
     assert!(parts.len() >= 2, "expected stats + groups sections");
-    let stats: serde_json::Value = from_str(parts[0]).unwrap();
+    let stats: Value = from_str(parts[0]).unwrap();
     assert!(stats["total_code_units"].as_u64().unwrap() > 0);
     assert!(stats["exact_duplicate_groups"].as_u64().unwrap() > 0);
-    let groups: serde_json::Value = from_str(parts[1]).unwrap();
+    let groups: Value = from_str(parts[1]).unwrap();
     assert!(groups.as_array().unwrap().len() > 0);
     assert!(groups[0]["fingerprint"].is_string());
     assert!(groups[0]["members"].is_array());
@@ -911,7 +911,7 @@ fn json_format_stats() {
         .stdout
         .clone();
     let text = String::from_utf8(output).unwrap();
-    let parsed: serde_json::Value = from_str(&text).unwrap();
+    let parsed: Value = from_str(&text).unwrap();
 
     // Assert
     assert!(parsed["total_code_units"].as_u64().unwrap() > 0);
@@ -934,7 +934,7 @@ fn json_stats_includes_line_counts() {
         .stdout
         .clone();
     let text = String::from_utf8(output).unwrap();
-    let parsed: serde_json::Value = from_str(&text).unwrap();
+    let parsed: Value = from_str(&text).unwrap();
 
     // Assert
     assert!(parsed["exact_duplicate_lines"].is_u64());
@@ -1204,7 +1204,7 @@ fn sub_function_json_stats() {
         .stdout
         .clone();
     let text = String::from_utf8(output).unwrap();
-    let parsed: serde_json::Value = from_str(&text).unwrap();
+    let parsed: Value = from_str(&text).unwrap();
 
     // Assert
     assert_eq!(parsed["sub_exact_groups"].as_u64().unwrap(), 3);
@@ -1295,7 +1295,7 @@ fn without_sub_function_json_no_sub_fields() {
         .stdout
         .clone();
     let text = String::from_utf8(output).unwrap();
-    let parsed: serde_json::Value = from_str(&text).unwrap();
+    let parsed: Value = from_str(&text).unwrap();
     // Without --sub-function, sub fields should be absent (skip_serializing_if = "is_zero")
 
     // Assert

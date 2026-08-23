@@ -6,6 +6,7 @@
 use dry4rust::rust::parser::*;
 use std::fs;
 use std::path::Path;
+use syn::File;
 use syn::parse_str;
 use tempfile::TempDir;
 
@@ -442,7 +443,7 @@ fn test_functions_tagged_as_test() {
 #[test]
 fn test_has_cfg_test_attr() {
     // Arrange & Act
-    let file: syn::File = parse_str(
+    let file: File = parse_str(
         r#"
         #[cfg(test)]
         mod tests {}
@@ -469,7 +470,7 @@ fn test_has_cfg_test_attr() {
 #[test]
 fn test_has_test_attr() {
     // Arrange & Act
-    let file: syn::File = parse_str(
+    let file: File = parse_str(
         r#"
         #[test]
         fn my_test() {}

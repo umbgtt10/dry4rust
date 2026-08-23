@@ -15,6 +15,13 @@ use crate::node;
 use crate::rust::normalizer;
 use normalizer::normalize;
 use std::fs;
+use syn::Attribute;
+use syn::ExprClosure;
+use syn::Ident;
+use syn::ItemFn;
+use syn::ItemImpl;
+use syn::ItemMod;
+use syn::Type;
 use syn::parse_file as parse_syn_file;
 use syn::visit;
 
@@ -22,17 +29,17 @@ pub use crate::code_unit::{CodeUnit, CodeUnitKind};
 
 /// Check if attributes contain `#[test]`.
 #[must_use]
-pub fn has_test_attr(attrs: &[syn::Attribute]) -> bool {
+pub fn has_test_attr(attrs: &[Attribute]) -> bool {
     attrs.iter().any(|attr| attr.path().is_ident("test"))
 }
 
 /// Check if attributes contain `#[cfg(test)]`.
 #[must_use]
-pub fn has_cfg_test_attr(attrs: &[syn::Attribute]) -> bool {
+pub fn has_cfg_test_attr(attrs: &[Attribute]) -> bool {
     attrs.iter().any(|attr| {
         attr.path().is_ident("cfg")
             && attr
-                .parse_args::<syn::Ident>()
+                .parse_args::<Ident>()
                 .is_ok_and(|ident| ident == "test")
     })
 }
@@ -101,7 +108,7 @@ impl CodeUnitExtractor {
 }
 
 impl<'ast> Visit<'ast> for CodeUnitExtractor {
-    fn visit_item_fn(&mut self, node: &'ast syn::ItemFn) {
+    fn visit_item_fn(&mut self, node: &'ast ItemFn) {
         let is_test =
             self.in_test_context || has_test_attr(&node.attrs) || has_cfg_test_attr(&node.attrs);
 
@@ -126,7 +133,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         self.in_test_context = prev;
     }
 
-    fn visit_item_mod(&mut self, node: &'ast syn::ItemMod) {
+    fn visit_item_mod(&mut self, node: &'ast ItemMod) {
         let prev = self.in_test_context;
         if has_cfg_test_attr(&node.attrs) {
             self.in_test_context = true;
@@ -135,7 +142,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         self.in_test_context = prev;
     }
 
-    fn visit_item_impl(&mut self, node: &'ast syn::ItemImpl) {
+    fn visit_item_impl(&mut self, node: &'ast ItemImpl) {
         let prev_test = self.in_test_context;
         if has_cfg_test_attr(&node.attrs) {
             self.in_test_context = true;
@@ -198,7 +205,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         self.in_test_context = prev_test;
     }
 
-    fn visit_expr_closure(&mut self, node: &'ast syn::ExprClosure) {
+    fn visit_expr_closure(&mut self, node: &'ast ExprClosure) {
         let line_start = node.or1_token.span.start().line;
         let line_end = match &*node.body {
             syn::Expr::Block(eb) => eb.block.brace_token.span.close().end().line,
@@ -237,9 +244,9 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
 }
 
 /// Get a simple string representation of a type for naming.
-fn quote_type(ty: &syn::Type) -> String {
+fn quote_type(ty: &Type) -> String {
     match ty {
-        syn::Type::Path(tp) => tp
+        Type::Path(tp) => tp
             .path
             .segments
             .iter()

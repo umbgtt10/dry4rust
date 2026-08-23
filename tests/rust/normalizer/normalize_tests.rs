@@ -15,6 +15,10 @@ use dry4rust::rust::normalizer::normalize::normalize_impl_block;
 use dry4rust::rust::normalizer::normalize::normalize_impl_item_fn;
 use dry4rust::rust::normalizer::normalize::normalize_item_fn;
 use dry4rust::rust::normalizer::normalize::normalize_signature;
+use syn::Expr;
+use syn::ExprClosure;
+use syn::ItemFn;
+use syn::ItemImpl;
 use syn::parse_str;
 
 fn normalize_code_expr(code: &str) -> NormalizedNode {
@@ -23,12 +27,12 @@ fn normalize_code_expr(code: &str) -> NormalizedNode {
     normalize_expr(&expr, &mut ctx)
 }
 
-fn parse_expr(code: &str) -> syn::Expr {
-    parse_str::<syn::Expr>(code).unwrap()
+fn parse_expr(code: &str) -> Expr {
+    parse_str::<Expr>(code).unwrap()
 }
 
-fn parse_fn(code: &str) -> syn::ItemFn {
-    parse_str::<syn::ItemFn>(code).unwrap()
+fn parse_fn(code: &str) -> ItemFn {
+    parse_str::<ItemFn>(code).unwrap()
 }
 
 #[test]
@@ -199,7 +203,7 @@ fn impl_block_methods_normalized() {
             fn baz(&mut self, val: i32) { self.x = val; }
         }
     "#;
-    let item: syn::ItemImpl = parse_str(code).unwrap();
+    let item: ItemImpl = parse_str(code).unwrap();
     let methods = normalize_impl_block(&item);
 
     // Assert
@@ -314,8 +318,8 @@ fn node_counting_works() {
 #[test]
 fn normalize_closure_expr_ignores_the_parameter_names() {
     // Arrange
-    let a: syn::ExprClosure = parse_str("|x: i32| x + 1").expect("parses");
-    let b: syn::ExprClosure = parse_str("|y: i32| y + 1").expect("parses");
+    let a: ExprClosure = parse_str("|x: i32| x + 1").expect("parses");
+    let b: ExprClosure = parse_str("|y: i32| y + 1").expect("parses");
 
     // Act
     let na = normalize_closure_expr(&a);
@@ -340,7 +344,7 @@ fn normalize_closures_ignores_the_parameter_names() {
 #[test]
 fn normalize_impl_item_fn_splits_a_method_into_signature_and_body() {
     // Arrange
-    let item: syn::ItemImpl =
+    let item: ItemImpl =
         parse_str("impl Foo { fn bar(&self, x: i32) -> i32 { x + 1 } }").expect("parses");
     let syn::ImplItem::Fn(method) = item.items.first().expect("one method").clone() else {
         panic!("expected a method");
@@ -367,8 +371,8 @@ fn normalize_loop_produces_a_loop_node() {
 #[test]
 fn normalize_signature_gives_alpha_equivalent_signatures_the_same_node() {
     // Arrange
-    let a: syn::ItemFn = parse_str("fn f(x: i32) -> i32 { x }").expect("parses");
-    let b: syn::ItemFn = parse_str("fn g(y: i32) -> i32 { y }").expect("parses");
+    let a: ItemFn = parse_str("fn f(x: i32) -> i32 { x }").expect("parses");
+    let b: ItemFn = parse_str("fn g(y: i32) -> i32 { y }").expect("parses");
 
     // Act
     let na = normalize_signature(&a.sig, &mut NormalizationContext::new());
@@ -384,7 +388,7 @@ fn pat_macro_normalized() {
     let code = "fn foo(x: i32) { match x { my_pat!(x) => {} _ => {} } }";
 
     // Assert
-    if let Ok(f) = parse_str::<syn::ItemFn>(code) {
+    if let Ok(f) = parse_str::<ItemFn>(code) {
         let (_, body) = normalize_item_fn(&f);
 
         assert!(count_nodes(&body) > 0);
@@ -569,7 +573,7 @@ fn type_position_macro_normalized() {
     let code = "fn foo() -> my_type!(i32) {}";
 
     // Assert
-    if let Ok(f) = parse_str::<syn::ItemFn>(code) {
+    if let Ok(f) = parse_str::<ItemFn>(code) {
         let (sig, _) = normalize_item_fn(&f);
 
         assert!(count_nodes(&sig) > 0);

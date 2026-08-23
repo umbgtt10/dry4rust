@@ -8,16 +8,22 @@ use crate::normalization_context::NormalizationContext;
 use syn::punctuated::Punctuated;
 
 use super::expr::normalize_expr;
+use syn::BinOp;
+use syn::Expr;
+use syn::Lit;
+use syn::Macro;
+use syn::Member;
+use syn::UnOp;
 
 #[must_use]
-pub fn member_to_string(member: &syn::Member) -> String {
+pub fn member_to_string(member: &Member) -> String {
     match member {
-        syn::Member::Named(ident) => ident.to_string(),
-        syn::Member::Unnamed(idx) => idx.index.to_string(),
+        Member::Named(ident) => ident.to_string(),
+        Member::Unnamed(idx) => idx.index.to_string(),
     }
 }
 
-pub fn normalize_macro(mac: &syn::Macro, ctx: &mut NormalizationContext) -> NormalizedNode {
+pub fn normalize_macro(mac: &Macro, ctx: &mut NormalizationContext) -> NormalizedNode {
     let name = mac
         .path
         .segments
@@ -27,7 +33,7 @@ pub fn normalize_macro(mac: &syn::Macro, ctx: &mut NormalizationContext) -> Norm
     let args = if mac.tokens.is_empty() {
         Vec::new()
     } else {
-        match mac.parse_body_with(Punctuated::<syn::Expr, syn::Token![,]>::parse_terminated) {
+        match mac.parse_body_with(Punctuated::<Expr, syn::Token![,]>::parse_terminated) {
             Ok(punct) => punct.into_iter().map(|e| normalize_expr(&e, ctx)).collect(),
             Err(_) => vec![NormalizedNode::leaf(NodeKind::Opaque)],
         }
@@ -36,61 +42,61 @@ pub fn normalize_macro(mac: &syn::Macro, ctx: &mut NormalizationContext) -> Norm
 }
 
 #[must_use]
-pub const fn normalize_lit(lit: &syn::Lit) -> NormalizedNode {
+pub const fn normalize_lit(lit: &Lit) -> NormalizedNode {
     match lit {
-        syn::Lit::Str(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Str)),
-        syn::Lit::ByteStr(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::ByteStr)),
-        syn::Lit::CStr(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::CStr)),
-        syn::Lit::Byte(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Byte)),
-        syn::Lit::Char(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Char)),
-        syn::Lit::Int(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Int)),
-        syn::Lit::Float(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Float)),
-        syn::Lit::Bool(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Bool)),
+        Lit::Str(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Str)),
+        Lit::ByteStr(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::ByteStr)),
+        Lit::CStr(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::CStr)),
+        Lit::Byte(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Byte)),
+        Lit::Char(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Char)),
+        Lit::Int(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Int)),
+        Lit::Float(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Float)),
+        Lit::Bool(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Bool)),
         _ => NormalizedNode::leaf(NodeKind::Opaque),
     }
 }
 
 #[must_use]
-pub const fn normalize_bin_op(op: &syn::BinOp) -> BinOpKind {
+pub const fn normalize_bin_op(op: &BinOp) -> BinOpKind {
     match op {
-        syn::BinOp::Add(_) => BinOpKind::Add,
-        syn::BinOp::Sub(_) => BinOpKind::Sub,
-        syn::BinOp::Mul(_) => BinOpKind::Mul,
-        syn::BinOp::Div(_) => BinOpKind::Div,
-        syn::BinOp::Rem(_) => BinOpKind::Rem,
-        syn::BinOp::And(_) => BinOpKind::And,
-        syn::BinOp::Or(_) => BinOpKind::Or,
-        syn::BinOp::BitXor(_) => BinOpKind::BitXor,
-        syn::BinOp::BitAnd(_) => BinOpKind::BitAnd,
-        syn::BinOp::BitOr(_) => BinOpKind::BitOr,
-        syn::BinOp::Shl(_) => BinOpKind::Shl,
-        syn::BinOp::Shr(_) => BinOpKind::Shr,
-        syn::BinOp::Eq(_) => BinOpKind::Eq,
-        syn::BinOp::Lt(_) => BinOpKind::Lt,
-        syn::BinOp::Le(_) => BinOpKind::Le,
-        syn::BinOp::Ne(_) => BinOpKind::Ne,
-        syn::BinOp::Ge(_) => BinOpKind::Ge,
-        syn::BinOp::Gt(_) => BinOpKind::Gt,
-        syn::BinOp::AddAssign(_) => BinOpKind::AddAssign,
-        syn::BinOp::SubAssign(_) => BinOpKind::SubAssign,
-        syn::BinOp::MulAssign(_) => BinOpKind::MulAssign,
-        syn::BinOp::DivAssign(_) => BinOpKind::DivAssign,
-        syn::BinOp::RemAssign(_) => BinOpKind::RemAssign,
-        syn::BinOp::BitXorAssign(_) => BinOpKind::BitXorAssign,
-        syn::BinOp::BitAndAssign(_) => BinOpKind::BitAndAssign,
-        syn::BinOp::BitOrAssign(_) => BinOpKind::BitOrAssign,
-        syn::BinOp::ShlAssign(_) => BinOpKind::ShlAssign,
-        syn::BinOp::ShrAssign(_) => BinOpKind::ShrAssign,
+        BinOp::Add(_) => BinOpKind::Add,
+        BinOp::Sub(_) => BinOpKind::Sub,
+        BinOp::Mul(_) => BinOpKind::Mul,
+        BinOp::Div(_) => BinOpKind::Div,
+        BinOp::Rem(_) => BinOpKind::Rem,
+        BinOp::And(_) => BinOpKind::And,
+        BinOp::Or(_) => BinOpKind::Or,
+        BinOp::BitXor(_) => BinOpKind::BitXor,
+        BinOp::BitAnd(_) => BinOpKind::BitAnd,
+        BinOp::BitOr(_) => BinOpKind::BitOr,
+        BinOp::Shl(_) => BinOpKind::Shl,
+        BinOp::Shr(_) => BinOpKind::Shr,
+        BinOp::Eq(_) => BinOpKind::Eq,
+        BinOp::Lt(_) => BinOpKind::Lt,
+        BinOp::Le(_) => BinOpKind::Le,
+        BinOp::Ne(_) => BinOpKind::Ne,
+        BinOp::Ge(_) => BinOpKind::Ge,
+        BinOp::Gt(_) => BinOpKind::Gt,
+        BinOp::AddAssign(_) => BinOpKind::AddAssign,
+        BinOp::SubAssign(_) => BinOpKind::SubAssign,
+        BinOp::MulAssign(_) => BinOpKind::MulAssign,
+        BinOp::DivAssign(_) => BinOpKind::DivAssign,
+        BinOp::RemAssign(_) => BinOpKind::RemAssign,
+        BinOp::BitXorAssign(_) => BinOpKind::BitXorAssign,
+        BinOp::BitAndAssign(_) => BinOpKind::BitAndAssign,
+        BinOp::BitOrAssign(_) => BinOpKind::BitOrAssign,
+        BinOp::ShlAssign(_) => BinOpKind::ShlAssign,
+        BinOp::ShrAssign(_) => BinOpKind::ShrAssign,
         _ => BinOpKind::Other,
     }
 }
 
 #[must_use]
-pub const fn normalize_un_op(op: &syn::UnOp) -> UnOpKind {
+pub const fn normalize_un_op(op: &UnOp) -> UnOpKind {
     match op {
-        syn::UnOp::Deref(_) => UnOpKind::Deref,
-        syn::UnOp::Not(_) => UnOpKind::Not,
-        syn::UnOp::Neg(_) => UnOpKind::Neg,
+        UnOp::Deref(_) => UnOpKind::Deref,
+        UnOp::Not(_) => UnOpKind::Not,
+        UnOp::Neg(_) => UnOpKind::Neg,
         _ => UnOpKind::Other,
     }
 }

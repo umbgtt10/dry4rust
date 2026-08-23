@@ -3,10 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use assert_cmd::Command;
 use assert_cmd::cargo::cargo_bin_cmd;
 use std::path::PathBuf;
 
-pub fn cargo_dry4rust() -> assert_cmd::Command {
+pub fn cargo_dry4rust() -> Command {
     cargo_bin_cmd!("cargo-dry4rust")
 }
 

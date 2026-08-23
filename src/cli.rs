@@ -10,6 +10,7 @@ use crate::analysis::AnalysisResult;
 use crate::analysis::analyze;
 use crate::analyzer::LanguageAnalyzer;
 use crate::config::Config;
+use crate::error::Error as AnalysisError;
 use crate::fingerprint::Fingerprint;
 use crate::ignore::{self, IgnoreEntry};
 use crate::output::json::JsonReporter;
@@ -42,7 +43,7 @@ pub enum CliError {
     /// Multiple languages detected — user must specify `--language` (exit code 2).
     AmbiguousLanguage(Vec<String>),
     /// Analysis pipeline failed (exit code 2).
-    Analysis(crate::error::Error),
+    Analysis(AnalysisError),
     /// Invalid fingerprint string (exit code 2).
     InvalidFingerprint(String),
     /// Check thresholds exceeded (exit code 1).
@@ -108,8 +109,8 @@ impl From<io::Error> for CliError {
     }
 }
 
-impl From<crate::error::Error> for CliError {
-    fn from(e: crate::error::Error) -> Self {
+impl From<AnalysisError> for CliError {
+    fn from(e: AnalysisError) -> Self {
         Self::Analysis(e)
     }
 }

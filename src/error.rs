@@ -5,6 +5,7 @@
 
 use std::io;
 use std::path::PathBuf;
+use std::result::Result as StdResult;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -18,6 +19,6 @@ pub enum Error {
     Other(String),
 }
 
-/// The one qualified path this crate keeps. Naming the alias `Result` shadows
-/// the prelude's, so the right-hand side has to say which one it means.
-pub type Result<T> = std::result::Result<T, Error>;
+/// Imported under another name because this alias is itself called `Result`:
+/// the right-hand side has to name something other than what it defines.
+pub type Result<T> = StdResult<T, Error>;

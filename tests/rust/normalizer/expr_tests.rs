@@ -6,13 +6,15 @@
 use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::expr::normalize_block;
 use dry4rust::rust::normalizer::expr::normalize_stmt;
+use syn::Block;
+use syn::Stmt;
 use syn::parse_str;
 
 #[test]
 fn normalize_block_erases_the_names_its_statements_bind() {
     // Arrange
-    let a: syn::Block = parse_str("{ let x = 1; x + 1 }").expect("parses");
-    let b: syn::Block = parse_str("{ let y = 1; y + 1 }").expect("parses");
+    let a: Block = parse_str("{ let x = 1; x + 1 }").expect("parses");
+    let b: Block = parse_str("{ let y = 1; y + 1 }").expect("parses");
 
     // Act
     let na = normalize_block(&a, &mut NormalizationContext::new());
@@ -25,8 +27,8 @@ fn normalize_block_erases_the_names_its_statements_bind() {
 #[test]
 fn normalize_block_keeps_blocks_of_different_shape_apart() {
     // Arrange
-    let a: syn::Block = parse_str("{ let x = 1; x + 1 }").expect("parses");
-    let b: syn::Block = parse_str("{ let x = 1; }").expect("parses");
+    let a: Block = parse_str("{ let x = 1; x + 1 }").expect("parses");
+    let b: Block = parse_str("{ let x = 1; }").expect("parses");
 
     // Act
     let na = normalize_block(&a, &mut NormalizationContext::new());
@@ -39,8 +41,8 @@ fn normalize_block_keeps_blocks_of_different_shape_apart() {
 #[test]
 fn normalize_stmt_gives_alpha_equivalent_lets_the_same_node() {
     // Arrange
-    let a: syn::Stmt = parse_str("let x = 1;").expect("parses");
-    let b: syn::Stmt = parse_str("let y = 1;").expect("parses");
+    let a: Stmt = parse_str("let x = 1;").expect("parses");
+    let b: Stmt = parse_str("let y = 1;").expect("parses");
 
     // Act
     let na = normalize_stmt(&a, &mut NormalizationContext::new());

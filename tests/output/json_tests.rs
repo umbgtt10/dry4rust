@@ -9,6 +9,7 @@ use dry4rust::grouper::{DuplicateGroup, DuplicationStats};
 use dry4rust::node::{NodeKind, NormalizedNode};
 use dry4rust::output::json::*;
 use dry4rust::output::reporter::Reporter;
+use serde_json::Value;
 use serde_json::from_str;
 use std::path::PathBuf;
 
@@ -43,7 +44,7 @@ fn json_is_valid() {
     // Should be valid JSON
 
     // Assert
-    assert!(from_str::<serde_json::Value>(&output).is_ok());
+    assert!(from_str::<Value>(&output).is_ok());
 }
 
 #[test]
@@ -72,7 +73,7 @@ fn json_report_exact_empty() {
     let mut buf = Vec::new();
     reporter.report_exact(&[], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
-    let parsed: serde_json::Value = from_str(&output).unwrap();
+    let parsed: Value = from_str(&output).unwrap();
 
     // Assert
     assert!(parsed.as_array().unwrap().is_empty());
@@ -93,7 +94,7 @@ fn json_report_exact_with_groups() {
     let mut buf = Vec::new();
     reporter.report_exact(&[group], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
-    let parsed: serde_json::Value = from_str(&output).unwrap();
+    let parsed: Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
 
     // Assert
@@ -119,7 +120,7 @@ fn json_report_near_with_groups() {
     let mut buf = Vec::new();
     reporter.report_near(&[group], &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
-    let parsed: serde_json::Value = from_str(&output).unwrap();
+    let parsed: Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
 
     // Assert
@@ -149,7 +150,7 @@ fn json_report_stats() {
     let mut buf = Vec::new();
     reporter.report_stats(&stats, &mut buf).unwrap();
     let output = String::from_utf8(buf).unwrap();
-    let parsed: serde_json::Value = from_str(&output).unwrap();
+    let parsed: Value = from_str(&output).unwrap();
 
     // Assert
     assert_eq!(parsed["total_code_units"], 50);

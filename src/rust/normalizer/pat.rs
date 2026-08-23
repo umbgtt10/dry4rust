@@ -5,13 +5,15 @@
 
 use crate::node::{NodeKind, NormalizedNode, PlaceholderKind};
 use crate::normalization_context::NormalizationContext;
+use syn::Pat;
+use syn::Type;
 
 use super::expr::normalize_expr;
 use super::helpers::{member_to_string, normalize_lit, normalize_macro};
 
-pub fn normalize_type(ty: &syn::Type, ctx: &mut NormalizationContext) -> NormalizedNode {
+pub fn normalize_type(ty: &Type, ctx: &mut NormalizationContext) -> NormalizedNode {
     match ty {
-        syn::Type::Path(tp) => {
+        Type::Path(tp) => {
             // Single-segment paths become type placeholders
             if tp.qself.is_none() && tp.path.segments.len() == 1 {
                 let seg = &tp.path.segments[0];
@@ -30,13 +32,13 @@ pub fn normalize_type(ty: &syn::Type, ctx: &mut NormalizationContext) -> Normali
                 NormalizedNode::with_children(NodeKind::TypePath, segments)
             }
         }
-        syn::Type::Reference(r) => NormalizedNode::with_children(
+        Type::Reference(r) => NormalizedNode::with_children(
             NodeKind::TypeReference {
                 mutable: r.mutability.is_some(),
             },
             vec![normalize_type(&r.elem, ctx)],
         ),
-        syn::Type::Tuple(t) => {
+        Type::Tuple(t) => {
             if t.elems.is_empty() {
                 NormalizedNode::leaf(NodeKind::TypeUnit)
             } else {
@@ -46,14 +48,14 @@ pub fn normalize_type(ty: &syn::Type, ctx: &mut NormalizationContext) -> Normali
                 )
             }
         }
-        syn::Type::Slice(s) => {
+        Type::Slice(s) => {
             NormalizedNode::with_children(NodeKind::TypeSlice, vec![normalize_type(&s.elem, ctx)])
         }
-        syn::Type::Array(a) => NormalizedNode::with_children(
+        Type::Array(a) => NormalizedNode::with_children(
             NodeKind::TypeArray,
             vec![normalize_type(&a.elem, ctx), normalize_expr(&a.len, ctx)],
         ),
-        syn::Type::ImplTrait(i) => NormalizedNode::with_children(
+        Type::ImplTrait(i) => NormalizedNode::with_children(
             NodeKind::TypeImplTrait,
             i.bounds
                 .iter()
@@ -83,30 +85,30 @@ pub fn normalize_type(ty: &syn::Type, ctx: &mut NormalizationContext) -> Normali
                 })
                 .collect(),
         ),
-        syn::Type::Infer(_) => NormalizedNode::leaf(NodeKind::TypeInfer),
-        syn::Type::Never(_) => NormalizedNode::leaf(NodeKind::TypeNever),
-        syn::Type::Paren(p) => normalize_type(&p.elem, ctx),
-        syn::Type::Macro(tm) => normalize_macro(&tm.mac, ctx),
+        Type::Infer(_) => NormalizedNode::leaf(NodeKind::TypeInfer),
+        Type::Never(_) => NormalizedNode::leaf(NodeKind::TypeNever),
+        Type::Paren(p) => normalize_type(&p.elem, ctx),
+        Type::Macro(tm) => normalize_macro(&tm.mac, ctx),
         _ => NormalizedNode::leaf(NodeKind::Opaque),
     }
 }
 
-pub fn normalize_pat(pat: &syn::Pat, ctx: &mut NormalizationContext) -> NormalizedNode {
+pub fn normalize_pat(pat: &Pat, ctx: &mut NormalizationContext) -> NormalizedNode {
     match pat {
-        syn::Pat::Ident(pi) => {
+        Pat::Ident(pi) => {
             let idx = ctx.placeholder(&pi.ident.to_string(), PlaceholderKind::Variable);
             NormalizedNode::leaf(NodeKind::PatPlaceholder(PlaceholderKind::Variable, idx))
         }
-        syn::Pat::Wild(_) => NormalizedNode::leaf(NodeKind::PatWild),
-        syn::Pat::Tuple(pt) => NormalizedNode::with_children(
+        Pat::Wild(_) => NormalizedNode::leaf(NodeKind::PatWild),
+        Pat::Tuple(pt) => NormalizedNode::with_children(
             NodeKind::PatTuple,
             pt.elems.iter().map(|p| normalize_pat(p, ctx)).collect(),
         ),
-        syn::Pat::TupleStruct(pts) => NormalizedNode::with_children(
+        Pat::TupleStruct(pts) => NormalizedNode::with_children(
             NodeKind::PatStruct,
             pts.elems.iter().map(|p| normalize_pat(p, ctx)).collect(),
         ),
-        syn::Pat::Struct(ps) => NormalizedNode::with_children(
+        Pat::Struct(ps) => NormalizedNode::with_children(
             NodeKind::PatStruct,
             ps.fields
                 .iter()
@@ -127,33 +129,33 @@ pub fn normalize_pat(pat: &syn::Pat, ctx: &mut NormalizationContext) -> Normaliz
                 })
                 .collect(),
         ),
-        syn::Pat::Or(po) => NormalizedNode::with_children(
+        Pat::Or(po) => NormalizedNode::with_children(
             NodeKind::PatOr,
             po.cases.iter().map(|p| normalize_pat(p, ctx)).collect(),
         ),
-        syn::Pat::Lit(pl) => {
+        Pat::Lit(pl) => {
             NormalizedNode::with_children(NodeKind::PatLiteral, vec![normalize_lit(&pl.lit)])
         }
-        syn::Pat::Reference(pr) => NormalizedNode::with_children(
+        Pat::Reference(pr) => NormalizedNode::with_children(
             NodeKind::PatReference {
                 mutable: pr.mutability.is_some(),
             },
             vec![normalize_pat(&pr.pat, ctx)],
         ),
-        syn::Pat::Slice(ps) => NormalizedNode::with_children(
+        Pat::Slice(ps) => NormalizedNode::with_children(
             NodeKind::PatSlice,
             ps.elems.iter().map(|p| normalize_pat(p, ctx)).collect(),
         ),
-        syn::Pat::Rest(_) => NormalizedNode::leaf(NodeKind::PatRest),
+        Pat::Rest(_) => NormalizedNode::leaf(NodeKind::PatRest),
         // PatRange -> [from_or_None, to_or_None]
-        syn::Pat::Range(pr) => NormalizedNode::with_children(
+        Pat::Range(pr) => NormalizedNode::with_children(
             NodeKind::PatRange,
             vec![
                 NormalizedNode::opt(pr.start.as_ref().map(|e| normalize_expr(e, ctx))),
                 NormalizedNode::opt(pr.end.as_ref().map(|e| normalize_expr(e, ctx))),
             ],
         ),
-        syn::Pat::Path(pp) => {
+        Pat::Path(pp) => {
             if pp.path.segments.len() == 1 {
                 let seg = &pp.path.segments[0];
                 let idx = ctx.placeholder(&seg.ident.to_string(), PlaceholderKind::Variable);
@@ -176,8 +178,8 @@ pub fn normalize_pat(pat: &syn::Pat, ctx: &mut NormalizationContext) -> Normaliz
                 )
             }
         }
-        syn::Pat::Type(pt) => normalize_pat(&pt.pat, ctx),
-        syn::Pat::Macro(pm) => normalize_macro(&pm.mac, ctx),
+        Pat::Type(pt) => normalize_pat(&pt.pat, ctx),
+        Pat::Macro(pm) => normalize_macro(&pm.mac, ctx),
         _ => NormalizedNode::leaf(NodeKind::Opaque),
     }
 }
