@@ -8,6 +8,7 @@ use std::path::Path;
 
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::analysis_output::AnalysisOutput;
+use crate::cli::baseline_command::BaselineCommand;
 use crate::cli::check_command::CheckCommand;
 use crate::cli::checking::check_thresholds::CheckThresholds;
 use crate::cli::cleanup_command::CleanupCommand;
@@ -70,8 +71,16 @@ impl<'a> CommandDispatcher<'a> {
     }
 
     fn dispatch_analysed(&self, command: &Command, writer: &mut impl Write) -> CliResult {
-        let output =
-            AnalysisOutput::produce(self.analyzer, self.root, self.format, &self.overrides)?;
+        let output = if matches!(command, Command::Baseline { .. }) {
+            AnalysisOutput::produce_ignoring_baseline(
+                self.analyzer,
+                self.root,
+                self.format,
+                &self.overrides,
+            )?
+        } else {
+            AnalysisOutput::produce(self.analyzer, self.root, self.format, &self.overrides)?
+        };
         Self::report_warnings(&output);
         self.render(command, &output, writer)
     }
@@ -109,6 +118,10 @@ impl<'a> CommandDispatcher<'a> {
             }
             Command::Cleanup { dry_run } => {
                 CleanupCommand::new(self.root, &output.result, *dry_run).run(writer)
+            }
+            Command::Baseline { dry_run } => {
+                BaselineCommand::new(self.root, &output.config, &output.result, *dry_run)
+                    .run(writer)
             }
             Command::Ignore { .. } | Command::Ignored => unreachable!(),
         }

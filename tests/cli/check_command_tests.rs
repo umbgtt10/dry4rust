@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::helpers::{analysed, cargo_dry4rust, fixture_path};
+use crate::common::{analysed, cargo_dry4rust, fixture_path};
 use dry4rust::cli::check_command::CheckCommand;
 use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::cli_error::CliError;

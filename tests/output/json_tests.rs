@@ -146,6 +146,7 @@ fn json_report_stats() {
         sub_exact_units: 0,
         sub_near_groups: 0,
         sub_near_units: 0,
+        baseline_suppressed: None,
     };
     let mut buf = Vec::new();
     reporter.report_stats(&stats, &mut buf).unwrap();

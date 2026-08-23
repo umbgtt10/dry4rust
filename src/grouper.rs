@@ -37,9 +37,22 @@ pub struct DuplicationStats {
     pub sub_exact_units: usize,
     pub sub_near_groups: usize,
     pub sub_near_units: usize,
+    /// Groups a baseline accounted for, or `None` when no baseline was in
+    /// effect. Zero and "there was nothing to suppress with" are different
+    /// facts, and a reader of the summary needs to tell them apart.
+    pub baseline_suppressed: Option<usize>,
 }
 
 impl DuplicationStats {
+    /// The same statistics, with what the baseline took out of them.
+    #[must_use]
+    pub const fn with_baseline_suppressed(self, suppressed: Option<usize>) -> Self {
+        Self {
+            baseline_suppressed: suppressed,
+            ..self
+        }
+    }
+
     fn percent_of_total(&self, lines: usize) -> f64 {
         if self.total_lines == 0 {
             0.0
@@ -138,6 +151,7 @@ pub fn compute_stats(
         sub_exact_units: 0,
         sub_near_groups: 0,
         sub_near_units: 0,
+        baseline_suppressed: None,
     }
 }
 

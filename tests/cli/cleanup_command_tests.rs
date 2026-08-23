@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::helpers::{analysed, cargo_dry4rust, fixture_path};
+use crate::common::{analysed, cargo_dry4rust, fixture_path};
 use dry4rust::cli::cleanup_command::CleanupCommand;
 use dry4rust::cli::ignore_command::IgnoreCommand;
 use predicate::str;

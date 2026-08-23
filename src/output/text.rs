@@ -138,6 +138,9 @@ impl Reporter for TextReporter {
             stats.near_duplicate_percent(),
             format_with_commas(stats.total_lines),
         )?;
+        if let Some(suppressed) = stats.baseline_suppressed {
+            writeln!(writer, "Baseline: {suppressed} groups suppressed")?;
+        }
         if stats.sub_exact_groups > 0 || stats.sub_near_groups > 0 {
             writeln!(writer)?;
             writeln!(

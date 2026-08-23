@@ -7,6 +7,8 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 
 use crate::analyzer::LanguageAnalyzer;
+use crate::baseline::baseline_filter::BaselineFilter;
+use crate::baseline::baseline_kind::BaselineKind;
 use crate::code_unit::CodeUnit;
 use crate::config::Config;
 use crate::error::Result;
@@ -137,14 +139,26 @@ pub fn analyze_units(
     let sub_exact_groups = filter_ignored(sub_exact_groups, &ignore_file);
     let sub_near_groups = filter_ignored(sub_near_groups, &ignore_file);
 
-    // 6. Compute stats
+    // 6. Set aside what the baseline already accounted for
+    let baseline = BaselineFilter::load(config)?;
+    let found =
+        exact_groups.len() + near_groups.len() + sub_exact_groups.len() + sub_near_groups.len();
+    let exact_groups = baseline.retain_new(BaselineKind::Exact, exact_groups);
+    let near_groups = baseline.retain_new(BaselineKind::Near, near_groups);
+    let sub_exact_groups = baseline.retain_new(BaselineKind::SubExact, sub_exact_groups);
+    let sub_near_groups = baseline.retain_new(BaselineKind::SubNear, sub_near_groups);
+    let reported =
+        exact_groups.len() + near_groups.len() + sub_exact_groups.len() + sub_near_groups.len();
+
+    // 7. Compute stats
     let stats = compute_stats_with_sub(
         units,
         &exact_groups,
         &near_groups,
         &sub_exact_groups,
         &sub_near_groups,
-    );
+    )
+    .with_baseline_suppressed(baseline.is_in_effect().then_some(found - reported));
 
     Ok(AnalysisResult {
         stats,

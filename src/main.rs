@@ -66,6 +66,11 @@ struct Cli {
     /// Minimum AST node count for sub-function units.
     #[arg(long, global = true)]
     min_sub_nodes: Option<usize>,
+
+    /// Baseline of inherited duplication: groups it records are not reported
+    /// and do not fail a check. Record one with the `baseline` subcommand.
+    #[arg(long, global = true)]
+    baseline: Option<PathBuf>,
 }
 
 fn main() {
@@ -80,6 +85,7 @@ fn main() {
         exclude_tests,
         sub_function,
         min_sub_nodes,
+        baseline,
         ..
     } = Cli::parse();
 
@@ -93,6 +99,7 @@ fn main() {
         exclude_tests: if exclude_tests { Some(true) } else { None },
         sub_function: if sub_function { Some(true) } else { None },
         min_sub_nodes,
+        baseline,
     };
 
     let analyzer = RustAnalyzer::new();

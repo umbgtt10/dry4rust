@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::path::PathBuf;
+
 use crate::config::Config;
 use crate::error::Result;
 use crate::threshold::Threshold;
@@ -17,6 +19,7 @@ pub struct CliOverrides {
     pub exclude_tests: Option<bool>,
     pub sub_function: Option<bool>,
     pub min_sub_nodes: Option<usize>,
+    pub baseline: Option<PathBuf>,
 }
 
 impl CliOverrides {
@@ -52,6 +55,9 @@ impl CliOverrides {
         }
         if let Some(min_sub_nodes) = self.min_sub_nodes {
             config.min_sub_nodes = min_sub_nodes;
+        }
+        if let Some(ref baseline) = self.baseline {
+            config.baseline = Some(baseline.clone());
         }
         Ok(config)
     }

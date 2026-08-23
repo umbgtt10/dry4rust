@@ -7,7 +7,7 @@
 //! These tests exercise fingerprint, similarity, grouper, and extractor functionality
 //! Every case is driven from syn-parsed Rust source.
 
-use crate::common::helpers::analysed;
+use crate::common::analysed;
 use dry4rust::analysis::analyze_units;
 use dry4rust::config::Config;
 use dry4rust::extractor;

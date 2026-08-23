@@ -41,4 +41,11 @@ pub enum Command {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Record the duplication that is already there, so `check` fails on what
+    /// is added rather than on what was inherited.
+    Baseline {
+        /// Only list what would be recorded, without writing the file.
+        #[arg(long)]
+        dry_run: bool,
+    },
 }

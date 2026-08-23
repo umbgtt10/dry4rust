@@ -42,6 +42,8 @@ struct JsonStats {
     sub_near_groups: usize,
     #[serde(skip_serializing_if = "is_zero")]
     sub_near_units: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    baseline_suppressed: Option<usize>,
 }
 
 #[allow(clippy::trivially_copy_pass_by_ref)] // serde skip_serializing_if requires &T
@@ -82,6 +84,7 @@ impl Reporter for JsonReporter {
             sub_exact_units: stats.sub_exact_units,
             sub_near_groups: stats.sub_near_groups,
             sub_near_units: stats.sub_near_units,
+            baseline_suppressed: stats.baseline_suppressed,
         };
         let json = to_string_pretty(&json_stats).map_err(io::Error::other)?;
         writeln!(writer, "{json}")

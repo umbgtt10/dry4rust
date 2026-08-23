@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::helpers::{cargo_dry4rust, fixture_path};
+use crate::common::{cargo_dry4rust, fixture_path};
 use dry4rust::cli::ignore_command::IgnoreCommand;
 use dry4rust::cli::ignored_command::IgnoredCommand;
 use tempfile::TempDir;

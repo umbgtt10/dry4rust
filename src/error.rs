@@ -22,6 +22,9 @@ pub enum Error {
         expected: &'static str,
     },
 
+    #[error("baseline {}: {problem}", .path.display())]
+    Baseline { path: PathBuf, problem: String },
+
     #[error("{0}")]
     Other(String),
 }

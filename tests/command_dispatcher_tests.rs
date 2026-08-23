@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::helpers::fixture_path;
+use crate::common::fixture_path;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::command::Command;

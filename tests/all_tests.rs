@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod analysis_tests;
+pub mod baseline;
 pub mod cli;
 pub mod code_unit_tests;
 pub mod command_dispatcher_tests;

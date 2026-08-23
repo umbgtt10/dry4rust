@@ -51,6 +51,7 @@ fn duplication_stats_percentages_match_their_counts() {
         sub_exact_units: 0,
         sub_near_groups: 0,
         sub_near_units: 0,
+        baseline_suppressed: None,
     };
 
     // Assert
@@ -166,9 +167,33 @@ fn percentage_helpers_zero_total() {
         sub_exact_units: 0,
         sub_near_groups: 0,
         sub_near_units: 0,
+        baseline_suppressed: None,
     };
 
     // Assert
     assert!((stats.exact_duplicate_percent() - 0.0).abs() < f64::EPSILON);
     assert!((stats.near_duplicate_percent() - 0.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn with_baseline_suppressed_distinguishes_none_suppressed_from_no_baseline() {
+    // Arrange
+    let units: Vec<CodeUnit> = Vec::new();
+    let none: Vec<DuplicateGroup> = Vec::new();
+    let stats = compute_stats_with_sub(&units, &none, &none, &none, &none);
+
+    // Act
+    let judged = stats.clone().with_baseline_suppressed(Some(0));
+    let unjudged = stats.with_baseline_suppressed(None);
+
+    // Assert
+    assert_eq!(
+        judged.baseline_suppressed,
+        Some(0),
+        "a baseline that suppressed nothing is still a baseline that was applied"
+    );
+    assert_eq!(
+        unjudged.baseline_suppressed, None,
+        "and no baseline at all is a different fact"
+    );
 }

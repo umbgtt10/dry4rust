@@ -52,6 +52,8 @@ pub struct Config {
     pub sub_function: bool,
     /// Minimum number of AST nodes for a sub-function unit to be analyzed.
     pub min_sub_nodes: usize,
+    /// Baseline of inherited duplication to judge against, if any.
+    pub baseline: Option<PathBuf>,
     /// Root path to analyze.
     pub root: PathBuf,
 }
@@ -70,6 +72,7 @@ impl Default for Config {
             exclude_tests: false,
             sub_function: false,
             min_sub_nodes: 5,
+            baseline: None,
             root: PathBuf::from("."),
         }
     }
@@ -90,6 +93,7 @@ struct FileConfig {
     exclude_tests: Option<bool>,
     sub_function: Option<bool>,
     min_sub_nodes: Option<usize>,
+    baseline: Option<PathBuf>,
 }
 
 /// Cargo.toml metadata section.
@@ -201,6 +205,9 @@ impl Config {
         }
         if let Some(v) = fc.min_sub_nodes {
             config.min_sub_nodes = v;
+        }
+        if let Some(ref v) = fc.baseline {
+            config.baseline = Some(v.clone());
         }
         Ok(config)
     }

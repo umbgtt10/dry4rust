@@ -44,10 +44,48 @@ impl AnalysisOutput {
         format: OutputFormat,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
-        let config = Config::load(root)
-            .and_then(|config| overrides.apply_to(config))
-            .map_err(|e| CliError::InvalidConfig(e.to_string()))?;
+        Self::from_config(analyzer, root, format, Self::configure(root, overrides)?)
+    }
 
+    /// The same run, with the baseline left out of it.
+    ///
+    /// What `baseline` records with: a recording that judged against the
+    /// previous recording would hold only what had been added since, and the
+    /// second run would empty the file.
+    ///
+    /// # Errors
+    ///
+    /// The same as [`AnalysisOutput::produce`], less the baseline.
+    pub fn produce_ignoring_baseline(
+        analyzer: &dyn LanguageAnalyzer,
+        root: &Path,
+        format: OutputFormat,
+        overrides: &CliOverrides,
+    ) -> CliResult<Self> {
+        let mut config = Self::configure(root, overrides)?;
+        let named = config.baseline.take();
+        let output = Self::from_config(analyzer, root, format, config)?;
+        Ok(Self {
+            config: Config {
+                baseline: named,
+                ..output.config
+            },
+            ..output
+        })
+    }
+
+    fn configure(root: &Path, overrides: &CliOverrides) -> CliResult<Config> {
+        Config::load(root)
+            .and_then(|config| overrides.apply_to(config))
+            .map_err(|e| CliError::InvalidConfig(e.to_string()))
+    }
+
+    fn from_config(
+        analyzer: &dyn LanguageAnalyzer,
+        root: &Path,
+        format: OutputFormat,
+        config: Config,
+    ) -> CliResult<Self> {
         let scan_config = ScanConfig::new(config.root.clone())
             .with_excludes(config.exclude.clone())
             .with_extensions(

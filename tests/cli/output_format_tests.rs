@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::helpers::analysed;
+use crate::common::analysed;
 use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::cli::stats_command::StatsCommand;
 use serde_json::Value;

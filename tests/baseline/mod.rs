@@ -3,4 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod helpers;
+pub mod baseline_entry_tests;
+pub mod baseline_file_tests;
+pub mod baseline_filter_tests;
+pub mod baseline_kind_tests;
