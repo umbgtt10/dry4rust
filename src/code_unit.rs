@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 use crate::fingerprint::Fingerprint;
 use crate::node::NormalizedNode;
+use std::fmt;
 
 /// The kind of code unit extracted from source.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
@@ -24,8 +25,8 @@ pub enum CodeUnitKind {
     Block,
 }
 
-impl std::fmt::Display for CodeUnitKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for CodeUnitKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Function => write!(f, "function"),
             Self::Method => write!(f, "method"),

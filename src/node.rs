@@ -260,7 +260,7 @@ impl NormalizedNode {
 fn collect_placeholder_order(
     node: &NormalizedNode,
     order: &mut Vec<(PlaceholderKind, usize)>,
-    seen: &mut std::collections::HashSet<(PlaceholderKind, usize)>,
+    seen: &mut HashSet<(PlaceholderKind, usize)>,
 ) {
     match &node.kind {
         NodeKind::Placeholder(kind, idx)

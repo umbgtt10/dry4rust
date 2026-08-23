@@ -22,6 +22,9 @@ use ignore::find_stale_entries;
 use ignore::load_ignore_file;
 use ignore::remove_stale_entries;
 use ignore::save_ignore_file;
+use std::error::Error;
+use std::fmt;
+use std::string::ToString;
 
 // ---------------------------------------------------------------------------
 // Error types
@@ -62,8 +65,8 @@ impl CliError {
     }
 }
 
-impl std::fmt::Display for CliError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for CliError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Io(e) => write!(f, "{e}"),
             Self::NoSourceFiles(path) => {
@@ -89,8 +92,8 @@ impl std::fmt::Display for CliError {
     }
 }
 
-impl std::error::Error for CliError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+impl Error for CliError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Io(e) => Some(e),
             Self::Analysis(e) => Some(e),
@@ -257,7 +260,7 @@ pub fn run_analysis(
             analyzer
                 .file_extensions()
                 .iter()
-                .map(std::string::ToString::to_string)
+                .map(ToString::to_string)
                 .collect(),
         );
     let files = scanner::scan_files(&scan_config);

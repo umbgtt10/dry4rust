@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::fingerprint::Fingerprint;
 use crate::grouper::DuplicateGroup;
 use std::fs;
+use std::io;
 use std::io::Error;
 use toml::from_str;
 use toml::to_string_pretty;
@@ -57,7 +58,7 @@ pub fn load_ignore_file(root: &Path) -> IgnoreFile {
 }
 
 /// Save the ignore file to disk.
-pub fn save_ignore_file(root: &Path, ignore_file: &IgnoreFile) -> std::io::Result<()> {
+pub fn save_ignore_file(root: &Path, ignore_file: &IgnoreFile) -> io::Result<()> {
     let path = ignore_file_path(root);
     let content = to_string_pretty(ignore_file)
         .map_err(|e| Error::other(format!("Failed to serialize ignore file: {e}")))?;

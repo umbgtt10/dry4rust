@@ -9,14 +9,15 @@ use crate::grouper::{DuplicateGroup, DuplicationStats};
 use crate::output::reporter::Reporter;
 use crate::output::reporter::display_path;
 use serde_json::to_string_pretty;
+use std::path::PathBuf;
 
 pub struct JsonReporter {
-    pub base_path: Option<std::path::PathBuf>,
+    pub base_path: Option<PathBuf>,
 }
 
 impl JsonReporter {
     #[must_use]
-    pub const fn new(base_path: Option<std::path::PathBuf>) -> Self {
+    pub const fn new(base_path: Option<PathBuf>) -> Self {
         Self { base_path }
     }
 }

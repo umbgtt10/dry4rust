@@ -8,6 +8,7 @@ use std::io;
 use crate::grouper::{DuplicateGroup, DuplicationStats};
 use crate::output::reporter::Reporter;
 use crate::output::reporter::display_path;
+use std::path::PathBuf;
 
 fn format_with_commas(n: usize) -> String {
     let s = n.to_string();
@@ -23,12 +24,12 @@ fn format_with_commas(n: usize) -> String {
 
 pub struct TextReporter {
     /// Base path for displaying relative paths.
-    pub base_path: Option<std::path::PathBuf>,
+    pub base_path: Option<PathBuf>,
 }
 
 impl TextReporter {
     #[must_use]
-    pub const fn new(base_path: Option<std::path::PathBuf>) -> Self {
+    pub const fn new(base_path: Option<PathBuf>) -> Self {
         Self { base_path }
     }
 

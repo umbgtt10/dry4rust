@@ -15,6 +15,7 @@ use super::parser::parse_source;
 use crate::analyzer::LanguageAnalyzer;
 use crate::code_unit::CodeUnit;
 use crate::config::AnalysisConfig;
+use std::error::Error;
 
 /// Rust language analyzer using syn for AST parsing.
 pub struct RustAnalyzer;
@@ -46,8 +47,8 @@ impl LanguageAnalyzer for RustAnalyzer {
         path: &Path,
         source: &str,
         config: &AnalysisConfig,
-    ) -> Result<Vec<CodeUnit>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Vec<CodeUnit>, Box<dyn Error + Send + Sync>> {
         parse_source(path, source, config.min_nodes, config.min_lines)
-            .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })
+            .map_err(|e| -> Box<dyn Error + Send + Sync> { e.into() })
     }
 }

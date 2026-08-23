@@ -7,6 +7,7 @@ use std::path::Path;
 
 use crate::code_unit::CodeUnit;
 use crate::config::AnalysisConfig;
+use std::error::Error;
 
 /// Trait for language-specific code analysis.
 ///
@@ -32,7 +33,7 @@ pub trait LanguageAnalyzer: Send + Sync {
         path: &Path,
         source: &str,
         config: &AnalysisConfig,
-    ) -> Result<Vec<CodeUnit>, Box<dyn std::error::Error + Send + Sync>>;
+    ) -> Result<Vec<CodeUnit>, Box<dyn Error + Send + Sync>>;
 
     /// Check whether a code unit represents test code.
     ///

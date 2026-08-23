@@ -12,6 +12,7 @@ use crate::grouper::DuplicateGroup;
 use crate::near_duplicate::pair_scanner::PairScanner;
 use crate::near_duplicate::similarity_pair::SimilarityPair;
 use crate::near_duplicate::union_find::UnionFind;
+use std::cmp::Ordering;
 
 /// Finds groups of units that are similar without being identical.
 ///
@@ -130,7 +131,7 @@ impl NearDuplicateFinder {
                 .then_with(|| {
                     b.similarity
                         .partial_cmp(&a.similarity)
-                        .unwrap_or(std::cmp::Ordering::Equal)
+                        .unwrap_or(Ordering::Equal)
                 })
                 .then_with(|| a.fingerprint.cmp(&b.fingerprint))
         });
