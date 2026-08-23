@@ -46,7 +46,7 @@ fn composite_fingerprint_order_independent() {
 }
 
 #[test]
-fn display_format() {
+fn fmt_pads_the_hash_to_sixteen_hex_digits() {
     // Arrange & Act
     let fp = Fingerprint::new(0x0000000000000042);
 
@@ -61,7 +61,7 @@ fn from_hex_invalid() {
 }
 
 #[test]
-fn hex_roundtrip() {
+fn to_hex_round_trips_back_through_from_hex() {
     // Arrange & Act
     let fp = Fingerprint::new(0xdeadbeef12345678);
     let hex = fp.to_hex();

@@ -5,10 +5,10 @@
 
 use dry4rust::node::LiteralKind;
 use dry4rust::node::NodeKind;
-use dry4rust::node::NormalizationContext;
 use dry4rust::node::NormalizedNode;
 use dry4rust::node::count_nodes;
 use dry4rust::node::reindex_placeholders;
+use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::expr::normalize_expr;
 use dry4rust::rust::normalizer::normalize::normalize_impl_block;
 use dry4rust::rust::normalizer::normalize::normalize_item_fn;
@@ -83,18 +83,6 @@ fn cast_expression_normalized() {
 
     // Assert
     assert_eq!(n.kind, NodeKind::Cast);
-}
-
-#[test]
-fn closures_normalized() {
-    // Arrange & Act
-    let code1 = "|x| x + 1";
-    let code2 = "|y| y + 1";
-    let n1 = normalize_code_expr(code1);
-    let n2 = normalize_code_expr(code2);
-
-    // Assert
-    assert_eq!(n1, n2);
 }
 
 #[test]
@@ -239,16 +227,6 @@ fn literal_kind_preserved_but_value_erased() {
 }
 
 #[test]
-fn loop_normalized() {
-    // Arrange & Act
-    let code = "loop { break; }";
-    let n = normalize_code_expr(code);
-
-    // Assert
-    assert_eq!(n.kind, NodeKind::Loop);
-}
-
-#[test]
 fn macro_call_node_count() {
     // Arrange & Act
     let n = normalize_code_expr("println!(\"a\", \"b\")");
@@ -328,6 +306,28 @@ fn node_counting_works() {
     // Assert
     assert!(sig_count > 0);
     assert!(body_count > 0);
+}
+
+#[test]
+fn normalize_closures_ignores_the_parameter_names() {
+    // Arrange & Act
+    let code1 = "|x| x + 1";
+    let code2 = "|y| y + 1";
+    let n1 = normalize_code_expr(code1);
+    let n2 = normalize_code_expr(code2);
+
+    // Assert
+    assert_eq!(n1, n2);
+}
+
+#[test]
+fn normalize_loop_produces_a_loop_node() {
+    // Arrange & Act
+    let code = "loop { break; }";
+    let n = normalize_code_expr(code);
+
+    // Assert
+    assert_eq!(n.kind, NodeKind::Loop);
 }
 
 #[test]

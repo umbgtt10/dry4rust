@@ -3,9 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::node::{
-    BinOpKind, LiteralKind, NodeKind, NormalizationContext, NormalizedNode, UnOpKind,
-};
+use crate::node::{BinOpKind, LiteralKind, NodeKind, NormalizedNode, UnOpKind};
+use crate::normalization_context::NormalizationContext;
 use syn::punctuated::Punctuated;
 
 use super::expr::normalize_expr;

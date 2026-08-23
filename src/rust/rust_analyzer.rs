@@ -33,6 +33,10 @@ impl Default for RustAnalyzer {
 }
 
 impl LanguageAnalyzer for RustAnalyzer {
+    fn is_test_code(&self, unit: &CodeUnit) -> bool {
+        unit.is_test
+    }
+
     fn file_extensions(&self) -> &[&str] {
         &["rs"]
     }

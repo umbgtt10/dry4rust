@@ -14,6 +14,7 @@ pub mod fingerprint;
 pub mod grouper;
 pub mod ignore;
 pub mod node;
+pub mod normalization_context;
 pub mod output;
 pub mod rust;
 pub mod scanner;

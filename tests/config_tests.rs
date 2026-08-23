@@ -80,7 +80,7 @@ fn config_with_thresholds() {
 }
 
 #[test]
-fn default_config() {
+fn default_returns_the_documented_thresholds() {
     // Arrange & Act
     let config = Config::default();
 

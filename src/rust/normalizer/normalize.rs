@@ -4,7 +4,8 @@
 // SPDX-License-Identifier: MIT
 
 // Re-export core node types used by the normalizer's public API and tests.
-use crate::node::{NodeKind, NormalizationContext, NormalizedNode, PlaceholderKind};
+use crate::node::{NodeKind, NormalizedNode, PlaceholderKind};
+use crate::normalization_context::NormalizationContext;
 
 use super::expr::{normalize_block, normalize_expr};
 use super::pat::{normalize_pat, normalize_type};

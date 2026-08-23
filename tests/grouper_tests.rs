@@ -6,16 +6,7 @@
 use dry4rust::grouper::*;
 
 #[test]
-fn empty_input_no_groups() {
-    // Arrange & Act
-    let groups = group_exact_duplicates(&[]);
-
-    // Assert
-    assert!(groups.is_empty());
-}
-
-#[test]
-fn percentage_helpers() {
+fn duplication_stats_percentages_match_their_counts() {
     // Arrange & Act
     let stats = DuplicationStats {
         total_code_units: 10,
@@ -35,6 +26,15 @@ fn percentage_helpers() {
     // Assert
     assert!((stats.exact_duplicate_percent() - 25.0).abs() < f64::EPSILON);
     assert!((stats.near_duplicate_percent() - 15.0).abs() < f64::EPSILON);
+}
+
+#[test]
+fn empty_input_no_groups() {
+    // Arrange & Act
+    let groups = group_exact_duplicates(&[]);
+
+    // Assert
+    assert!(groups.is_empty());
 }
 
 #[test]

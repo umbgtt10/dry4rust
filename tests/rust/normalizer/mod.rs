@@ -3,4 +3,4 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod normalizer_tests;
+pub mod normalize_tests;

@@ -5,4 +5,4 @@
 
 pub mod normalizer;
 pub mod parser_tests;
-pub mod rust_tests;
+pub mod rust_analyzer_tests;

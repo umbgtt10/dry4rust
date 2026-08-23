@@ -10,9 +10,9 @@
 use dry4rust::extractor;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::grouper;
-use dry4rust::node::NormalizationContext;
 use dry4rust::node::reindex_placeholders;
 use dry4rust::node::{NodeKind, NormalizedNode};
+use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::expr::normalize_expr;
 use dry4rust::rust::normalizer::normalize::normalize_item_fn;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
@@ -62,15 +62,6 @@ fn parse_fn(code: &str) -> syn::ItemFn {
 }
 
 #[test]
-fn closure_similarity() {
-    // Arrange & Act
-    let score = expr_similarity("|x| x + 1", "|y| y + 1");
-
-    // Assert
-    assert!((score - 1.0).abs() < f64::EPSILON);
-}
-
-#[test]
 fn completely_different_trees_score_low() {
     // Arrange & Act
     let score = fn_body_similarity(
@@ -80,6 +71,26 @@ fn completely_different_trees_score_low() {
 
     // Assert
     assert!(score < 0.3);
+}
+
+#[test]
+fn compute_stats_counts_units_and_duplicate_lines() {
+    // Arrange & Act
+    let units = make_units(
+        r#"
+        fn a(x: i32) -> i32 { x + 1 }
+        fn b(y: i32) -> i32 { y + 1 }
+        fn c(x: i32) -> i32 { x * 2 }
+        "#,
+    );
+    let exact = grouper::group_exact_duplicates(&units);
+    let stats = grouper::compute_stats(&units, &exact, &[]);
+
+    // Assert
+    assert_eq!(stats.total_code_units, 3);
+    assert_eq!(stats.exact_duplicate_groups, 1);
+    assert_eq!(stats.exact_duplicate_units, 2);
+    assert!(stats.total_lines > 0);
 }
 
 #[test]
@@ -333,7 +344,7 @@ fn fingerprint_ignores_variable_names() {
 }
 
 #[test]
-fn fingerprint_stability() {
+fn fingerprint_of_the_same_function_is_stable() {
     // Arrange & Act
     let code = "fn foo(x: i32) -> i32 { x + 1 }";
     let f = parse_fn(code);
@@ -646,6 +657,15 @@ fn similarity_is_symmetric() {
 }
 
 #[test]
+fn similarity_score_for_alpha_equivalent_closures_is_one() {
+    // Arrange & Act
+    let score = expr_similarity("|x| x + 1", "|y| y + 1");
+
+    // Assert
+    assert!((score - 1.0).abs() < f64::EPSILON);
+}
+
+#[test]
 fn simple_expr_different_op() {
     // Arrange & Act
     let score = expr_similarity("x + 1", "x - 1");
@@ -684,26 +704,6 @@ fn single_unit_no_groups() {
 
     // Assert
     assert!(groups.is_empty());
-}
-
-#[test]
-fn stats_computation() {
-    // Arrange & Act
-    let units = make_units(
-        r#"
-        fn a(x: i32) -> i32 { x + 1 }
-        fn b(y: i32) -> i32 { y + 1 }
-        fn c(x: i32) -> i32 { x * 2 }
-        "#,
-    );
-    let exact = grouper::group_exact_duplicates(&units);
-    let stats = grouper::compute_stats(&units, &exact, &[]);
-
-    // Assert
-    assert_eq!(stats.total_code_units, 3);
-    assert_eq!(stats.exact_duplicate_groups, 1);
-    assert_eq!(stats.exact_duplicate_units, 2);
-    assert!(stats.total_lines > 0);
 }
 
 #[test]

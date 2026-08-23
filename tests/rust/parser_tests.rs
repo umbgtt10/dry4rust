@@ -167,31 +167,6 @@ fn duplicate_functions_same_fingerprint() {
 }
 
 #[test]
-fn extracts_closures() {
-    // Arrange & Act
-    let units = write_and_parse(
-        r#"
-        fn foo() {
-            let f = |x: i32, y: i32| {
-                let sum = x + y;
-                let product = x * y;
-                sum + product
-            };
-        }
-        "#,
-        1,
-    );
-    let closures: Vec<_> = units
-        .iter()
-        .filter(|u| u.kind == CodeUnitKind::Closure)
-        .collect();
-
-    // Assert
-
-    assert!(!closures.is_empty());
-}
-
-#[test]
 fn extracts_methods_from_impl() {
     // Arrange & Act
     let units = write_and_parse(
@@ -365,6 +340,31 @@ fn parse_files_collects_warnings() {
 
     assert!(!units.is_empty());
     assert_eq!(warnings.len(), 1);
+}
+
+#[test]
+fn parse_source_extracts_closures_as_their_own_units() {
+    // Arrange & Act
+    let units = write_and_parse(
+        r#"
+        fn foo() {
+            let f = |x: i32, y: i32| {
+                let sum = x + y;
+                let product = x * y;
+                sum + product
+            };
+        }
+        "#,
+        1,
+    );
+    let closures: Vec<_> = units
+        .iter()
+        .filter(|u| u.kind == CodeUnitKind::Closure)
+        .collect();
+
+    // Assert
+
+    assert!(!closures.is_empty());
 }
 
 #[test]

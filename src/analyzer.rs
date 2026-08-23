@@ -36,9 +36,7 @@ pub trait LanguageAnalyzer: Send + Sync {
 
     /// Check whether a code unit represents test code.
     ///
-    /// The default implementation delegates to [`CodeUnit::is_test`],
-    /// which language analyzers set during parsing.
-    fn is_test_code(&self, unit: &CodeUnit) -> bool {
-        unit.is_test
-    }
+    /// Required rather than defaulted: an analyser that cannot tell test code
+    /// from production code should have to say so, not inherit an answer.
+    fn is_test_code(&self, unit: &CodeUnit) -> bool;
 }
