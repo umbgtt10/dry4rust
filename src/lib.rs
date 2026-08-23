@@ -5,7 +5,6 @@
 
 pub mod analysis;
 pub mod analyzer;
-pub mod checking;
 pub mod cli;
 pub mod code_unit;
 pub mod command_dispatcher;

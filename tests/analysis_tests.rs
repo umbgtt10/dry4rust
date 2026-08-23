@@ -7,6 +7,9 @@
 //! These tests exercise fingerprint, similarity, grouper, and extractor functionality
 //! Every case is driven from syn-parsed Rust source.
 
+use crate::common::helpers::analysed;
+use dry4rust::analysis::analyze_units;
+use dry4rust::config::Config;
 use dry4rust::extractor;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::grouper;
@@ -61,6 +64,29 @@ fn parse_expr(code: &str) -> Expr {
 
 fn parse_fn(code: &str) -> ItemFn {
     parse_str::<ItemFn>(code).unwrap()
+}
+
+#[test]
+fn analyze_over_a_duplicated_fixture_reports_exact_groups() {
+    // Arrange & Act
+    let (_, result) = analysed("exact_dupes");
+
+    // Assert
+    assert!(result.stats.total_code_units > 0);
+    assert!(!result.exact_groups.is_empty());
+}
+
+#[test]
+fn analyze_units_over_no_units_reports_nothing_duplicated() {
+    // Arrange
+    let config = Config::default();
+
+    // Act
+    let result = analyze_units(&[], Vec::new(), &config).expect("empty input is not an error");
+
+    // Assert
+    assert_eq!(result.stats.total_code_units, 0);
+    assert!(result.exact_groups.is_empty());
 }
 
 #[test]

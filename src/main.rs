@@ -10,10 +10,10 @@ use std::process;
 
 use clap::Parser;
 
-use dry4rust::cli::CliError;
-use dry4rust::cli::CliOverrides;
-use dry4rust::cli::Command;
-use dry4rust::cli::OutputFormat;
+use dry4rust::cli::cli_error::CliError;
+use dry4rust::cli::cli_overrides::CliOverrides;
+use dry4rust::cli::command::Command;
+use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 

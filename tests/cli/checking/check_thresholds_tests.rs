@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::checking::check_thresholds::CheckThresholds;
+use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 
 #[test]
 fn default_sets_no_ceiling_at_all() {

@@ -7,22 +7,21 @@ use std::io::Write;
 use std::path::Path;
 
 use crate::analyzer::LanguageAnalyzer;
-use crate::checking::check_thresholds::CheckThresholds;
-use crate::cli::AnalysisOutput;
-use crate::cli::CliOverrides;
-use crate::cli::CliResult;
-use crate::cli::Command;
-use crate::cli::OutputFormat;
-use crate::cli::cmd_check;
-use crate::cli::cmd_cleanup;
-use crate::cli::cmd_ignore;
-use crate::cli::cmd_ignored;
-use crate::cli::cmd_report;
-use crate::cli::cmd_stats;
-use crate::cli::run_analysis;
+use crate::cli::analysis_output::AnalysisOutput;
+use crate::cli::check_command::CheckCommand;
+use crate::cli::checking::check_thresholds::CheckThresholds;
+use crate::cli::cleanup_command::CleanupCommand;
+use crate::cli::cli_error::CliResult;
+use crate::cli::cli_overrides::CliOverrides;
+use crate::cli::command::Command;
+use crate::cli::ignore_command::IgnoreCommand;
+use crate::cli::ignored_command::IgnoredCommand;
+use crate::cli::output_format::OutputFormat;
+use crate::cli::report_command::ReportCommand;
+use crate::cli::stats_command::StatsCommand;
 use crate::output::reporter::Reporter;
 
-/// Routes a parsed [`Command`] to the function that serves it.
+/// Routes a parsed [`Command`] to the type that serves it.
 ///
 /// Two commands read and write the ignore file without analysing anything;
 /// the other four need an analysis first. Splitting on that distinction is
@@ -56,21 +55,22 @@ impl<'a> CommandDispatcher<'a> {
     /// # Errors
     ///
     /// Returns whatever the command returns: a failed analysis, an I/O
-    /// failure, or [`crate::cli::CliError::CheckFailed`] when `check` finds
-    /// more duplication than its ceilings allow.
+    /// failure, or [`crate::cli::cli_error::CliError::CheckFailed`] when
+    /// `check` finds more duplication than its ceilings allow.
     pub fn dispatch(&self, command: &Command, writer: &mut impl Write) -> CliResult {
         match command {
             Command::Ignore {
                 fingerprint,
                 reason,
-            } => cmd_ignore(self.root, fingerprint, reason.clone(), writer),
-            Command::Ignored => cmd_ignored(self.root, writer),
+            } => IgnoreCommand::new(self.root, fingerprint, reason.as_deref()).run(writer),
+            Command::Ignored => IgnoredCommand::new(self.root).run(writer),
             _ => self.dispatch_analysed(command, writer),
         }
     }
 
     fn dispatch_analysed(&self, command: &Command, writer: &mut impl Write) -> CliResult {
-        let output = run_analysis(self.analyzer, self.root, self.format, &self.overrides)?;
+        let output =
+            AnalysisOutput::produce(self.analyzer, self.root, self.format, &self.overrides)?;
         Self::report_warnings(&output);
         self.render(command, &output, writer)
     }
@@ -89,27 +89,27 @@ impl<'a> CommandDispatcher<'a> {
     ) -> CliResult {
         let reporter: &dyn Reporter = &*output.reporter;
         match command {
-            Command::Stats => cmd_stats(&output.result, reporter, writer),
-            Command::Report => cmd_report(&output.result, reporter, writer),
+            Command::Stats => StatsCommand::new(&output.result, reporter).run(writer),
+            Command::Report => ReportCommand::new(&output.result, reporter).run(writer),
             Command::Check {
                 max_exact,
                 max_near,
                 max_exact_percent,
                 max_near_percent,
-            } => cmd_check(
+            } => CheckCommand::new(
                 &output.config,
                 &output.result,
                 reporter,
-                writer,
                 &CheckThresholds {
                     max_exact: *max_exact,
                     max_near: *max_near,
                     max_exact_percent: *max_exact_percent,
                     max_near_percent: *max_near_percent,
                 },
-            ),
+            )
+            .run(writer),
             Command::Cleanup { dry_run } => {
-                cmd_cleanup(self.root, &output.result, writer, *dry_run)
+                CleanupCommand::new(self.root, &output.result, *dry_run).run(writer)
             }
             Command::Ignore { .. } | Command::Ignored => unreachable!(),
         }

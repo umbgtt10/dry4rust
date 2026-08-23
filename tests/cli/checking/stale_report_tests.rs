@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::checking::stale_report::StaleReport;
+use dry4rust::cli::checking::stale_report::StaleReport;
 use dry4rust::ignore::IgnoreEntry;
 
 fn entry(fingerprint: &str) -> IgnoreEntry {
