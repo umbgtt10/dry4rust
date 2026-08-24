@@ -101,10 +101,19 @@ upstream's history kept as an ancestor rather than a credit line.
 - `config.rs` split into `Config`, `FileConfig` and `AnalysisConfig`, one per file. Three
   structs that existed only to spell out the path `package` → `metadata` → `dry4rust`
   through `Cargo.toml` are gone, replaced by navigating the parsed document.
-- 524 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
+- 562 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
   baseline; `crap4rust` clean at 15 with no override; every source file mirrored; no file
   at or above 10 on `iceberg4rust`.
 - Upstream's changelog is preserved below, under its own heading, rather than replaced.
+
+- The repository is a workspace: `core/` publishes as `cargo-dry4rust`, `validation/` is
+  `publish = false` and holds the tests whose subject is the whole tool, and `fixture/`
+  holds the corpus outside both. `cargo package` drops any subdirectory holding a
+  `Cargo.toml`, so the corpus had been dropped from the tarball while the tests reading it
+  were kept -- `cargo test` on the packaged crate gave 66 failures and now gives none. See
+  [ADR-CorpusOutsideThePackage](docs/ADRs/ADR-CorpusOutsideThePackage.md).
+- `main` is eleven lines. The argument mapping moved into the library as `EntryPoint`, so
+  which root, which command and which overrides are things a test can call.
 
 ### Removed
 - The `dupes-treesitter` and `dupes-python` crates, and the `code-dupes` multi-language

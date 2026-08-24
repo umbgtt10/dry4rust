@@ -2,8 +2,15 @@
 
 ## Status
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-CorpusOutsideThePackage](ADR-CorpusOutsideThePackage.md)
 - **Date:** 2026-08-23
+
+The exclusion this ADR argued for no longer exists. The reasoning held --
+the corpus is input and must not be edited to satisfy a rule about source --
+but excluding it from the rule was the weaker of the two ways to honour that.
+Moving it out of the package removes it from the rule's reach entirely, and
+fixed a packaging defect the exclusion had been hiding. See the superseding
+ADR.
 
 ## Context
 

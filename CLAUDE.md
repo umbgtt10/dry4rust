@@ -67,10 +67,15 @@ the gate checks.
 Four lines rather than the three its sibling repositories use, because MIT
 requires upstream's copyright notice to travel with the code.
 
-`tests/fixtures/**` is excluded, and that is the one exclusion. Those crates
-are the corpus the tool measures, and several tests assert on their line
-counts, so a header stamped into them would edit the question rather than
-answer it. The report names the exclusion and how many files it removed.
+Nothing is excluded, and that is new. The corpus used to live under
+`tests/fixtures/` and had to be excluded from the header rule; it now lives in
+`fixture/`, outside both workspace members, so there is nothing for a rule to
+reach and nothing to exclude.
+
+Stage 1 covers the workspace. Stage 2 gates `--package cargo-dry4rust` only:
+`validation/` holds the tests whose subject is the whole tool rather than any
+one source file, so they have no mirror to be named after and the house rules
+leave them alone. That is what every workspace in this family does.
 
 `crap4rust` runs at 15 -- the family's number, with no override and no
 tolerance. Nothing is baselined, skipped or budgeted.
@@ -126,7 +131,9 @@ is worth a test; if it is not, deleting it is the honest answer.
 
 - one struct per file
 - do not use fully qualified paths; use `use` imports instead
-- unit tests are not allowed. Only integration tests are, under `tests/`
+- unit tests are not allowed. Only integration tests are, under `core/tests/`
+  for a single source file, or `validation/tests/` when the subject is the
+  whole tool
 - no unnecessary comments in code
 - no `&mut` input parameters; prefer return values (`&mut self` is allowed in
   traits and impl blocks)

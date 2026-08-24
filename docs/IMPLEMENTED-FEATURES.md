@@ -124,7 +124,7 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Documented**
 
-- Fourteen ADRs with an index; `ARCHITECTURE.md`, `FORMULA.md`,
+- Fifteen ADRs with an index; `ARCHITECTURE.md`, `FORMULA.md`,
   `OPEN_POINTS.md`, `ROADMAP.md`, this file
 - README credits the creator on its first line of body text, and documents
   `--sub-function`, `--min-sub-nodes` and `--baseline`, which were features
@@ -133,7 +133,7 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Verified**
 
-- 524 tests, up from 213
+- 562 tests, up from 213
 - `stern4rust`: 0 offences over 130 files, 21 rules applied, nothing skipped,
   nothing baselined, one exclusion (`tests/fixtures/**`)
 - `crap4rust`: 0 crappy functions at 15 over 240 functions, no override

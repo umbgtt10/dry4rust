@@ -430,6 +430,9 @@ The scanner automatically:
 
 **Requirements:** Rust 1.85+ (edition 2024)
 
+The repository is a workspace: `core/` is the published crate, `validation/` holds the
+end-to-end tests, and `fixture/` is the corpus both are pointed at.
+
 ```sh
 cargo build          # Build
 cargo test           # Run the suite
