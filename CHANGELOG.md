@@ -95,7 +95,13 @@ upstream's history kept as an ancestor rather than a credit line.
   `CommandDispatcher` — rather than the threshold being raised. See
   [ADR-DecompositionOverThresholdRelaxation](docs/ADRs/ADR-DecompositionOverThresholdRelaxation.md).
 - Nine re-exports removed, so every import names the module where the symbol is defined.
-- 513 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
+- `ignore` and `baseline` became `src/suppression/`, one type per file. `IgnoreFile` has
+  methods where nine free functions took it as an argument, three of them as `&mut`; every
+  operation that changes the file now takes it by value and hands back the changed one.
+- `config.rs` split into `Config`, `FileConfig` and `AnalysisConfig`, one per file. Three
+  structs that existed only to spell out the path `package` → `metadata` → `dry4rust`
+  through `Cargo.toml` are gone, replaced by navigating the parsed document.
+- 525 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
   baseline; `crap4rust` clean at 15 with no override; every source file mirrored; no file
   at or above 10 on `iceberg4rust`.
 - Upstream's changelog is preserved below, under its own heading, rather than replaced.

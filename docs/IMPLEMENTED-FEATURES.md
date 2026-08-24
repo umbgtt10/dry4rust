@@ -111,6 +111,16 @@ upstream's history kept as an ancestor rather than a credit line.
 - `write_ignore_entry`, shared by `ignored` and `cleanup`, became
   `IgnoreEntryLine` with a `Display` impl -- a line a test can compare against
   rather than something only a buffer can observe.
+- `ignore.rs` and `baseline/` became `src/suppression/`. They are two answers
+  to one question -- this duplication should not fail the build -- and they
+  differ in who writes them: an ignore entry by a person, with a reason in
+  their words; a baseline entry by the tool, read back by it. `IgnoreFile`
+  gained the methods that nine free functions had been performing on it, three
+  of them through a `&mut` parameter the house rules forbid.
+- `config.rs` held six types. Three of them described the path `package` →
+  `metadata` → `dry4rust` through `Cargo.toml` and nothing else; navigating the
+  parsed document says the same thing without them. The rest are one per file,
+  with `FileConfig::apply_to` mirroring `CliOverrides::apply_to`.
 
 **Documented**
 
@@ -123,10 +133,10 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Verified**
 
-- 513 tests, up from 213
-- `stern4rust`: 0 offences over 124 files, 21 rules applied, nothing skipped,
+- 525 tests, up from 213
+- `stern4rust`: 0 offences over 130 files, 21 rules applied, nothing skipped,
   nothing baselined, one exclusion (`tests/fixtures/**`)
-- `crap4rust`: 0 crappy functions at 15 over 237 functions, no override
+- `crap4rust`: 0 crappy functions at 15 over 240 functions, no override
 - `twin4rust`: every source file mirrored
 - `iceberg4rust`: no file at or above 10
 - Both stage gates proven to fail, not only to pass

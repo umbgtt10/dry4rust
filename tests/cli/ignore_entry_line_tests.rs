@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::cli::ignore_entry_line::IgnoreEntryLine;
-use dry4rust::ignore::IgnoreEntry;
+use dry4rust::suppression::ignore_entry::IgnoreEntry;
 
 fn entry(reason: Option<&str>, members: &[&str]) -> IgnoreEntry {
     IgnoreEntry {

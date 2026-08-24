@@ -3,12 +3,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::baseline::baseline_file::BaselineFile;
-use crate::baseline::baseline_file::baseline_path;
-use crate::baseline::baseline_kind::BaselineKind;
 use crate::config::Config;
 use crate::error::Result;
 use crate::grouper::DuplicateGroup;
+use crate::suppression::baseline_file::BaselineFile;
+use crate::suppression::baseline_file::baseline_path;
+use crate::suppression::baseline_kind::BaselineKind;
 
 /// Keeps the duplication a baseline did not already account for.
 ///

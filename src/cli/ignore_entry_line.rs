@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use crate::ignore::IgnoreEntry;
+use crate::suppression::ignore_entry::IgnoreEntry;
 
 /// One ignore entry as a single report line.
 ///

@@ -3,17 +3,17 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod analysis_config_tests;
 pub mod analysis_tests;
-pub mod baseline;
 pub mod cli;
 pub mod code_unit_tests;
 pub mod command_dispatcher_tests;
 pub mod common;
 pub mod config_tests;
 pub mod extractor_tests;
+pub mod file_config_tests;
 pub mod fingerprint_tests;
 pub mod grouper_tests;
-pub mod ignore_tests;
 pub mod near_duplicate;
 pub mod node_encoder_tests;
 pub mod node_tests;
@@ -23,4 +23,5 @@ pub mod rust;
 pub mod scanner_tests;
 pub mod stable_hasher_tests;
 pub mod sub_unit_extractor_tests;
+pub mod suppression;
 pub mod threshold_tests;

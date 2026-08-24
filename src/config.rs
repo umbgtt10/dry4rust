@@ -3,23 +3,16 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::fs;
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
-use std::fs;
+use toml::Value;
 use toml::from_str;
 
+use crate::analysis_config::AnalysisConfig;
 use crate::error::Result;
+use crate::file_config::FileConfig;
 use crate::threshold::Threshold;
-
-/// The subset of configuration relevant to language-specific parsing.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AnalysisConfig {
-    /// Minimum number of AST nodes for a code unit to be analyzed.
-    pub min_nodes: usize,
-    /// Minimum number of source lines for a code unit to be analyzed.
-    pub min_lines: usize,
-}
 
 /// Configuration for cargo-dry4rust analysis.
 ///
@@ -78,43 +71,6 @@ impl Default for Config {
     }
 }
 
-/// Config as stored in dry4rust.toml or Cargo.toml metadata.
-#[derive(Debug, Deserialize, Default)]
-#[serde(default)]
-struct FileConfig {
-    min_nodes: Option<usize>,
-    similarity_threshold: Option<f64>,
-    exclude: Option<Vec<String>>,
-    max_exact_duplicates: Option<usize>,
-    max_near_duplicates: Option<usize>,
-    max_exact_percent: Option<f64>,
-    max_near_percent: Option<f64>,
-    min_lines: Option<usize>,
-    exclude_tests: Option<bool>,
-    sub_function: Option<bool>,
-    min_sub_nodes: Option<usize>,
-    baseline: Option<PathBuf>,
-}
-
-/// Cargo.toml metadata section.
-#[derive(Debug, Deserialize)]
-struct CargoMetadata {
-    #[serde(default)]
-    package: Option<CargoPackage>,
-}
-
-#[derive(Debug, Deserialize)]
-struct CargoPackage {
-    #[serde(default)]
-    metadata: Option<CargoPackageMetadata>,
-}
-
-#[derive(Debug, Deserialize)]
-struct CargoPackageMetadata {
-    #[serde(default)]
-    dry4rust: Option<FileConfig>,
-}
-
 impl Config {
     /// Extract the parsing-relevant subset of the configuration.
     #[must_use]
@@ -147,68 +103,33 @@ impl Config {
             ..Default::default()
         };
 
-        // Try Cargo.toml metadata first (lowest priority file config)
-        let cargo_toml = root.join("Cargo.toml");
-        if cargo_toml.exists()
-            && let Ok(content) = fs::read_to_string(&cargo_toml)
-            && let Ok(cargo) = from_str::<CargoMetadata>(&content)
-            && let Some(pkg) = cargo.package
-            && let Some(meta) = pkg.metadata
-            && let Some(file_config) = meta.dry4rust
-        {
-            config = config.with_file_config(&file_config)?;
+        // Cargo.toml metadata first: the lowest-priority file config
+        if let Some(file_config) = Self::from_cargo_metadata(root) {
+            config = file_config.apply_to(config)?;
         }
 
-        // Try dry4rust.toml (higher priority)
-        let dry4rust_toml = root.join("dry4rust.toml");
-        if dry4rust_toml.exists()
-            && let Ok(content) = fs::read_to_string(&dry4rust_toml)
-            && let Ok(file_config) = from_str::<FileConfig>(&content)
-        {
-            config = config.with_file_config(&file_config)?;
+        // dry4rust.toml wins over it
+        if let Some(file_config) = Self::from_named_file(root) {
+            config = file_config.apply_to(config)?;
         }
 
         Ok(config)
     }
 
-    fn with_file_config(self, fc: &FileConfig) -> Result<Self> {
-        let mut config = self;
-        if let Some(v) = fc.min_nodes {
-            config.min_nodes = v;
-        }
-        if let Some(v) = fc.similarity_threshold {
-            config.similarity_threshold = Threshold::fraction("similarity_threshold", v)?;
-        }
-        if let Some(ref v) = fc.exclude {
-            config.exclude.clone_from(v);
-        }
-        if let Some(v) = fc.max_exact_duplicates {
-            config.max_exact_duplicates = Some(v);
-        }
-        if let Some(v) = fc.max_near_duplicates {
-            config.max_near_duplicates = Some(v);
-        }
-        if let Some(v) = fc.max_exact_percent {
-            config.max_exact_percent = Some(Threshold::percent("max_exact_percent", v)?);
-        }
-        if let Some(v) = fc.max_near_percent {
-            config.max_near_percent = Some(Threshold::percent("max_near_percent", v)?);
-        }
-        if let Some(v) = fc.min_lines {
-            config.min_lines = v;
-        }
-        if let Some(v) = fc.exclude_tests {
-            config.exclude_tests = v;
-        }
-        if let Some(v) = fc.sub_function {
-            config.sub_function = v;
-        }
-        if let Some(v) = fc.min_sub_nodes {
-            config.min_sub_nodes = v;
-        }
-        if let Some(ref v) = fc.baseline {
-            config.baseline = Some(v.clone());
-        }
-        Ok(config)
+    fn from_cargo_metadata(root: &Path) -> Option<FileConfig> {
+        let content = fs::read_to_string(root.join("Cargo.toml")).ok()?;
+        from_str::<Value>(&content)
+            .ok()?
+            .get("package")?
+            .get("metadata")?
+            .get("dry4rust")?
+            .clone()
+            .try_into()
+            .ok()
+    }
+
+    fn from_named_file(root: &Path) -> Option<FileConfig> {
+        let content = fs::read_to_string(root.join("dry4rust.toml")).ok()?;
+        from_str(&content).ok()
     }
 }

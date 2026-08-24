@@ -5,8 +5,8 @@
 
 use std::path::Path;
 
+use crate::analysis_config::AnalysisConfig;
 use crate::code_unit::CodeUnit;
-use crate::config::AnalysisConfig;
 use std::error::Error;
 
 /// Trait for language-specific code analysis.

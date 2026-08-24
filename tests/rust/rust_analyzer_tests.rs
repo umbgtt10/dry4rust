@@ -3,8 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::analysis_config::AnalysisConfig;
 use dry4rust::analyzer::LanguageAnalyzer;
-use dry4rust::config::AnalysisConfig;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use std::path::PathBuf;
 

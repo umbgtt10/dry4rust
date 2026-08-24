@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::ignore::IgnoreEntry;
+use crate::suppression::ignore_entry::IgnoreEntry;
 
 /// What `cleanup` found, and the words it uses to say so.
 ///

@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
-use dry4rust::baseline::baseline_entry::BaselineEntry;
-use dry4rust::baseline::baseline_kind::BaselineKind;
+use dry4rust::suppression::baseline_entry::BaselineEntry;
+use dry4rust::suppression::baseline_kind::BaselineKind;
 
 #[test]
 fn admits_a_group_it_recorded_unchanged() {

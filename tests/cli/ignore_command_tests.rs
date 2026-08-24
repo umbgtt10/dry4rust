@@ -6,7 +6,7 @@
 use crate::common::{cargo_dry4rust, fixture_path};
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::ignore_command::IgnoreCommand;
-use dry4rust::ignore::load_ignore_file;
+use dry4rust::suppression::ignore_file::IgnoreFile;
 use predicate::str;
 use predicates::prelude::*;
 use std::fs;
@@ -175,7 +175,7 @@ fn run_over_the_same_fingerprint_twice_records_it_once() {
         .expect("the second is accepted");
 
     // Assert
-    assert_eq!(load_ignore_file(tmp.path()).ignore.len(), 1);
+    assert_eq!(IgnoreFile::load(tmp.path()).ignore.len(), 1);
 }
 
 #[test]
@@ -194,7 +194,7 @@ fn run_records_the_fingerprint_with_the_reason_it_was_given() {
     .expect("a valid fingerprint is accepted");
 
     // Assert
-    let ignore_file = load_ignore_file(tmp.path());
+    let ignore_file = IgnoreFile::load(tmp.path());
     assert_eq!(ignore_file.ignore.len(), 1);
     assert_eq!(ignore_file.ignore[0].fingerprint, "deadbeef12345678");
     assert_eq!(

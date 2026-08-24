@@ -4,17 +4,17 @@
 // SPDX-License-Identifier: MIT
 
 pub mod analysis;
+pub mod analysis_config;
 pub mod analyzer;
-pub mod baseline;
 pub mod cli;
 pub mod code_unit;
 pub mod command_dispatcher;
 pub mod config;
 pub mod error;
 pub mod extractor;
+pub mod file_config;
 pub mod fingerprint;
 pub mod grouper;
-pub mod ignore;
 pub mod near_duplicate;
 pub mod node;
 pub mod node_encoder;
@@ -24,4 +24,5 @@ pub mod rust;
 pub mod scanner;
 pub mod stable_hasher;
 pub mod sub_unit_extractor;
+pub mod suppression;
 pub mod threshold;

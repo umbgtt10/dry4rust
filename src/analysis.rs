@@ -7,8 +7,6 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 
 use crate::analyzer::LanguageAnalyzer;
-use crate::baseline::baseline_filter::BaselineFilter;
-use crate::baseline::baseline_kind::BaselineKind;
 use crate::code_unit::CodeUnit;
 use crate::config::Config;
 use crate::error::Result;
@@ -18,9 +16,10 @@ use crate::grouper::compute_stats_with_sub;
 use crate::grouper::find_near_duplicates;
 use crate::grouper::group_exact_duplicates;
 use crate::grouper::{DuplicateGroup, DuplicationStats};
-use crate::ignore::filter_ignored;
-use crate::ignore::load_ignore_file;
 use crate::node::NormalizedNode;
+use crate::suppression::baseline_filter::BaselineFilter;
+use crate::suppression::baseline_kind::BaselineKind;
+use crate::suppression::ignore_file::IgnoreFile;
 use std::fs;
 
 /// The result of a full analysis run.
@@ -133,11 +132,11 @@ pub fn analyze_units(
         .collect();
 
     // 5. Apply ignore filtering
-    let ignore_file = load_ignore_file(&config.root);
-    let exact_groups = filter_ignored(exact_groups, &ignore_file);
-    let near_groups = filter_ignored(near_groups, &ignore_file);
-    let sub_exact_groups = filter_ignored(sub_exact_groups, &ignore_file);
-    let sub_near_groups = filter_ignored(sub_near_groups, &ignore_file);
+    let ignore_file = IgnoreFile::load(&config.root);
+    let exact_groups = ignore_file.retain_unsuppressed(exact_groups);
+    let near_groups = ignore_file.retain_unsuppressed(near_groups);
+    let sub_exact_groups = ignore_file.retain_unsuppressed(sub_exact_groups);
+    let sub_near_groups = ignore_file.retain_unsuppressed(sub_near_groups);
 
     // 6. Set aside what the baseline already accounted for
     let baseline = BaselineFilter::load(config)?;

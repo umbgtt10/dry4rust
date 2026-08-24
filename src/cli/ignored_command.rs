@@ -8,7 +8,7 @@ use std::path::Path;
 
 use crate::cli::cli_error::CliResult;
 use crate::cli::ignore_entry_line::IgnoreEntryLine;
-use crate::ignore::load_ignore_file;
+use crate::suppression::ignore_file::IgnoreFile;
 
 /// `ignored`: list what the ignore file holds.
 pub struct IgnoredCommand<'a> {
@@ -27,7 +27,7 @@ impl<'a> IgnoredCommand<'a> {
     ///
     /// Returns [`crate::cli::cli_error::CliError::Io`] if the writer fails.
     pub fn run(&self, writer: &mut impl Write) -> CliResult {
-        let ignore_file = load_ignore_file(self.root);
+        let ignore_file = IgnoreFile::load(self.root);
         if ignore_file.ignore.is_empty() {
             writeln!(writer, "No ignored fingerprints.")?;
             return Ok(());

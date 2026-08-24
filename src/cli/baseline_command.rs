@@ -7,11 +7,11 @@ use std::io::Write;
 use std::path::Path;
 
 use crate::analysis::AnalysisResult;
-use crate::baseline::baseline_file::BaselineFile;
-use crate::baseline::baseline_file::baseline_path;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::config::Config;
+use crate::suppression::baseline_file::BaselineFile;
+use crate::suppression::baseline_file::baseline_path;
 
 /// `baseline`: record the duplication that is already there.
 ///

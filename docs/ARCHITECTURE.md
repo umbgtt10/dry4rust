@@ -9,11 +9,17 @@ matches and compared tree-to-tree for near ones. Nothing is inferred from
 names, comments or formatting, because all three are exactly what a copied
 block changes first.
 
-60 source files, roughly 5,500 lines, one type each. Four directories group
+66 source files, roughly 5,800 lines, one type each. Five directories group
 the modules that answer one question between them: `src/near_duplicate/`,
-which only `grouper` reaches; `src/baseline/`, the record of inherited
-duplication; `src/cli/`, one file per command; and `src/rust/`, the only
-`LanguageAnalyzer` there is.
+which only `grouper` reaches; `src/suppression/`, the two ways duplication is
+kept out of a report; `src/cli/`, one file per command, with `checking/` under
+it; `src/output/`, the reporters; and `src/rust/`, the only `LanguageAnalyzer`
+there is.
+
+Both limits the house rules impose are now met exactly: twenty files at the
+top of `src/` and five directories under it. The next module to be added
+forces a grouping decision rather than another loose file, which is what the
+limits are for.
 
 ## Pipeline
 
@@ -76,13 +82,16 @@ bodies as further units, which then travel the same path.
 | `near_duplicate::similarity` | The Dice score between two normalised trees. |
 | `near_duplicate::union_find` | Disjoint-set forest turning similar-pairs into groups. |
 | `near_duplicate::similarity_pair` | One scored pair, and the ordered key a symmetric lookup needs. |
-| `ignore` | The suppression file: read, write, filter. |
-| `baseline::baseline_kind` | Which of the four group sets an entry was recorded from. |
-| `baseline::baseline_entry` | One recorded group: kind, fingerprint, member count, names. |
-| `baseline::baseline_file` | The file itself -- record, load, save, and where it lives. |
-| `baseline::baseline_filter` | Keeps the groups the baseline does not already account for. |
+| `suppression::ignore_entry` | One duplicate somebody decided should stay, with their reason. |
+| `suppression::ignore_file` | The ignore file: read, write, add, prune, filter. |
+| `suppression::baseline_kind` | Which of the four group sets an entry was recorded from. |
+| `suppression::baseline_entry` | One recorded group: kind, fingerprint, member count, names. |
+| `suppression::baseline_file` | The file itself -- record, load, save, and where it lives. |
+| `suppression::baseline_filter` | Keeps the groups the baseline does not already account for. |
 | `threshold` | `Threshold`, a proportion that cannot be built out of range. |
-| `config` | Defaults, `dry4rust.toml`, `[package.metadata.dry4rust]`, CLI overrides. |
+| `config` | `Config`: what a run is configured with, assembled and range-checked. |
+| `file_config` | What `dry4rust.toml` and `[package.metadata.dry4rust]` may state. |
+| `analysis_config` | The two floors a language analyzer needs, and nothing else. |
 | `analysis` | `analyze` and `analyze_units` -- the pipeline as one call. |
 | `cli::cli_error` | `CliError` and the exit code each variant maps to. |
 | `cli::command` | The subcommands, as `clap` sees them. |

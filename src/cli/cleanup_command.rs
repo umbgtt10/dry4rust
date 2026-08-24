@@ -10,10 +10,7 @@ use crate::analysis::AnalysisResult;
 use crate::cli::checking::stale_report::StaleReport;
 use crate::cli::cli_error::CliResult;
 use crate::cli::ignore_entry_line::IgnoreEntryLine;
-use crate::ignore::find_stale_entries;
-use crate::ignore::load_ignore_file;
-use crate::ignore::remove_stale_entries;
-use crate::ignore::save_ignore_file;
+use crate::suppression::ignore_file::IgnoreFile;
 
 /// `cleanup`: drop ignore entries whose fingerprint no longer matches anything.
 ///
@@ -42,18 +39,16 @@ impl<'a> CleanupCommand<'a> {
     /// Returns [`crate::cli::cli_error::CliError::Io`] if the ignore file
     /// cannot be written or the writer fails.
     pub fn run(&self, writer: &mut impl Write) -> CliResult {
-        let mut ignore_file = load_ignore_file(self.root);
+        let ignore_file = IgnoreFile::load(self.root);
         let taken;
 
         let report = if self.dry_run {
-            StaleReport::dry_run(find_stale_entries(
-                &ignore_file,
-                &self.result.all_fingerprints,
-            ))
+            StaleReport::dry_run(ignore_file.stale(&self.result.all_fingerprints))
         } else {
-            taken = remove_stale_entries(&mut ignore_file, &self.result.all_fingerprints);
+            let pruned;
+            (pruned, taken) = ignore_file.without_stale(&self.result.all_fingerprints);
             if !taken.is_empty() {
-                save_ignore_file(self.root, &ignore_file)?;
+                pruned.save(self.root)?;
             }
             StaleReport::removed(taken.iter().collect())
         };

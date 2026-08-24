@@ -14,11 +14,11 @@ use serde_json::from_str;
 use serde_json::to_string_pretty;
 
 use crate::analysis::AnalysisResult;
-use crate::baseline::baseline_entry::BaselineEntry;
-use crate::baseline::baseline_kind::BaselineKind;
 use crate::error::Error;
 use crate::error::Result;
 use crate::grouper::DuplicateGroup;
+use crate::suppression::baseline_entry::BaselineEntry;
+use crate::suppression::baseline_kind::BaselineKind;
 
 /// What `baseline` writes when no path says otherwise.
 ///

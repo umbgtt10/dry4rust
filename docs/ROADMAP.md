@@ -53,7 +53,7 @@ Version 0.2.0. Forked, cleaned, corrected, and under the family's gates.
   added, with the suppressed count in every summary
 - Configuration from defaults, `dry4rust.toml`, `[package.metadata.dry4rust]`
   and CLI flags, with every ranged value carrying its range in its type
-- 513 tests; `stern4rust` clean with all 21 rules applied and no baseline;
+- 525 tests; `stern4rust` clean with all 21 rules applied and no baseline;
   `crap4rust` clean at 15 with no override; every source file mirrored;
   no file at or above 10 on `iceberg4rust`
 

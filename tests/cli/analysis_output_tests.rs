@@ -4,13 +4,13 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::{cargo_dry4rust, fixture_path};
-use dry4rust::baseline::baseline_file::BaselineFile;
 use dry4rust::cli::analysis_output::AnalysisOutput;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
+use dry4rust::suppression::baseline_file::BaselineFile;
 use predicate::str;
 use predicates::prelude::*;
 use std::fs;

@@ -12,9 +12,9 @@
 use std::path::Path;
 
 use super::parser::parse_source;
+use crate::analysis_config::AnalysisConfig;
 use crate::analyzer::LanguageAnalyzer;
 use crate::code_unit::CodeUnit;
-use crate::config::AnalysisConfig;
 use std::error::Error;
 
 /// Rust language analyzer using syn for AST parsing.

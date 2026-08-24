@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::baseline::baseline_kind::BaselineKind;
+use dry4rust::suppression::baseline_kind::BaselineKind;
 use serde_json::from_str;
 use serde_json::to_string;
 

@@ -6,11 +6,11 @@
 use crate::common::analysed;
 use crate::common::group;
 use crate::common::result_with;
-use dry4rust::baseline::baseline_file::BaselineFile;
-use dry4rust::baseline::baseline_file::DEFAULT_BASELINE_FILE;
-use dry4rust::baseline::baseline_file::FORMAT_VERSION;
-use dry4rust::baseline::baseline_file::baseline_path;
-use dry4rust::baseline::baseline_kind::BaselineKind;
+use dry4rust::suppression::baseline_file::BaselineFile;
+use dry4rust::suppression::baseline_file::DEFAULT_BASELINE_FILE;
+use dry4rust::suppression::baseline_file::FORMAT_VERSION;
+use dry4rust::suppression::baseline_file::baseline_path;
+use dry4rust::suppression::baseline_kind::BaselineKind;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
