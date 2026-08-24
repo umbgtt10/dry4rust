@@ -3,8 +3,8 @@
 Each ADR documents one load-bearing decision behind `cargo-dry4rust` --
 succinct, self-contained, citable on its own. Like the sibling `crap4rust`,
 `twin4rust` and `iceberg4rust` tools, and unlike the larger `etheram`
-ecosystem repositories, these are not priority-tiered: a single-crate CLI has
-a small enough decision surface that a flat list is sufficient.
+ecosystem repositories, these are not priority-tiered: two crates and a corpus
+have a small enough decision surface that a flat list is sufficient.
 
 Decisions about where this tool is *going* are not here. They are in
 [`../dry4rust-dossier.md`](../dry4rust-dossier.md), which is research rather

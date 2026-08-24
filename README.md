@@ -78,16 +78,22 @@ Commands:
 
 Options:
   -p, --path <PATH>                Path to analyze (defaults to current directory)
-      --min-nodes <MIN_NODES>      Minimum AST node count for analysis [default: 10]
-      --min-lines <MIN_LINES>      Minimum source line count for analysis [default: 0 (disabled)]
-      --threshold <THRESHOLD>      Similarity threshold for near-duplicates (0.0-1.0) [default: 0.9]
+      --min-nodes <MIN_NODES>      Minimum AST node count for analysis
+      --min-lines <MIN_LINES>      Minimum source line count for analysis
+      --threshold <THRESHOLD>      Similarity threshold (0.0-1.0)
       --format <FORMAT>            Output format [default: text] [possible values: text, json]
       --exclude <EXCLUDE>          Exclude patterns (can be repeated)
       --exclude-tests              Exclude test code (#[test] functions and #[cfg(test)] modules)
   -s, --sub-function               Also analyse if-branches, match arms, loop bodies and closure bodies
       --min-sub-nodes <N>          Minimum AST node count for a sub-function unit [default: 5]
       --baseline <PATH>            Judge the run against a recorded baseline of inherited duplication
+  -h, --help                       Print help
+  -V, --version                    Print version
 ```
+
+Every example below is real output from `fixture/exact_dupes`, which ships in the
+repository -- `cargo run -p cargo-dry4rust -- --path fixture/exact_dupes report` reproduces
+it.
 
 `--threshold` and the two `--max-*-percent` ceilings are checked against their ranges. A
 threshold outside `0.0..=1.0`, or a percentage outside `0.0..=100.0`, fails the run with a
@@ -101,21 +107,22 @@ message naming the field rather than being accepted and quietly finding nothing.
 $ cargo dry4rust report
 Duplication Statistics
 =====================
-Total code units analyzed: 4
+Total code units analyzed: 3
 
-Exact duplicates: 1 groups (2 code units)
+Exact duplicates: 1 groups (3 code units)
 Near duplicates:  0 groups (0 code units)
 
-Duplicated lines (exact): 18
+Duplicated lines (exact): 27
 Duplicated lines (near):  0
-Duplication: 50.0% exact, 0.0% near (of 36 total lines)
+Duplication: 100.0% exact, 0.0% near (of 27 total lines)
 
 Exact Duplicates
 ================
 
-Group 1 (fingerprint: 2a182da9e04e9428, 2 members):
-  - sum_positive (function) at src/lib.rs:2-10
-  - count_positive (function) at src/lib.rs:12-20
+Group 1 (fingerprint: 396fa8f6b728ff01, 3 members):
+  - process_data (function) at src/target.rs:6-14
+  - compute_total (function) at src/target.rs:16-24
+  - aggregate (function) at src/target.rs:26-34
 ```
 
 **Statistics only:**
@@ -124,14 +131,14 @@ Group 1 (fingerprint: 2a182da9e04e9428, 2 members):
 $ cargo dry4rust stats
 Duplication Statistics
 =====================
-Total code units analyzed: 4
+Total code units analyzed: 3
 
-Exact duplicates: 1 groups (2 code units)
+Exact duplicates: 1 groups (3 code units)
 Near duplicates:  0 groups (0 code units)
 
-Duplicated lines (exact): 18
+Duplicated lines (exact): 27
 Duplicated lines (near):  0
-Duplication: 50.0% exact, 0.0% near (of 36 total lines)
+Duplication: 100.0% exact, 0.0% near (of 27 total lines)
 ```
 
 **JSON output:**
@@ -139,15 +146,15 @@ Duplication: 50.0% exact, 0.0% near (of 36 total lines)
 ```sh
 $ cargo dry4rust --format json stats
 {
-  "total_code_units": 4,
-  "total_lines": 36,
+  "total_code_units": 3,
+  "total_lines": 27,
   "exact_duplicate_groups": 1,
-  "exact_duplicate_units": 2,
+  "exact_duplicate_units": 3,
   "near_duplicate_groups": 0,
   "near_duplicate_units": 0,
-  "exact_duplicate_lines": 18,
+  "exact_duplicate_lines": 27,
   "near_duplicate_lines": 0,
-  "exact_duplicate_percent": 50.0,
+  "exact_duplicate_percent": 100.0,
   "near_duplicate_percent": 0.0
 }
 ```
@@ -310,13 +317,13 @@ Some duplicates are intentional (e.g., test helpers, trait implementations). You
 
 ```sh
 # Add a fingerprint to the ignore list
-$ cargo dry4rust ignore 2a182da9e04e9428 --reason "Intentional test helpers"
-Added 2a182da9e04e9428 to ignore list.
+$ cargo dry4rust ignore 396fa8f6b728ff01 --reason "Intentional test helpers"
+Added 396fa8f6b728ff01 to ignore list.
 
 # List ignored fingerprints
 $ cargo dry4rust ignored
 Ignored fingerprints:
-  2a182da9e04e9428 (reason: Intentional test helpers)
+  396fa8f6b728ff01 (reason: Intentional test helpers)
 
 # Ignored groups are automatically filtered from reports and checks
 $ cargo dry4rust report

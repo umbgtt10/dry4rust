@@ -9,7 +9,7 @@ matches and compared tree-to-tree for near ones. Nothing is inferred from
 names, comments or formatting, because all three are exactly what a copied
 block changes first.
 
-66 source files, roughly 5,800 lines, one type each. Five directories group
+67 source files, roughly 5,900 lines, one type each. Five directories group
 the modules that answer one question between them: `src/near_duplicate/`,
 which only `grouper` reaches; `src/suppression/`, the two ways duplication is
 kept out of a report; `src/cli/`, one file per command, with `checking/` under
@@ -95,6 +95,7 @@ bodies as further units, which then travel the same path.
 | `analysis` | `analyze` and `analyze_units` -- the pipeline as one call. |
 | `cli::cli_error` | `CliError` and the exit code each variant maps to. |
 | `cli::command` | The subcommands, as `clap` sees them. |
+| `cli::entry_point` | The command line and what it means: which root, which command, which overrides. |
 | `cli::cli_overrides` | What the command line said, applied over what the files said. |
 | `cli::output_format` | Text or JSON, and the reporter each builds. |
 | `cli::analysis_output` | One run's config, result and reporter, produced together. |
@@ -154,8 +155,9 @@ extracted fragment can be compared against another extracted fragment.
 
 ## CLI layer
 
-`main` unpacks arguments and produces an exit code. Everything else is in the
-library, where tests reach it: `CommandDispatcher` splits the two commands that
+`main` is eleven lines: it hands `argv` to `EntryPoint::run` and returns the
+`ExitCode` that comes back. The mapping from arguments to a run lives in the
+library, so a test can call it, and everything after it is there too: `CommandDispatcher` splits the two commands that
 touch only the ignore file from the five that need an analysis first, runs the
 analysis once, and hands the result to the command struct that serves it.
 
