@@ -22,7 +22,7 @@ contributes nothing. Two blocks that a reader would call obviously duplicated
 scored as though they shared only their outermost node.
 
 Measured on four-statement blocks differing by one insertion: `2/11`. The same
-pair under alignment: `10/11`. The default threshold is `0.8`.
+pair under alignment: `10/11`. The default threshold is `0.9`.
 
 The score was measuring alignment as much as content, and no flag changed it.
 

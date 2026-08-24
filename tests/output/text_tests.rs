@@ -143,3 +143,72 @@ fn text_report_stats() {
     assert!(output.contains("5 groups"));
     assert!(output.contains("3 groups"));
 }
+
+#[test]
+fn text_report_sub_exact_heads_its_own_section_and_names_the_parent() {
+    // Arrange
+    let reporter = TextReporter::new(None);
+    let mut member = make_unit("if-then branch", "/src/a.rs", 10, 25);
+    member.parent_name = Some(String::from("handle_positive"));
+    let group = DuplicateGroup {
+        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        members: vec![member],
+        similarity: 1.0,
+    };
+    let mut buf = Vec::new();
+
+    // Act
+    reporter.report_sub_exact(&[group], &mut buf).unwrap();
+
+    // Assert
+    let output = String::from_utf8(buf).unwrap();
+    assert!(output.contains("Sub-function Exact Duplicates"), "{output}");
+    assert!(
+        output.contains("in handle_positive"),
+        "a branch is only locatable through the function it came from, got: {output}"
+    );
+    assert!(
+        !output.contains("similarity:"),
+        "an exact section states no similarity, got: {output}"
+    );
+}
+
+#[test]
+fn text_report_sub_near_heads_its_own_section_and_states_the_similarity() {
+    // Arrange
+    let reporter = TextReporter::new(None);
+    let mut member = make_unit("for body", "/src/a.rs", 10, 25);
+    member.parent_name = Some(String::from("total_rising"));
+    let group = DuplicateGroup {
+        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        members: vec![member],
+        similarity: 0.95,
+    };
+    let mut buf = Vec::new();
+
+    // Act
+    reporter.report_sub_near(&[group], &mut buf).unwrap();
+
+    // Assert
+    let output = String::from_utf8(buf).unwrap();
+    assert!(output.contains("Sub-function Near Duplicates"), "{output}");
+    assert!(output.contains("95%"), "{output}");
+    assert!(output.contains("in total_rising"), "{output}");
+}
+
+#[test]
+fn text_report_sub_near_with_nothing_to_report_writes_nothing_at_all() {
+    // Arrange
+    let reporter = TextReporter::new(None);
+    let mut buf = Vec::new();
+
+    // Act
+    reporter.report_sub_near(&[], &mut buf).unwrap();
+
+    // Assert
+    assert!(
+        buf.is_empty(),
+        "the two sub-function sections have no empty message, unlike the exact \
+         one, so an absent section is absent rather than announced"
+    );
+}

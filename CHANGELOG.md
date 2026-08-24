@@ -87,7 +87,7 @@ upstream's history kept as an ancestor rather than a credit line.
   `CommandDispatcher` — rather than the threshold being raised. See
   [ADR-DecompositionOverThresholdRelaxation](docs/ADRs/ADR-DecompositionOverThresholdRelaxation.md).
 - Nine re-exports removed, so every import names the module where the symbol is defined.
-- 482 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
+- 493 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
   baseline; `crap4rust` clean at 15 with no override; every source file mirrored; no file
   at or above 10 on `iceberg4rust`.
 - Upstream's changelog is preserved below, under its own heading, rather than replaced.

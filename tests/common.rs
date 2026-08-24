@@ -31,6 +31,20 @@ pub fn analysed(fixture: &str) -> (Config, AnalysisResult) {
     (config, result)
 }
 
+/// The same, with sub-function analysis on, which no fixture configures for
+/// itself.
+pub fn analysed_with_sub_function(fixture: &str) -> (Config, AnalysisResult) {
+    let root = fixture_path(fixture);
+    let config = Config {
+        sub_function: true,
+        ..Config::load(&root).expect("the fixture configuration is in range")
+    };
+    let files = scan_files(&ScanConfig::new(root));
+    let result =
+        analyze(&RustAnalyzer::new(), &files, &config).expect("the fixture analyses cleanly");
+    (config, result)
+}
+
 pub fn cargo_dry4rust() -> Command {
     cargo_bin_cmd!("cargo-dry4rust")
 }

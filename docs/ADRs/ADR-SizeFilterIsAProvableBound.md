@@ -25,8 +25,8 @@ not imply sharing a bucket. The gap is not academic:
 | 8 and 15 nodes | 1.88 | yes | 0.696 |
 
 A pair one node apart, able to score `0.933` against a default threshold of
-`0.8`, was never compared, because `log2` happens to put a boundary between 7
-and 8. A pair nearly twice apart, unable to reach `0.8` at all, was compared
+`0.9`, was never compared, because `log2` happens to put a boundary between 7
+and 8. A pair nearly twice apart, unable to reach `0.9` at all, was compared
 anyway.
 
 The misses were silent. A report saying "no near duplicates" did not

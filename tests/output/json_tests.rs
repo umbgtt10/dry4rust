@@ -157,3 +157,49 @@ fn json_report_stats() {
     assert_eq!(parsed["total_code_units"], 50);
     assert_eq!(parsed["exact_duplicate_groups"], 3);
 }
+
+#[test]
+fn json_report_sub_exact_with_groups() {
+    // Arrange
+    let reporter = JsonReporter::new(None);
+    let fp = Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque));
+    let group = DuplicateGroup {
+        fingerprint: fp,
+        members: vec![make_unit("if-then branch", "/src/a.rs", 10, 25)],
+        similarity: 1.0,
+    };
+    let mut buf = Vec::new();
+
+    // Act
+    reporter.report_sub_exact(&[group], &mut buf).unwrap();
+
+    // Assert
+    let parsed: Value = from_str(&String::from_utf8(buf).unwrap()).unwrap();
+    let groups = parsed.as_array().unwrap();
+    assert_eq!(groups.len(), 1);
+    assert_eq!(groups[0]["fingerprint"].as_str().unwrap(), fp.to_hex());
+    assert_eq!(groups[0]["similarity"], 1.0);
+}
+
+#[test]
+fn json_report_sub_near_with_groups() {
+    // Arrange
+    let reporter = JsonReporter::new(None);
+    let fp = Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque));
+    let group = DuplicateGroup {
+        fingerprint: fp,
+        members: vec![make_unit("for body", "/src/a.rs", 10, 25)],
+        similarity: 0.95,
+    };
+    let mut buf = Vec::new();
+
+    // Act
+    reporter.report_sub_near(&[group], &mut buf).unwrap();
+
+    // Assert
+    let parsed: Value = from_str(&String::from_utf8(buf).unwrap()).unwrap();
+    let groups = parsed.as_array().unwrap();
+    assert_eq!(groups.len(), 1);
+    assert_eq!(groups[0]["fingerprint"].as_str().unwrap(), fp.to_hex());
+    assert_eq!(groups[0]["similarity"], 0.95);
+}

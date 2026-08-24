@@ -53,7 +53,7 @@ upstream's history kept as an ancestor rather than a credit line.
 - `Block`, `Tuple` and `Array` children are aligned by weighted
   longest-common-subsequence instead of zipped. Two blocks differing by one
   inserted statement scored `2/11` and now score `10/11`, against a default
-  threshold of `0.8`. Kinds whose children are named slots keep positional
+  threshold of `0.9`. Kinds whose children are named slots keep positional
   comparison, so an `If` with a then-branch is still not a match for an `If`
   with an else-branch.
 
@@ -64,7 +64,7 @@ upstream's history kept as an ancestor rather than a credit line.
   tool now agree.
 - The size pre-filter is now the exact bound the threshold implies, rather
   than `floor(log2(n))` bucketing. The old filter never compared units 7 and 8
-  nodes apart -- a pair able to score `0.933` against a threshold of `0.8` --
+  nodes apart -- a pair able to score `0.933` against a threshold of `0.9` --
   because a bucket boundary fell between them, while comparing pairs nearly
   twice apart that could not clear the bar. Codebases that reported no near
   duplicates may now report some, and those findings were always there.
@@ -123,7 +123,7 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Verified**
 
-- 482 tests, up from 213
+- 493 tests, up from 213
 - `stern4rust`: 0 offences over 118 files, 21 rules applied, nothing skipped,
   nothing baselined, one exclusion (`tests/fixtures/**`)
 - `crap4rust`: 0 crappy functions at 15 over 216 functions, no override
