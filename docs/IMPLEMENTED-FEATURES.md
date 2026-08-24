@@ -133,7 +133,7 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Verified**
 
-- 525 tests, up from 213
+- 524 tests, up from 213
 - `stern4rust`: 0 offences over 130 files, 21 rules applied, nothing skipped,
   nothing baselined, one exclusion (`tests/fixtures/**`)
 - `crap4rust`: 0 crappy functions at 15 over 240 functions, no override

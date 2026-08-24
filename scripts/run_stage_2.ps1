@@ -226,22 +226,6 @@ Invoke-Stern4RustGate "House rules dry4rust" @("cargo-dry4rust")
 
 # ---------------------------------------------------------------------------
 # CRAP gate
-#
-# 15 with no override and no tolerance: the same number every repository in
-# the family uses, failing on the first function that crosses it.
-#
-# Getting here took decomposing the three functions that could not. CRAP is
-# complexity^2 * (1 - coverage)^3 + complexity, so it never falls below the
-# complexity itself, and no amount of testing brings a function of complexity
-# 27 under 15. Tests were not the answer; smaller functions were.
-#
-#   grouper::find_near_duplicates  27 -> NearDuplicateFinder, UnionFind,
-#                                       SimilarityPair
-#   extractor::extract_recursive   20 -> SubUnitExtractor
-#   main                           14 -> CommandDispatcher
-#
-# Nothing is baselined, skipped or budgeted. If this gate ever needs an
-# override again, the honest move is the one taken here: split the function.
 # ---------------------------------------------------------------------------
 
 Invoke-Crap4RustGate "CRAP dry4rust" @("cargo-dry4rust")

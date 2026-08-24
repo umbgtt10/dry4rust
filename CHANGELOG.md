@@ -101,7 +101,7 @@ upstream's history kept as an ancestor rather than a credit line.
 - `config.rs` split into `Config`, `FileConfig` and `AnalysisConfig`, one per file. Three
   structs that existed only to spell out the path `package` → `metadata` → `dry4rust`
   through `Cargo.toml` are gone, replaced by navigating the parsed document.
-- 525 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
+- 524 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
   baseline; `crap4rust` clean at 15 with no override; every source file mirrored; no file
   at or above 10 on `iceberg4rust`.
 - Upstream's changelog is preserved below, under its own heading, rather than replaced.
