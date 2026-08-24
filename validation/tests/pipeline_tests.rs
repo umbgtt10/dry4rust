@@ -53,7 +53,7 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     let tmp = TempDir::new().expect("temp dir");
     fs::create_dir_all(tmp.path().join("src")).expect("src");
     fs::copy(
-        fixture_path("exact_dupes").join("src/lib.rs"),
+        fixture_path("exact_dupes").join("src/target.rs"),
         tmp.path().join("src/lib.rs"),
     )
     .expect("copy the fixture");

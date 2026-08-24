@@ -115,6 +115,9 @@ upstream's history kept as an ancestor rather than a credit line.
 - Both workspace members are gated. `core` takes all twenty-one house rules;
   `validation` takes twenty, with `paired-test-file` skipped by name because a crate with
   no `src/` has nothing for a test file to be named after.
+- The fixture corpus carries the four-line header, and each crate keeps its code in
+  `src/target.rs` behind a `src/lib.rs` that only names it -- matching the family, and
+  putting productive code out of a `lib.rs` the house rules keep for registries.
 - `main` is eleven lines. The argument mapping moved into the library as `EntryPoint`, so
   which root, which command and which overrides are things a test can call.
 

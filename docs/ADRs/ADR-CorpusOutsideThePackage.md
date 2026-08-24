@@ -46,6 +46,13 @@ input; those moved too, because core touching the corpus is the defect itself.
 `fixture/` is excluded from the workspace rather than made a member, so a
 deliberately-duplicated crate never has to satisfy the workspace's own build.
 
+The corpus still carries the repository's four-line header on every file, and
+each crate keeps its code in `src/target.rs` behind a `src/lib.rs` that only
+names it -- the shape `crap4rust`'s fixtures use. No rule reaches these files
+any more, so this is consistency rather than compliance: a corpus that reads
+like the rest of the family is one a reader is not surprised by. It changed no
+measurement, which is the property that made it safe to do at all.
+
 Stage 1 covers the workspace. Stage 2 gates both members: `core` at all
 twenty-one rules, `validation` at twenty. This is a step stricter than the rest
 of the family, which gates `core` and leaves `validation` unmeasured.

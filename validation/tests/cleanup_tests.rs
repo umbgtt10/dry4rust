@@ -19,7 +19,7 @@ fn cleanup_dry_run() {
     let tmp = TempDir::new().unwrap();
     fs::create_dir_all(tmp.path().join("src")).unwrap();
     fs::copy(
-        fixture_path("exact_dupes").join("src/lib.rs"),
+        fixture_path("exact_dupes").join("src/target.rs"),
         tmp.path().join("src/lib.rs"),
     )
     .unwrap();
@@ -56,7 +56,7 @@ fn cleanup_removes_stale_entries() {
     let tmp = TempDir::new().unwrap();
     fs::create_dir_all(tmp.path().join("src")).unwrap();
     fs::copy(
-        fixture_path("exact_dupes").join("src/lib.rs"),
+        fixture_path("exact_dupes").join("src/target.rs"),
         tmp.path().join("src/lib.rs"),
     )
     .unwrap();

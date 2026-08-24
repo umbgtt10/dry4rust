@@ -33,18 +33,37 @@ fn error_on_nonexistent_path() {
 
 #[test]
 fn exclude_option_drops_the_named_paths_from_the_report() {
-    // Arrange & Act & Assert
+    // Arrange & Act & Assert -- `src` rather than `lib.rs`, because a fixture's
+    // code lives in target.rs and lib.rs is only the registry that names it;
+    // excluding one file no longer leaves the scan with nothing
     cargo_dry4rust()
         .args([
             "--path",
             fixture_path("exact_dupes").to_str().unwrap(),
             "--exclude",
-            "lib.rs",
+            "src",
             "stats",
         ])
         .assert()
         .code(2)
         .stderr(str::contains("No source files"));
+}
+
+#[test]
+fn exclude_option_leaves_the_files_it_does_not_name() {
+    // Arrange & Act & Assert -- target.rs holds every unit, so dropping it
+    // leaves a registry that parses to nothing rather than nothing to parse
+    cargo_dry4rust()
+        .args([
+            "--path",
+            fixture_path("exact_dupes").to_str().unwrap(),
+            "--exclude",
+            "target.rs",
+            "stats",
+        ])
+        .assert()
+        .success()
+        .stdout(str::contains("Total code units analyzed: 0"));
 }
 
 #[test]

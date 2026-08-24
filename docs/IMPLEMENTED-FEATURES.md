@@ -135,9 +135,14 @@ upstream's history kept as an ancestor rather than a credit line.
 
 - 562 tests, up from 213
 - `stern4rust`: 0 offences over 130 files, 21 rules applied, nothing skipped,
-  nothing baselined, one exclusion (`tests/fixtures/**`)
+  nothing baselined, no exclusion at all
 - `crap4rust`: 0 crappy functions at 15 over 240 functions, no override
 - `twin4rust`: every source file mirrored
+- `validation`: 20 of the 21 house rules, `paired-test-file` skipped by name
+  because a crate with no `src/` has nothing for a test file to be named after
+- the fixture corpus carries the same four-line header as the source, and each
+  crate keeps its code in `src/target.rs` behind a `src/lib.rs` that only names
+  it -- the shape the family's fixtures use
 - `iceberg4rust`: no file at or above 10
 - Both stage gates proven to fail, not only to pass
 

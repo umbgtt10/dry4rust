@@ -233,12 +233,12 @@ Sub-function Exact Duplicates
 =============================
 
 Group 1 (fingerprint: 004522adf0425ce1, 2 members):
-  - for body (loop body) in sum_doubled at src/lib.rs:65-73
-  - for body (loop body) in accumulate at src/lib.rs:75-83
+  - for body (loop body) in sum_doubled at src/target.rs:70-78
+  - for body (loop body) in accumulate at src/target.rs:80-88
 
 Group 2 (fingerprint: 847270a821ab17a2, 2 members):
-  - match arm 2 (match arm) in classify_number at src/lib.rs:28-48
-  - match arm 2 (match arm) in describe_value at src/lib.rs:50-61
+  - match arm 2 (match arm) in classify_number at src/target.rs:33-53
+  - match arm 2 (match arm) in describe_value at src/target.rs:55-66
 ```
 
 Each member names the function it came from, and the line range shown is that parent
