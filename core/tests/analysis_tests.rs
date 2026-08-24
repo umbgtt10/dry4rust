@@ -138,11 +138,11 @@ fn completely_different_trees_score_low() {
 fn compute_stats_counts_units_and_duplicate_lines() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn a(x: i32) -> i32 { x + 1 }
         fn b(y: i32) -> i32 { y + 1 }
         fn c(x: i32) -> i32 { x * 2 }
-        "#,
+        ",
     );
     let exact = grouper::group_exact_duplicates(&units);
     let stats = grouper::compute_stats(&units, &exact, &[]);
@@ -183,10 +183,10 @@ fn different_macro_names_score_zero() {
 fn duplicate_group_has_fingerprint() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn a(x: i32) -> i32 { x + 1 }
         fn b(y: i32) -> i32 { y + 1 }
-        "#,
+        ",
     );
     let groups = grouper::group_exact_duplicates(&units);
 
@@ -208,7 +208,7 @@ fn empty_trees_score_one() {
 fn exact_duplicates_grouped() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn foo(x: i32) -> i32 {
             let y = x + 1;
             y * 2
@@ -220,7 +220,7 @@ fn exact_duplicates_grouped() {
         fn unique(x: i32) -> i32 {
             x * x * x
         }
-        "#,
+        ",
     );
     let groups = grouper::group_exact_duplicates(&units);
 
@@ -234,13 +234,13 @@ fn exact_duplicates_grouped() {
 fn exact_groups_sorted_by_size() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn a1(x: i32) -> i32 { x + 1 }
         fn a2(y: i32) -> i32 { y + 1 }
         fn a3(z: i32) -> i32 { z + 1 }
         fn b1(x: i32) -> i32 { x * 2 }
         fn b2(y: i32) -> i32 { y * 2 }
-        "#,
+        ",
     );
     let groups = grouper::group_exact_duplicates(&units);
 
@@ -270,22 +270,22 @@ fn extracts_bare_loop_bodies() {
 fn extracts_closure_bodies() {
     // Arrange & Act
     let body = parse_and_extract_body(
-        r#"fn foo(data: Vec<i32>) -> Vec<i32> {
+        r"fn foo(data: Vec<i32>) -> Vec<i32> {
             data.iter().map(|x| {
                 let y = x + 1;
                 let z = y * 2;
                 z
             }).collect()
-        }"#,
+        }",
     );
     let subs = extractor::extract_sub_units(&body, 1);
-    let closures: Vec<_> = subs
+    let closures = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::Block && s.description == "closure body")
-        .collect();
+        .count();
 
     // Assert
-    assert_eq!(closures.len(), 1);
+    assert_eq!(closures, 1);
 }
 
 #[test]
@@ -295,13 +295,13 @@ fn extracts_if_branches() {
         "fn foo(x: i32) -> i32 { if x > 0 { let y = x + 1; y * 2 } else { let z = x - 1; z * 3 } }",
     );
     let subs = extractor::extract_sub_units(&body, 1);
-    let if_branches: Vec<_> = subs
+    let if_branches = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::IfBranch)
-        .collect();
+        .count();
 
     // Assert
-    assert_eq!(if_branches.len(), 2);
+    assert_eq!(if_branches, 2);
 }
 
 #[test]
@@ -310,35 +310,35 @@ fn extracts_loop_bodies() {
     let body =
         parse_and_extract_body("fn foo(x: i32) { for i in 0..10 { let y = i + x; let _ = y; } }");
     let subs = extractor::extract_sub_units(&body, 1);
-    let loops: Vec<_> = subs
+    let loops = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
-        .collect();
+        .count();
 
     // Assert
-    assert_eq!(loops.len(), 1);
+    assert_eq!(loops, 1);
 }
 
 #[test]
 fn extracts_match_arms() {
     // Arrange & Act
     let body = parse_and_extract_body(
-        r#"fn foo(x: i32) -> i32 {
+        r"fn foo(x: i32) -> i32 {
             match x {
                 0 => { let a = 1; a + 1 },
                 1 => { let b = 2; b + 2 },
                 _ => { let c = 3; c + 3 },
             }
-        }"#,
+        }",
     );
     let subs = extractor::extract_sub_units(&body, 1);
-    let match_arms: Vec<_> = subs
+    let match_arms = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::MatchArm)
-        .collect();
+        .count();
 
     // Assert
-    assert_eq!(match_arms.len(), 3);
+    assert_eq!(match_arms, 3);
 }
 
 #[test]
@@ -533,12 +533,12 @@ fn method_call_similarity() {
 fn multiple_exact_groups() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn a1(x: i32) -> i32 { x + 1 }
         fn a2(y: i32) -> i32 { y + 1 }
         fn b1(x: i32) -> i32 { x * 2 }
         fn b2(y: i32) -> i32 { y * 2 }
-        "#,
+        ",
     );
     let groups = grouper::group_exact_duplicates(&units);
 
@@ -550,7 +550,7 @@ fn multiple_exact_groups() {
 fn near_duplicate_complex_fn() {
     // Arrange & Act
     let score = fn_body_similarity(
-        r#"
+        r"
         fn process(data: Vec<i32>) -> i32 {
             let mut sum = 0;
             for item in data.iter() {
@@ -560,8 +560,8 @@ fn near_duplicate_complex_fn() {
             }
             sum
         }
-        "#,
-        r#"
+        ",
+        r"
         fn compute(values: Vec<i32>) -> i32 {
             let mut total = 0;
             for val in values.iter() {
@@ -571,7 +571,7 @@ fn near_duplicate_complex_fn() {
             }
             total
         }
-        "#,
+        ",
     );
 
     // Assert
@@ -582,10 +582,10 @@ fn near_duplicate_complex_fn() {
 fn near_duplicates_exclude_exact() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn a(x: i32) -> i32 { x + 1 }
         fn b(y: i32) -> i32 { y + 1 }
-        "#,
+        ",
     );
     let exact = grouper::group_exact_duplicates(&units);
     let exact_fps: Vec<_> = exact.iter().map(|g| g.fingerprint).collect();
@@ -599,7 +599,7 @@ fn near_duplicates_exclude_exact() {
 fn near_duplicates_found() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn process(data: i32) -> i32 {
             let a = data + 1;
             let b = a * 2;
@@ -612,7 +612,7 @@ fn near_duplicates_found() {
             let c = b - 4;
             a + b + c
         }
-        "#,
+        ",
     );
     let exact = grouper::group_exact_duplicates(&units);
     let exact_fps: Vec<_> = exact.iter().map(|g| g.fingerprint).collect();
@@ -626,7 +626,7 @@ fn near_duplicates_found() {
 fn nested_structures_extracted_recursively() {
     // Arrange & Act
     let body = parse_and_extract_body(
-        r#"fn foo(x: i32) -> i32 {
+        r"fn foo(x: i32) -> i32 {
             if x > 0 {
                 for i in 0..x {
                     let y = i + 1;
@@ -636,32 +636,32 @@ fn nested_structures_extracted_recursively() {
             } else {
                 x
             }
-        }"#,
+        }",
     );
     let subs = extractor::extract_sub_units(&body, 1);
-    let if_branches: Vec<_> = subs
+    let if_branches = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::IfBranch)
-        .collect();
-    let loops: Vec<_> = subs
+        .count();
+    let loops = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
-        .collect();
+        .count();
 
     // Assert
-    assert_eq!(if_branches.len(), 2);
-    assert_eq!(loops.len(), 1);
+    assert_eq!(if_branches, 2);
+    assert_eq!(loops, 1);
 }
 
 #[test]
 fn no_duplicates_no_groups() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn add(x: i32) -> i32 { x + 1 }
         fn mul(x: i32) -> i32 { x * 2 }
         fn sub(x: i32) -> i32 { x - 3 }
-        "#,
+        ",
     );
     let groups = grouper::group_exact_duplicates(&units);
 
@@ -771,7 +771,7 @@ fn single_unit_no_groups() {
 fn stats_includes_line_counts() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn foo(x: i32) -> i32 {
             let y = x + 1;
             y * 2
@@ -780,7 +780,7 @@ fn stats_includes_line_counts() {
             let b = a + 1;
             b * 2
         }
-        "#,
+        ",
     );
     let exact = grouper::group_exact_duplicates(&units);
     let stats = grouper::compute_stats(&units, &exact, &[]);
@@ -794,7 +794,7 @@ fn stats_includes_line_counts() {
 fn stats_total_lines_computed() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn foo(x: i32) -> i32 {
             let y = x + 1;
             y * 2
@@ -803,7 +803,7 @@ fn stats_total_lines_computed() {
             let b = a + 1;
             b * 2
         }
-        "#,
+        ",
     );
     let stats = grouper::compute_stats(&units, &[], &[]);
 
@@ -815,10 +815,10 @@ fn stats_total_lines_computed() {
 fn stats_with_near_duplicates() {
     // Arrange & Act
     let units = make_units(
-        r#"
+        r"
         fn a(x: i32) -> i32 { x + 1 }
         fn b(y: i32) -> i32 { y * 2 }
-        "#,
+        ",
     );
     let composite_fp = Fingerprint::from_fingerprints(&[Fingerprint::from_node(
         &NormalizedNode::leaf(NodeKind::Opaque),

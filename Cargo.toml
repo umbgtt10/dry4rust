@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["core", "validation"]
+members = ["core", "validation", "xtask"]
 
 # The fixture crates are analysis input, not code this workspace builds. They
 # carry manifests because dry4rust is pointed at them as real packages, and

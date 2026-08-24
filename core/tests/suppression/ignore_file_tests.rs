@@ -8,10 +8,11 @@ use dry4rust::grouper::DuplicateGroup;
 use dry4rust::node::{LiteralKind, NodeKind, NormalizedNode};
 use dry4rust::suppression::ignore_file::IgnoreFile;
 use std::collections::HashSet;
+use std::iter::once;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
-fn group_of(fingerprint: Fingerprint, similarity: f64) -> DuplicateGroup {
+const fn group_of(fingerprint: Fingerprint, similarity: f64) -> DuplicateGroup {
     DuplicateGroup {
         fingerprint,
         members: vec![],
@@ -186,7 +187,7 @@ fn stale_separates_the_entries_that_no_longer_match_anything() {
         (live_fp, Some("live")),
         (other_fingerprint(), Some("stale")),
     ]);
-    let live: HashSet<Fingerprint> = [live_fp].into_iter().collect();
+    let live: HashSet<Fingerprint> = once(live_fp).collect();
 
     // Act
     let stale = ignore.stale(&live);
@@ -243,7 +244,7 @@ fn without_stale_keeps_the_live_entries_and_hands_back_the_rest() {
         (live_fp, Some("live")),
         (other_fingerprint(), Some("stale")),
     ]);
-    let live: HashSet<Fingerprint> = [live_fp].into_iter().collect();
+    let live: HashSet<Fingerprint> = once(live_fp).collect();
 
     // Act
     let (kept, taken) = ignore.without_stale(&live);

@@ -13,7 +13,7 @@
 # problem entirely: the tests that need it are never packaged.
 [package]
 name = "validation"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.91"
 description = "End-to-end validation of the cargo-dry4rust binary against the fixture crates"

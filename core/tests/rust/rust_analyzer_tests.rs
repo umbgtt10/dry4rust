@@ -16,7 +16,7 @@ fn rust_analyzer_through_trait() {
         min_nodes: 1,
         min_lines: 0,
     };
-    let source = r#"
+    let source = r"
         fn foo(x: i32) -> i32 {
             let y = x + 1;
             y * 2
@@ -27,7 +27,7 @@ fn rust_analyzer_through_trait() {
             let w = z + 1;
             assert_eq!(w, 2);
         }
-    "#;
+    ";
     let path = PathBuf::from("test.rs");
     let units = analyzer.parse_file(&path, source, &config).unwrap();
 

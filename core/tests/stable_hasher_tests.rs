@@ -5,7 +5,7 @@
 
 use dry4rust::stable_hasher::StableHasher;
 
-fn hash_of(bytes: &[u8]) -> u64 {
+const fn hash_of(bytes: &[u8]) -> u64 {
     let mut hasher = StableHasher::new();
     hasher.write_bytes(bytes);
     hasher.finish()

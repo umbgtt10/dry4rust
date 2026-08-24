@@ -1,0 +1,36 @@
+# Copyright (c) 2026 Matjaz Domen Pecan
+# Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+# Licensed under the MIT License
+# SPDX-License-Identifier: MIT
+
+# just looks for a POSIX `sh` on Windows and there is not reliably one on PATH:
+# Git for Windows ships sh.exe without putting it there, and a resolvable
+# bash.exe may belong to WSL, a separate toolchain. PowerShell is the one shell
+# guaranteed present. Only recipe bodies are shell-interpreted, so this affects
+# Windows alone; the Linux and macOS runners use just's default `sh`.
+set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
+
+# Set by just itself rather than per recipe line, so it reaches whichever shell
+# runs the body without needing sh and PowerShell syntax for the same thing.
+export RUSTFLAGS := "-D warnings"
+
+# CI fails on drift instead of silently rewriting files nobody is there to
+# review; a local run still formats in place.
+fmt_mode := if env('CI', '') != '' { '--check' } else { '' }
+
+default:
+    @just --list
+
+# Formatting, clippy and tests -- cargo built-ins only, so it works on a fresh
+# checkout with none of the house tools installed.
+stage1:
+    cargo fmt {{fmt_mode}}
+    cargo clippy --workspace --all-targets -- -D warnings
+    cargo test --workspace
+
+# House rules, CRAP, mirrored tests and file risk, run in that order. stern
+# runs first because its corrections are renames, file moves and directory
+# splits: a layout it is about to reject is one the other three would have
+# measured for nothing.
+stage2:
+    cargo xtask stage2

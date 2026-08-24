@@ -16,6 +16,7 @@ use std::path::PathBuf;
 
 /// A duplicate group with a stated fingerprint and members, for tests that
 /// care about grouping rather than about the code behind it.
+#[must_use]
 pub fn group(fingerprint: u64, names: &[&str]) -> DuplicateGroup {
     let fingerprint = Fingerprint::new(fingerprint);
     DuplicateGroup {
@@ -42,6 +43,7 @@ pub fn group(fingerprint: u64, names: &[&str]) -> DuplicateGroup {
 
 /// An analysis result holding exactly these groups, for tests about what is
 /// done with groups rather than about how they were found.
+#[must_use]
 pub fn result_with(
     exact: Vec<DuplicateGroup>,
     near: Vec<DuplicateGroup>,

@@ -17,7 +17,7 @@ fn entry(fingerprint: &str) -> IgnoreEntry {
 #[test]
 fn entries_come_back_in_the_order_they_were_given() {
     // Arrange
-    let held = vec![entry("aaaa"), entry("bbbb")];
+    let held = [entry("aaaa"), entry("bbbb")];
     let report = StaleReport::dry_run(held.iter().collect());
 
     // Act
@@ -34,7 +34,7 @@ fn entries_come_back_in_the_order_they_were_given() {
 #[test]
 fn heading_distinguishes_a_dry_run_from_a_removal() {
     // Arrange
-    let held = vec![entry("aaaa")];
+    let held = [entry("aaaa")];
 
     // Act
     let planned = StaleReport::dry_run(held.iter().collect());
@@ -57,7 +57,7 @@ fn is_empty_reports_an_ignore_file_with_nothing_stale_in_it() {
 #[test]
 fn is_empty_reports_false_once_something_is_stale() {
     // Arrange
-    let held = vec![entry("aaaa")];
+    let held = [entry("aaaa")];
 
     // Act
     let report = StaleReport::removed(held.iter().collect());
@@ -69,7 +69,7 @@ fn is_empty_reports_false_once_something_is_stale() {
 #[test]
 fn summary_of_a_dry_run_speaks_of_what_would_happen() {
     // Arrange
-    let held = vec![entry("aaaa"), entry("bbbb"), entry("cccc")];
+    let held = [entry("aaaa"), entry("bbbb"), entry("cccc")];
 
     // Act
     let summary = StaleReport::dry_run(held.iter().collect()).summary();
@@ -81,7 +81,7 @@ fn summary_of_a_dry_run_speaks_of_what_would_happen() {
 #[test]
 fn summary_of_a_removal_speaks_of_what_did() {
     // Arrange
-    let held = vec![entry("aaaa"), entry("bbbb")];
+    let held = [entry("aaaa"), entry("bbbb")];
 
     // Act
     let summary = StaleReport::removed(held.iter().collect()).summary();

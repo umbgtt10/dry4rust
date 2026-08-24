@@ -7,6 +7,7 @@ use clap::Parser;
 use dry4rust::cli::command::Command;
 use dry4rust::cli::entry_point::EntryPoint;
 use dry4rust::cli::output_format::OutputFormat;
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -108,7 +109,7 @@ fn root_falls_back_to_the_working_directory_when_no_path_is_given() {
 
     // Assert
     assert!(
-        root.is_absolute() || root == PathBuf::from("."),
+        root.is_absolute() || root == Path::new("."),
         "either the shell's directory or the last resort, got {}",
         root.display()
     );

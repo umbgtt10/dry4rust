@@ -75,7 +75,7 @@ fn composite_fingerprint_order_independent() {
 #[test]
 fn fmt_pads_the_hash_to_sixteen_hex_digits() {
     // Arrange & Act
-    let fp = Fingerprint::new(0x0000000000000042);
+    let fp = Fingerprint::new(0x0000_0000_0000_0042);
 
     // Assert
     assert_eq!(format!("{fp}"), "0000000000000042");
@@ -141,7 +141,7 @@ fn parse_file_gives_the_golden_sample_a_stable_fingerprint() {
 #[test]
 fn to_hex_round_trips_back_through_from_hex() {
     // Arrange & Act
-    let fp = Fingerprint::new(0xdeadbeef12345678);
+    let fp = Fingerprint::new(0xdead_beef_1234_5678);
     let hex = fp.to_hex();
 
     // Assert
