@@ -1,0 +1,35 @@
+# End-to-end validation of the cargo-dry4rust binary.
+#
+# These tests drive the built binary against the crates in fixture/ and assert
+# on what it prints. Their subject is the whole tool, not any one source file,
+# so there is no core/ file for them to be named after -- which is what
+# paired-test-file would report if they stayed there.
+#
+# A workspace member rather than an excluded crate, so `cargo test` at the root
+# still runs every one of them. Stage 2 passes `--package cargo-dry4rust` to
+# each gate, so the house rules measure core/ and leave this alone.
+#
+# publish = false is what keeps the fixture corpus out of the published crate's
+# problem entirely: the tests that need it are never packaged.
+[package]
+name = "validation"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.91"
+description = "End-to-end validation of the cargo-dry4rust binary against the fixture crates"
+license = "MIT"
+publish = false
+
+autotests = false
+
+[[test]]
+name = "all_tests"
+path = "tests/all_tests.rs"
+
+[dev-dependencies]
+cargo-dry4rust = { path = "../core" }
+assert_cmd = { workspace = true }
+predicates = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+toml = { workspace = true }

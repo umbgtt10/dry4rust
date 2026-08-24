@@ -7,7 +7,7 @@
 //! These tests exercise fingerprint, similarity, grouper, and extractor functionality
 //! Every case is driven from syn-parsed Rust source.
 
-use crate::common::analysed;
+use dry4rust::analysis::analyze;
 use dry4rust::analysis::analyze_units;
 use dry4rust::config::Config;
 use dry4rust::extractor;
@@ -20,12 +20,34 @@ use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::expr::normalize_expr;
 use dry4rust::rust::normalizer::normalize::normalize_item_fn;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
+use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use parser::parse_file;
 use std::fs;
 use syn::Expr;
 use syn::ItemFn;
 use syn::parse_str;
 use tempfile::TempDir;
+
+const DUPLICATED: &str = r"pub fn process_data(input: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for item in input.iter() {
+        if *item > 0 {
+            sum += *item;
+        }
+    }
+    sum
+}
+
+pub fn compute_total(values: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for value in values.iter() {
+        if *value > 0 {
+            sum += *value;
+        }
+    }
+    sum
+}
+";
 
 fn expr_similarity(code1: &str, code2: &str) -> f64 {
     let e1 = parse_expr(code1);
@@ -67,13 +89,24 @@ fn parse_fn(code: &str) -> ItemFn {
 }
 
 #[test]
-fn analyze_over_a_duplicated_fixture_reports_exact_groups() {
-    // Arrange & Act
-    let (_, result) = analysed("exact_dupes");
+fn analyze_over_a_written_crate_reports_the_duplication_in_it() {
+    // Arrange -- written here rather than read from fixture/, which core does
+    // not ship and therefore cannot reach once packaged
+    let tmp = TempDir::new().expect("temp dir");
+    let file = tmp.path().join("lib.rs");
+    fs::write(&file, DUPLICATED).expect("write");
+    let config = Config {
+        root: tmp.path().to_path_buf(),
+        ..Config::default()
+    };
+
+    // Act
+    let result = analyze(&RustAnalyzer::new(), &[file], &config).expect("it analyses cleanly");
 
     // Assert
-    assert!(result.stats.total_code_units > 0);
-    assert!(!result.exact_groups.is_empty());
+    assert_eq!(result.stats.total_code_units, 2);
+    assert_eq!(result.exact_groups.len(), 1);
+    assert_eq!(result.exact_groups[0].members.len(), 2);
 }
 
 #[test]

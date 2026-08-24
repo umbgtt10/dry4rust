@@ -3,21 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::{cargo_dry4rust, fixture_path};
 use dry4rust::cli::ignore_command::IgnoreCommand;
 use dry4rust::cli::ignored_command::IgnoredCommand;
 use tempfile::TempDir;
-
-#[test]
-fn main_dispatches_the_ignored_subcommand_without_an_ignore_file() {
-    // Arrange & Act & Assert
-    cargo_dry4rust()
-        .arg("ignored")
-        .arg("--path")
-        .arg(fixture_path("no_dupes"))
-        .assert()
-        .success();
-}
 
 #[test]
 fn run_after_ignore_lists_what_was_added() {

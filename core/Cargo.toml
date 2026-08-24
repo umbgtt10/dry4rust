@@ -1,0 +1,65 @@
+[package]
+name = "cargo-dry4rust"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.91"
+license = "MIT"
+description = "A cargo subcommand that detects duplicate and near-duplicate code blocks in Rust codebases using AST normalization"
+repository = "https://github.com/umbgtt10/dry4rust"
+documentation = "https://docs.rs/cargo-dry4rust"
+readme = "../README.md"
+keywords = ["cargo", "duplicates", "code-quality", "lint", "ast"]
+categories = ["development-tools::cargo-plugins", "development-tools"]
+authors = [
+    "Matjaz Domen Pecan <matjaz.pecan@gmail.com>",
+    "Umberto Gotti <umberto.gotti@umbertogotti.dev>",
+]
+
+autotests = false
+
+[[test]]
+name = "all_tests"
+path = "tests/all_tests.rs"
+
+[lib]
+name = "dry4rust"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cargo-dry4rust"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+proc-macro2 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+syn = { workspace = true }
+thiserror = { workspace = true }
+toml = { workspace = true }
+walkdir = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = { workspace = true }
+clap = { workspace = true }
+predicates = { workspace = true }
+tempfile = { workspace = true }
+
+# Upstream's lint configuration, kept. pedantic and nursery at warn are
+# stricter than this family's stage 1, which runs -D warnings on the default
+# lints only, and the tree already satisfies them.
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+doc_markdown = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+cast_possible_truncation = "allow"
+too_long_first_doc_paragraph = "allow"
+cognitive_complexity = "warn"
+module_name_repetitions = "allow"
+implicit_hasher = "allow"
+option_if_let_else = "allow"
+useless_let_if_seq = "allow"

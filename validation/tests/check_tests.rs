@@ -3,7 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::{analysed, cargo_dry4rust, fixture_path};
+use crate::common::analysed;
+use crate::common::cargo_dry4rust;
+use crate::common::fixture_path;
 use dry4rust::cli::check_command::CheckCommand;
 use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::cli_error::CliError;
@@ -14,17 +16,6 @@ use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
-
-fn checked(fixture: &str, thresholds: &CheckThresholds) -> (CliResult, String) {
-    let (config, result) = analysed(fixture);
-    let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
-
-    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds).run(&mut out);
-
-    (outcome, String::from_utf8(out).expect("utf-8"))
-}
-
 fn percent(value: f64) -> Threshold {
     Threshold::percent("a ceiling", value).expect("the test states a share of a hundred")
 }
@@ -262,6 +253,16 @@ fn main_dispatches_the_check_subcommand_and_succeeds_on_a_clean_fixture() {
         .arg(fixture_path("no_dupes"))
         .assert()
         .success();
+}
+
+fn checked(fixture: &str, thresholds: &CheckThresholds) -> (CliResult, String) {
+    let (config, result) = analysed(fixture);
+    let reporter = OutputFormat::Text.reporter(None);
+    let mut out = Vec::new();
+
+    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds).run(&mut out);
+
+    (outcome, String::from_utf8(out).expect("utf-8"))
 }
 
 #[test]

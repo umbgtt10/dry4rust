@@ -3,14 +3,15 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::{analysed, cargo_dry4rust, fixture_path};
+use crate::common::analysed;
+use crate::common::cargo_dry4rust;
+use crate::common::fixture_path;
 use dry4rust::cli::cleanup_command::CleanupCommand;
 use dry4rust::cli::ignore_command::IgnoreCommand;
 use predicate::str;
 use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
-
 #[test]
 fn cleanup_dry_run() {
     // Arrange & Act

@@ -3,82 +3,31 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::{cargo_dry4rust, fixture_path};
-use dry4rust::cli::cli_overrides::CliOverrides;
-use dry4rust::config::Config;
+use crate::common::cargo_dry4rust;
+use crate::common::fixture_path;
 use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
-
 #[test]
-fn apply_to_appends_excludes_rather_than_replacing_the_configured_ones() {
-    // Arrange
-    let config = Config {
-        exclude: vec![String::from("vendor")],
-        ..Config::default()
-    };
-    let overrides = CliOverrides {
-        exclude: vec![String::from("benches")],
-        ..CliOverrides::default()
-    };
-
-    // Act
-    let config = overrides
-        .apply_to(config)
-        .expect("the overrides are in range");
-
-    // Assert
-    assert_eq!(
-        config.exclude,
-        vec![String::from("vendor"), String::from("benches")],
-        "a --exclude on the command line adds to the config file, it does not stand in for it"
-    );
+fn default_command_is_report() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .args(["--path", fixture_path("exact_dupes").to_str().unwrap()])
+        .assert()
+        .success()
+        .stdout(str::contains("Duplication Statistics"))
+        .stdout(str::contains("Exact Duplicates"));
 }
 
 #[test]
-fn apply_to_replaces_only_the_values_that_were_given() {
-    // Arrange
-    let config = Config::default();
-    let untouched_threshold = config.similarity_threshold.as_fraction();
-    let overrides = CliOverrides {
-        min_nodes: Some(42),
-        ..CliOverrides::default()
-    };
-
-    // Act
-    let config = overrides
-        .apply_to(config)
-        .expect("the overrides are in range");
-
-    // Assert
-    assert_eq!(config.min_nodes, 42);
-    assert!((config.similarity_threshold.as_fraction() - untouched_threshold).abs() < f64::EPSILON);
-}
-
-#[test]
-fn apply_to_with_nothing_set_leaves_every_field_as_it_was() {
-    // Arrange
-    let config = Config {
-        min_nodes: 7,
-        min_lines: 3,
-        sub_function: true,
-        min_sub_nodes: 11,
-        exclude_tests: true,
-        ..Config::default()
-    };
-
-    // Act
-    let config = CliOverrides::default()
-        .apply_to(config)
-        .expect("no override is always in range");
-
-    // Assert
-    assert_eq!(config.min_nodes, 7);
-    assert_eq!(config.min_lines, 3);
-    assert_eq!(config.min_sub_nodes, 11);
-    assert!(config.sub_function);
-    assert!(config.exclude_tests);
+fn error_on_nonexistent_path() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .args(["--path", "/nonexistent/path/that/does/not/exist", "stats"])
+        .assert()
+        .code(2)
+        .stderr(str::contains("No source files"));
 }
 
 #[test]
@@ -151,6 +100,42 @@ fn exclude_tests_text_report() {
         .success()
         .stdout(str::contains("Exact Duplicates"))
         .stdout(str::contains("Group 1"));
+}
+
+#[test]
+fn help_flag_lists_every_subcommand_the_enum_declares() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("--help")
+        .assert()
+        .success()
+        .stdout(str::contains("stats"))
+        .stdout(str::contains("report"))
+        .stdout(str::contains("check"))
+        .stdout(str::contains("ignore"))
+        .stdout(str::contains("ignored"))
+        .stdout(str::contains("cleanup"));
+}
+
+#[test]
+fn help_flag_prints_usage_and_exits_success() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("--help")
+        .assert()
+        .success()
+        .stdout(str::contains("Detect duplicate code"));
+}
+
+#[test]
+fn main_over_a_path_that_does_not_exist_reports_the_error_and_exits_non_zero() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("--path")
+        .arg(fixture_path("no_such_fixture_anywhere"))
+        .assert()
+        .failure()
+        .stderr(str::contains("Error"));
 }
 
 #[test]

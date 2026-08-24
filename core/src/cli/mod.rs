@@ -11,6 +11,7 @@ pub mod cleanup_command;
 pub mod cli_error;
 pub mod cli_overrides;
 pub mod command;
+pub mod entry_point;
 pub mod ignore_command;
 pub mod ignore_entry_line;
 pub mod ignored_command;

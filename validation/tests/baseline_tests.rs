@@ -3,24 +3,20 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::{analysed, cargo_dry4rust, fixture_path};
+use crate::common::analysed;
+use crate::common::cargo_dry4rust;
+use crate::common::duplicated_crate_in;
+use crate::common::fixture_path;
+use crate::common::group;
 use dry4rust::cli::baseline_command::BaselineCommand;
 use dry4rust::config::Config;
 use dry4rust::suppression::baseline_file::BaselineFile;
+use dry4rust::suppression::baseline_file::FORMAT_VERSION;
+use dry4rust::suppression::baseline_kind::BaselineKind;
 use predicate::str;
 use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
-
-fn duplicated_crate_in(tmp: &TempDir) {
-    fs::create_dir_all(tmp.path().join("src")).expect("src");
-    fs::copy(
-        fixture_path("exact_dupes").join("src/lib.rs"),
-        tmp.path().join("src/lib.rs"),
-    )
-    .expect("copy the fixture");
-}
-
 #[test]
 fn baseline_reads_its_path_from_dry4rust_toml() {
     // Arrange
@@ -118,6 +114,114 @@ fn main_dispatches_the_baseline_subcommand_in_dry_run() {
 }
 
 #[test]
+fn run_twice_records_the_same_groups_rather_than_emptying_the_file() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    duplicated_crate_in(&tmp);
+    let root = tmp.path().to_str().expect("utf-8 path");
+    cargo_dry4rust()
+        .args(["--path", root, "baseline"])
+        .assert()
+        .success();
+    let first = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
+
+    // Act
+    cargo_dry4rust()
+        .args([
+            "--path",
+            root,
+            "--baseline",
+            "dry4rust-baseline.json",
+            "baseline",
+        ])
+        .assert()
+        .success();
+
+    // Assert
+    let second = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
+    assert_eq!(
+        first, second,
+        "recording judges nothing; a recording that judged against the previous \
+         one would find nothing left to record and empty the file"
+    );
+}
+
+#[test]
+fn admits_a_group_some_entry_recorded() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let recorded = BaselineFile::record(&result);
+    let already_there = result.exact_groups[0].clone();
+
+    // Act
+    let admitted = recorded.admits(BaselineKind::Exact, &already_there);
+
+    // Assert
+    assert!(admitted);
+}
+
+#[test]
+fn admits_nothing_a_group_it_never_saw() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let recorded = BaselineFile::record(&result);
+
+    // Act
+    let admitted = recorded.admits(BaselineKind::Exact, &group(0xdead_beef, &["new", "copy"]));
+
+    // Assert
+    assert!(!admitted);
+}
+
+#[test]
+fn is_empty_reports_a_recording_of_a_clean_codebase() {
+    // Arrange
+    let (_, result) = analysed("no_dupes");
+
+    // Act
+    let recorded = BaselineFile::record(&result);
+
+    // Assert
+    assert!(recorded.is_empty());
+    assert_eq!(recorded.len(), 0);
+}
+
+#[test]
+fn record_orders_entries_so_an_unchanged_codebase_writes_an_unchanged_file() {
+    // Arrange
+    let (_, result) = analysed("mixed");
+
+    // Act
+    let first = BaselineFile::record(&result);
+    let second = BaselineFile::record(&result);
+
+    // Assert
+    assert_eq!(
+        first.entries, second.entries,
+        "a baseline is committed, so a re-record of the same tree has to diff \
+         as nothing at all"
+    );
+    let fingerprints: Vec<_> = first.entries.iter().map(|e| &e.fingerprint).collect();
+    let mut sorted = fingerprints.clone();
+    sorted.sort();
+    assert_eq!(fingerprints, sorted);
+}
+
+#[test]
+fn record_takes_every_group_the_result_holds() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+
+    // Act
+    let recorded = BaselineFile::record(&result);
+
+    // Assert
+    assert_eq!(recorded.version, FORMAT_VERSION);
+    assert_eq!(recorded.len(), result.exact_groups.len());
+    assert_eq!(recorded.entries[0].kind, BaselineKind::Exact);
+}
+
+#[test]
 fn run_in_dry_run_names_what_it_would_record_without_writing_it() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
@@ -183,34 +287,18 @@ fn run_over_a_clean_codebase_records_nothing_and_says_so() {
 }
 
 #[test]
-fn run_twice_records_the_same_groups_rather_than_emptying_the_file() {
+fn save_then_load_returns_what_was_recorded() {
     // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let recorded = BaselineFile::record(&result);
     let tmp = TempDir::new().expect("temp dir");
-    duplicated_crate_in(&tmp);
-    let root = tmp.path().to_str().expect("utf-8 path");
-    cargo_dry4rust()
-        .args(["--path", root, "baseline"])
-        .assert()
-        .success();
-    let first = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
+    let path = tmp.path().join("nested").join("dry4rust-baseline.json");
 
     // Act
-    cargo_dry4rust()
-        .args([
-            "--path",
-            root,
-            "--baseline",
-            "dry4rust-baseline.json",
-            "baseline",
-        ])
-        .assert()
-        .success();
+    recorded.save(&path).expect("the baseline is written");
+    let read_back = BaselineFile::load(&path).expect("and read back");
 
     // Assert
-    let second = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
-    assert_eq!(
-        first, second,
-        "recording judges nothing; a recording that judged against the previous \
-         one would find nothing left to record and empty the file"
-    );
+    assert_eq!(read_back.version, recorded.version);
+    assert_eq!(read_back.entries, recorded.entries);
 }

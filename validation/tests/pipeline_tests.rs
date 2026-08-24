@@ -3,39 +3,26 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::{cargo_dry4rust, fixture_path};
+use crate::common::analysed;
+use crate::common::fixture_path;
 use dry4rust::cli::analysis_output::AnalysisOutput;
-use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::suppression::baseline_file::BaselineFile;
-use predicate::str;
-use predicates::prelude::*;
 use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
 
 #[test]
-fn error_on_nonexistent_path() {
-    // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args(["--path", "/nonexistent/path/that/does/not/exist", "stats"])
-        .assert()
-        .code(2)
-        .stderr(str::contains("No source files"));
-}
+fn analyze_over_a_duplicated_fixture_reports_exact_groups() {
+    // Arrange & Act
+    let (_, result) = analysed("exact_dupes");
 
-#[test]
-fn main_over_a_path_that_does_not_exist_reports_the_error_and_exits_non_zero() {
-    // Arrange & Act & Assert
-    cargo_dry4rust()
-        .arg("--path")
-        .arg(fixture_path("no_such_fixture_anywhere"))
-        .assert()
-        .failure()
-        .stderr(str::contains("Error"));
+    // Assert
+    assert!(result.stats.total_code_units > 0);
+    assert!(!result.exact_groups.is_empty());
 }
 
 #[test]
@@ -136,24 +123,4 @@ fn produce_over_a_fixture_returns_config_and_result_together() {
     // Assert
     assert!(output.result.stats.total_code_units > 0);
     assert_eq!(output.config.min_nodes, Config::default().min_nodes);
-}
-
-#[test]
-fn produce_over_a_root_with_no_source_files_names_the_root_it_looked_in() {
-    // Arrange
-    let empty = TempDir::new().expect("temp dir");
-
-    // Act
-    let outcome = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        empty.path(),
-        OutputFormat::Text,
-        &CliOverrides::default(),
-    );
-
-    // Assert
-    let Err(CliError::NoSourceFiles(path)) = outcome else {
-        panic!("an empty root has no source files to analyse");
-    };
-    assert_eq!(path, empty.path());
 }
