@@ -3,7 +3,14 @@
 What each version added, newest first. Upstream's releases are included, under
 their own heading, because the engine they built is the engine this tool runs.
 
-## Version 0.2.0 (unreleased)
+## Version 0.3.0
+
+Cross-platform quality gates. `just stage1` / `just stage2` replace the two
+Windows-only PowerShell scripts, stage 2 moves into an `xtask/` crate covered by
+63 integration tests of its own, and CI runs both stages on Ubuntu, Windows and
+macOS. No detection behaviour changed.
+
+## Version 0.2.0
 
 The fork. `cargo-dupes` by Matjaz Domen Pecan became `cargo-dry4rust`, with
 upstream's history kept as an ancestor rather than a credit line.

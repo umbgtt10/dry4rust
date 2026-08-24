@@ -77,7 +77,7 @@ commit.
 
 ## Enforcement
 
-`cargo run -- --version` prints `cargo-dry4rust 0.2.0`. The configuration
+`cargo run -- --version` prints `cargo-dry4rust 0.3.0`. The configuration
 tests write `dry4rust.toml` and `[package.metadata.dry4rust]` and would fail
 if the reader and the writer disagreed.
 

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-24
+
+How the gates are run, not what the tool does. No detection behaviour changed,
+no flag was added or removed, and no score moves. Minor rather than patch
+because the workspace gained a member and the test suite grew by 63.
+
 ### Added
 - `xtask/`, a real crate replacing the stage 2 PowerShell script. Each gate is a
   `Gate` implementation constructed against a `CommandRunner` trait, so the
