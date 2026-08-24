@@ -12,11 +12,13 @@ use dry4rust::code_unit::CodeUnitKind;
 use dry4rust::config::Config;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::grouper::DuplicateGroup;
+use dry4rust::grouper::compute_stats_with_sub;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::scanner::ScanConfig;
 use dry4rust::scanner::scan_files;
+use std::collections::HashSet;
 use std::path::PathBuf;
 
 /// Run the analysis pipeline over a fixture crate, as the CLI would.
@@ -63,5 +65,24 @@ pub fn group(fingerprint: u64, names: &[&str]) -> DuplicateGroup {
             })
             .collect(),
         similarity: 1.0,
+    }
+}
+
+/// An analysis result holding exactly these groups, for tests about what is
+/// done with groups rather than about how they were found.
+pub fn result_with(
+    exact: Vec<DuplicateGroup>,
+    near: Vec<DuplicateGroup>,
+    sub_exact: Vec<DuplicateGroup>,
+    sub_near: Vec<DuplicateGroup>,
+) -> AnalysisResult {
+    AnalysisResult {
+        stats: compute_stats_with_sub(&[], &exact, &near, &sub_exact, &sub_near),
+        exact_groups: exact,
+        near_groups: near,
+        sub_exact_groups: sub_exact,
+        sub_near_groups: sub_near,
+        warnings: Vec::new(),
+        all_fingerprints: HashSet::new(),
     }
 }

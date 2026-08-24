@@ -5,6 +5,7 @@
 
 use crate::common::analysed;
 use crate::common::group;
+use crate::common::result_with;
 use dry4rust::baseline::baseline_file::BaselineFile;
 use dry4rust::baseline::baseline_file::DEFAULT_BASELINE_FILE;
 use dry4rust::baseline::baseline_file::FORMAT_VERSION;
@@ -59,13 +60,16 @@ fn baseline_path_joins_a_relative_name_to_the_analysed_root() {
 
 #[test]
 fn baseline_path_leaves_an_absolute_name_alone() {
-    // Arrange
-    let named = PathBuf::from("/var/ci/recorded.json");
+    // Arrange -- absolute on every platform, which a leading slash is not:
+    // on Windows it has a root without a prefix, and `join` would take that
+    // branch too, so this test would pass without reaching the one it names
+    let named = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("recorded.json");
 
     // Act
     let path = baseline_path(Path::new("/projects/thing"), Some(&named));
 
     // Assert
+    assert!(named.is_absolute(), "the arrangement has to be absolute");
     assert_eq!(path, named);
 }
 
@@ -114,6 +118,26 @@ fn load_of_a_baseline_from_a_later_format_says_to_re_record_it() {
 }
 
 #[test]
+fn load_of_a_directory_reports_what_the_filesystem_said_rather_than_absence() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+
+    // Act
+    let outcome = BaselineFile::load(tmp.path());
+
+    // Assert
+    let message = outcome
+        .expect_err("a directory is not a baseline")
+        .to_string();
+    assert!(
+        !message.contains("no such file"),
+        "a baseline that is there and cannot be read is a different problem \
+         from one that was never recorded, got: {message}"
+    );
+    assert!(message.contains("baseline"), "{message}");
+}
+
+#[test]
 fn load_of_a_malformed_baseline_is_an_error_rather_than_an_empty_one() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
@@ -144,6 +168,37 @@ fn load_of_a_missing_baseline_names_the_command_that_would_record_one() {
     let message = outcome.expect_err("nothing is there to load").to_string();
     assert!(message.contains("no such file"), "{message}");
     assert!(message.contains("cargo dry4rust baseline"), "{message}");
+}
+
+#[test]
+fn record_orders_entries_by_kind_then_fingerprint() {
+    // Arrange -- out of order in both dimensions at once
+    let result = result_with(
+        vec![group(0x22, &["b"]), group(0x11, &["a"])],
+        vec![group(0x33, &["c"])],
+        vec![group(0x44, &["d"])],
+        vec![group(0x55, &["e"])],
+    );
+
+    // Act
+    let recorded = BaselineFile::record(&result);
+
+    // Assert
+    let order: Vec<_> = recorded
+        .entries
+        .iter()
+        .map(|entry| (entry.kind, entry.fingerprint.as_str()))
+        .collect();
+    assert_eq!(
+        order,
+        vec![
+            (BaselineKind::Exact, "0000000000000011"),
+            (BaselineKind::Exact, "0000000000000022"),
+            (BaselineKind::Near, "0000000000000033"),
+            (BaselineKind::SubExact, "0000000000000044"),
+            (BaselineKind::SubNear, "0000000000000055"),
+        ]
+    );
 }
 
 #[test]
@@ -196,4 +251,28 @@ fn save_then_load_returns_what_was_recorded() {
     // Assert
     assert_eq!(read_back.version, recorded.version);
     assert_eq!(read_back.entries, recorded.entries);
+}
+
+#[test]
+fn save_where_the_parent_is_a_file_reports_the_failure() {
+    // Arrange -- the directory `save` would create is blocked by a file
+    let tmp = TempDir::new().expect("temp dir");
+    let blocker = tmp.path().join("blocker");
+    fs::write(&blocker, "not a directory").expect("write");
+    let recorded = BaselineFile {
+        version: FORMAT_VERSION,
+        entries: Vec::new(),
+    };
+
+    // Act
+    let outcome = recorded.save(&blocker.join("dry4rust-baseline.json"));
+
+    // Assert
+    let message = outcome
+        .expect_err("the directory above the baseline cannot be created")
+        .to_string();
+    assert!(
+        message.contains("baseline"),
+        "a write that failed says which file it was, got: {message}"
+    );
 }
