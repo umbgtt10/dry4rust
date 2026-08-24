@@ -16,6 +16,9 @@ exclude = ["fixture"]
 # Declared once here; every member takes them with `.workspace = true`, so a
 # version is bumped in one place and no two members can disagree.
 [workspace.dependencies]
+# The published crate, taken by path so validation drives the same code the
+# gates measure rather than whatever is on crates.io.
+cargo-dry4rust = { path = "core" }
 clap = { version = "4", features = ["derive"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
 serde = { version = "1", features = ["derive"] }

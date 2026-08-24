@@ -10,6 +10,7 @@ use predicate::str;
 use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
+
 #[test]
 fn ignore_add_then_report_suppresses_the_group() {
     // Arrange & Act

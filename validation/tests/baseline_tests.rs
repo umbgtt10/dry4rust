@@ -17,6 +17,34 @@ use predicate::str;
 use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
+
+#[test]
+fn admits_a_group_some_entry_recorded() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let recorded = BaselineFile::record(&result);
+    let already_there = result.exact_groups[0].clone();
+
+    // Act
+    let admitted = recorded.admits(BaselineKind::Exact, &already_there);
+
+    // Assert
+    assert!(admitted);
+}
+
+#[test]
+fn admits_nothing_a_group_it_never_saw() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let recorded = BaselineFile::record(&result);
+
+    // Act
+    let admitted = recorded.admits(BaselineKind::Exact, &group(0xdead_beef, &["new", "copy"]));
+
+    // Assert
+    assert!(!admitted);
+}
+
 #[test]
 fn baseline_reads_its_path_from_dry4rust_toml() {
     // Arrange
@@ -101,79 +129,6 @@ fn baseline_then_check_passes_on_what_was_inherited_and_fails_on_what_is_added()
 }
 
 #[test]
-fn main_dispatches_the_baseline_subcommand_in_dry_run() {
-    // Arrange & Act & Assert
-    cargo_dry4rust()
-        .arg("baseline")
-        .arg("--dry-run")
-        .arg("--path")
-        .arg(fixture_path("exact_dupes"))
-        .assert()
-        .success()
-        .stdout(str::contains("would be recorded"));
-}
-
-#[test]
-fn run_twice_records_the_same_groups_rather_than_emptying_the_file() {
-    // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    duplicated_crate_in(&tmp);
-    let root = tmp.path().to_str().expect("utf-8 path");
-    cargo_dry4rust()
-        .args(["--path", root, "baseline"])
-        .assert()
-        .success();
-    let first = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
-
-    // Act
-    cargo_dry4rust()
-        .args([
-            "--path",
-            root,
-            "--baseline",
-            "dry4rust-baseline.json",
-            "baseline",
-        ])
-        .assert()
-        .success();
-
-    // Assert
-    let second = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
-    assert_eq!(
-        first, second,
-        "recording judges nothing; a recording that judged against the previous \
-         one would find nothing left to record and empty the file"
-    );
-}
-
-#[test]
-fn admits_a_group_some_entry_recorded() {
-    // Arrange
-    let (_, result) = analysed("exact_dupes");
-    let recorded = BaselineFile::record(&result);
-    let already_there = result.exact_groups[0].clone();
-
-    // Act
-    let admitted = recorded.admits(BaselineKind::Exact, &already_there);
-
-    // Assert
-    assert!(admitted);
-}
-
-#[test]
-fn admits_nothing_a_group_it_never_saw() {
-    // Arrange
-    let (_, result) = analysed("exact_dupes");
-    let recorded = BaselineFile::record(&result);
-
-    // Act
-    let admitted = recorded.admits(BaselineKind::Exact, &group(0xdead_beef, &["new", "copy"]));
-
-    // Assert
-    assert!(!admitted);
-}
-
-#[test]
 fn is_empty_reports_a_recording_of_a_clean_codebase() {
     // Arrange
     let (_, result) = analysed("no_dupes");
@@ -184,6 +139,19 @@ fn is_empty_reports_a_recording_of_a_clean_codebase() {
     // Assert
     assert!(recorded.is_empty());
     assert_eq!(recorded.len(), 0);
+}
+
+#[test]
+fn main_dispatches_the_baseline_subcommand_in_dry_run() {
+    // Arrange & Act & Assert
+    cargo_dry4rust()
+        .arg("baseline")
+        .arg("--dry-run")
+        .arg("--path")
+        .arg(fixture_path("exact_dupes"))
+        .assert()
+        .success()
+        .stdout(str::contains("would be recorded"));
 }
 
 #[test]
@@ -283,6 +251,39 @@ fn run_over_a_clean_codebase_records_nothing_and_says_so() {
             "Recorded 0 groups in {}.\n",
             tmp.path().join("dry4rust-baseline.json").display()
         )
+    );
+}
+
+#[test]
+fn run_twice_records_the_same_groups_rather_than_emptying_the_file() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    duplicated_crate_in(&tmp);
+    let root = tmp.path().to_str().expect("utf-8 path");
+    cargo_dry4rust()
+        .args(["--path", root, "baseline"])
+        .assert()
+        .success();
+    let first = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
+
+    // Act
+    cargo_dry4rust()
+        .args([
+            "--path",
+            root,
+            "--baseline",
+            "dry4rust-baseline.json",
+            "baseline",
+        ])
+        .assert()
+        .success();
+
+    // Assert
+    let second = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
+    assert_eq!(
+        first, second,
+        "recording judges nothing; a recording that judged against the previous \
+         one would find nothing left to record and empty the file"
     );
 }
 

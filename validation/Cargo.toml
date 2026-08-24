@@ -27,7 +27,7 @@ name = "all_tests"
 path = "tests/all_tests.rs"
 
 [dev-dependencies]
-cargo-dry4rust = { path = "../core" }
+cargo-dry4rust = { workspace = true }
 assert_cmd = { workspace = true }
 predicates = { workspace = true }
 serde_json = { workspace = true }

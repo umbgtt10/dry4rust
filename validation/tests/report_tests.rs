@@ -13,6 +13,7 @@ use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
+
 #[test]
 fn json_format_report() {
     // Arrange & Act
@@ -102,6 +103,75 @@ fn report_no_dupes_fixture() {
         .assert()
         .success()
         .stdout(str::contains("No exact duplicates"));
+}
+
+#[test]
+fn run_over_a_clean_fixture_says_so_rather_than_printing_an_empty_section() {
+    // Arrange
+    let (_, result) = analysed("no_dupes");
+    let reporter = OutputFormat::Text.reporter(None);
+    let mut out = Vec::new();
+
+    // Act
+    ReportCommand::new(&result, reporter.as_ref())
+        .run(&mut out)
+        .expect("reporting succeeds");
+
+    // Assert
+    let text = String::from_utf8(out).expect("utf-8");
+    assert!(text.contains("No exact duplicates found."), "{text}");
+    assert!(
+        !text.contains("Near Duplicates"),
+        "an empty near section is left out entirely, got: {text}"
+    );
+}
+
+#[test]
+fn run_writes_both_the_stats_and_the_groups() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let reporter = OutputFormat::Text.reporter(None);
+    let mut out = Vec::new();
+
+    // Act
+    ReportCommand::new(&result, reporter.as_ref())
+        .run(&mut out)
+        .expect("reporting succeeds");
+
+    // Assert
+    let text = String::from_utf8(out).expect("utf-8");
+    assert!(text.contains("Duplication Statistics"), "{text}");
+    assert!(text.contains("Exact Duplicates"), "{text}");
+}
+
+#[test]
+fn run_writes_the_sub_function_sections_when_there_are_any() {
+    // Arrange
+    let (_, result) = analysed_with_sub_function("sub_function_near_dupes");
+    let reporter = OutputFormat::Text.reporter(None);
+    let mut out = Vec::new();
+
+    // Act
+    ReportCommand::new(&result, reporter.as_ref())
+        .run(&mut out)
+        .expect("reporting succeeds");
+
+    // Assert
+    let text = String::from_utf8(out).expect("utf-8");
+    assert_eq!(
+        result.sub_near_groups.len(),
+        1,
+        "the fixture's two loop bodies differ by one operator, which is what \
+         puts them in a near group rather than an exact one"
+    );
+    assert!(
+        text.contains("Sub-function Near Duplicates"),
+        "the section a result with sub-near groups must produce, got: {text}"
+    );
+    assert!(
+        !text.contains("Sub-function Exact Duplicates"),
+        "and not the one it has no groups for, got: {text}"
+    );
 }
 
 #[test]
@@ -215,73 +285,4 @@ fn without_sub_function_flag_no_sub_sections() {
         .success()
         .stdout(str::contains("Exact Duplicates"))
         .stdout(str::contains("Sub-function").not());
-}
-
-#[test]
-fn run_over_a_clean_fixture_says_so_rather_than_printing_an_empty_section() {
-    // Arrange
-    let (_, result) = analysed("no_dupes");
-    let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
-
-    // Act
-    ReportCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
-
-    // Assert
-    let text = String::from_utf8(out).expect("utf-8");
-    assert!(text.contains("No exact duplicates found."), "{text}");
-    assert!(
-        !text.contains("Near Duplicates"),
-        "an empty near section is left out entirely, got: {text}"
-    );
-}
-
-#[test]
-fn run_writes_both_the_stats_and_the_groups() {
-    // Arrange
-    let (_, result) = analysed("exact_dupes");
-    let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
-
-    // Act
-    ReportCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
-
-    // Assert
-    let text = String::from_utf8(out).expect("utf-8");
-    assert!(text.contains("Duplication Statistics"), "{text}");
-    assert!(text.contains("Exact Duplicates"), "{text}");
-}
-
-#[test]
-fn run_writes_the_sub_function_sections_when_there_are_any() {
-    // Arrange
-    let (_, result) = analysed_with_sub_function("sub_function_near_dupes");
-    let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
-
-    // Act
-    ReportCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
-
-    // Assert
-    let text = String::from_utf8(out).expect("utf-8");
-    assert_eq!(
-        result.sub_near_groups.len(),
-        1,
-        "the fixture's two loop bodies differ by one operator, which is what \
-         puts them in a near group rather than an exact one"
-    );
-    assert!(
-        text.contains("Sub-function Near Duplicates"),
-        "the section a result with sub-near groups must produce, got: {text}"
-    );
-    assert!(
-        !text.contains("Sub-function Exact Duplicates"),
-        "and not the one it has no groups for, got: {text}"
-    );
 }

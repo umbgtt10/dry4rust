@@ -12,6 +12,7 @@ use predicate::str;
 use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
+
 #[test]
 fn cleanup_dry_run() {
     // Arrange & Act

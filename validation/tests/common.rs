@@ -20,17 +20,12 @@ use std::env::consts::EXE_SUFFIX;
 use std::env::current_exe;
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command as StdCommand;
 use tempfile::TempDir;
 
 /// Run the analysis pipeline over a fixture crate, as the CLI would.
 pub fn analysed(fixture: &str) -> (Config, AnalysisResult) {
     analysed_under(fixture, false)
-}
-
-/// The same, with sub-function analysis on, which no fixture configures for
-/// itself.
-pub fn analysed_with_sub_function(fixture: &str) -> (Config, AnalysisResult) {
-    analysed_under(fixture, true)
 }
 
 fn analysed_under(fixture: &str, sub_function: bool) -> (Config, AnalysisResult) {
@@ -43,6 +38,12 @@ fn analysed_under(fixture: &str, sub_function: bool) -> (Config, AnalysisResult)
     let result =
         analyze(&RustAnalyzer::new(), &files, &config).expect("the fixture analyses cleanly");
     (config, result)
+}
+
+/// The same, with sub-function analysis on, which no fixture configures for
+/// itself.
+pub fn analysed_with_sub_function(fixture: &str) -> (Config, AnalysisResult) {
+    analysed_under(fixture, true)
 }
 
 /// The built `cargo-dry4rust` binary.
@@ -58,7 +59,7 @@ pub fn cargo_dry4rust() -> Command {
         path.pop();
     }
     path.push(format!("cargo-dry4rust{EXE_SUFFIX}"));
-    Command::from_std(std::process::Command::new(path))
+    Command::from_std(StdCommand::new(path))
 }
 
 /// A throwaway crate holding a known-duplicated source file, for tests that

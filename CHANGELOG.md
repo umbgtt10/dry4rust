@@ -112,6 +112,9 @@ upstream's history kept as an ancestor rather than a credit line.
   `Cargo.toml`, so the corpus had been dropped from the tarball while the tests reading it
   were kept -- `cargo test` on the packaged crate gave 66 failures and now gives none. See
   [ADR-CorpusOutsideThePackage](docs/ADRs/ADR-CorpusOutsideThePackage.md).
+- Both workspace members are gated. `core` takes all twenty-one house rules;
+  `validation` takes twenty, with `paired-test-file` skipped by name because a crate with
+  no `src/` has nothing for a test file to be named after.
 - `main` is eleven lines. The argument mapping moved into the library as `EntryPoint`, so
   which root, which command and which overrides are things a test can call.
 

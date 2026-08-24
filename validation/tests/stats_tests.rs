@@ -12,6 +12,7 @@ use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
+
 #[test]
 fn json_format_stats() {
     // Arrange & Act
@@ -68,6 +69,41 @@ fn main_dispatches_the_stats_subcommand_to_a_successful_summary() {
         .arg(fixture_path("exact_dupes"))
         .assert()
         .success();
+}
+
+#[test]
+fn run_over_a_clean_fixture_still_writes_the_summary() {
+    // Arrange
+    let (_, result) = analysed("no_dupes");
+    let reporter = OutputFormat::Text.reporter(None);
+    let mut out = Vec::new();
+
+    // Act
+    StatsCommand::new(&result, reporter.as_ref())
+        .run(&mut out)
+        .expect("reporting succeeds");
+
+    // Assert
+    let text = String::from_utf8(out).expect("utf-8");
+    assert!(text.contains("Exact duplicates: 0 groups"), "{text}");
+}
+
+#[test]
+fn run_writes_the_summary_and_nothing_else() {
+    // Arrange
+    let (_, result) = analysed("exact_dupes");
+    let reporter = OutputFormat::Text.reporter(None);
+    let mut out = Vec::new();
+
+    // Act
+    StatsCommand::new(&result, reporter.as_ref())
+        .run(&mut out)
+        .expect("reporting succeeds");
+
+    // Assert
+    let text = String::from_utf8(out).expect("utf-8");
+    assert!(text.contains("Duplication Statistics"), "{text}");
+    assert!(!text.contains("Exact Duplicates"), "{text}");
 }
 
 #[test]
@@ -179,39 +215,4 @@ fn without_sub_function_json_no_sub_fields() {
     // Assert
     assert!(parsed.get("sub_exact_groups").is_none());
     assert!(parsed.get("sub_near_groups").is_none());
-}
-
-#[test]
-fn run_over_a_clean_fixture_still_writes_the_summary() {
-    // Arrange
-    let (_, result) = analysed("no_dupes");
-    let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
-
-    // Act
-    StatsCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
-
-    // Assert
-    let text = String::from_utf8(out).expect("utf-8");
-    assert!(text.contains("Exact duplicates: 0 groups"), "{text}");
-}
-
-#[test]
-fn run_writes_the_summary_and_nothing_else() {
-    // Arrange
-    let (_, result) = analysed("exact_dupes");
-    let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
-
-    // Act
-    StatsCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
-
-    // Assert
-    let text = String::from_utf8(out).expect("utf-8");
-    assert!(text.contains("Duplication Statistics"), "{text}");
-    assert!(!text.contains("Exact Duplicates"), "{text}");
 }

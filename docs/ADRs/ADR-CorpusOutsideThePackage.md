@@ -46,8 +46,9 @@ input; those moved too, because core touching the corpus is the defect itself.
 `fixture/` is excluded from the workspace rather than made a member, so a
 deliberately-duplicated crate never has to satisfy the workspace's own build.
 
-Stage 1 covers the workspace. Stage 2 passes `--package cargo-dry4rust` to all
-four gates, so the house rules measure `core/` and leave `validation/` alone.
+Stage 1 covers the workspace. Stage 2 gates both members: `core` at all
+twenty-one rules, `validation` at twenty. This is a step stricter than the rest
+of the family, which gates `core` and leaves `validation` unmeasured.
 
 ## Forcing constraints / Evidence
 
@@ -94,10 +95,16 @@ cannot run.
 
 ## Consequences
 
-`validation/` is ungated. Its tests get no header rule, no AAA check, no
-alphabetical ordering. That is the family's trade and the price of holding
-tests that have no source file to be named after; the alternative was
-`paired-test-file` reporting them forever.
+`validation/` is gated at twenty rules rather than left alone. The one it
+cannot take is `paired-test-file`: with no `src/` in that crate, no test file
+can be named after a source file. It is skipped by name on the command line, so
+the report states which rule was not applied -- a silence would have been the
+thing worth objecting to, not the skip.
+
+`crap4rust` stays on core. It scores source functions against coverage and
+validation has none; pointed at validation it also fails outright, because it
+drives coverage with `-p validation`, which does not build the binary those
+tests spawn.
 
 The one house-rule exclusion is gone. `stern4rust.toml` no longer names
 `tests/fixtures/**`, because with the corpus outside the package there is

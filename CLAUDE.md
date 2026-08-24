@@ -72,10 +72,25 @@ Nothing is excluded, and that is new. The corpus used to live under
 `fixture/`, outside both workspace members, so there is nothing for a rule to
 reach and nothing to exclude.
 
-Stage 1 covers the workspace. Stage 2 gates `--package cargo-dry4rust` only:
-`validation/` holds the tests whose subject is the whole tool rather than any
-one source file, so they have no mirror to be named after and the house rules
-leave them alone. That is what every workspace in this family does.
+Stage 1 covers the workspace. Stage 2 gates **both members**, which is one
+step stricter than the rest of the family: the other workspaces here gate
+`core` and leave `validation` unmeasured.
+
+`core` takes all twenty-one rules. `validation` takes twenty, and the one it
+does not take is named on the command line rather than switched off in
+`stern4rust.toml`, so a hand-run against core still applies all twenty-one and
+the report says which rule was skipped and where.
+
+The skipped rule is `paired-test-file`, and it is skipped because it cannot
+hold rather than because the tests are exempt: `validation/` has no `src/` at
+all, so no file in it can be named after a source file. Everything else
+applies -- the four-line header, AAA structure, import naming, ordering, test
+naming -- and holds.
+
+`crap4rust` is the one gate that stays on core. It scores source functions
+against their coverage and `validation` has no source, only tests; pointed
+there it also fails outright, because it drives coverage with `-p validation`,
+which does not build core's binary for the 53 tests that spawn it.
 
 `crap4rust` runs at 15 -- the family's number, with no override and no
 tolerance. Nothing is baselined, skipped or budgeted.

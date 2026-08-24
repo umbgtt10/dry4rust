@@ -9,6 +9,7 @@ use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
+
 #[test]
 fn default_command_is_report() {
     // Arrange & Act & Assert

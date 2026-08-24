@@ -9,7 +9,8 @@ Push-Location (Split-Path $PSScriptRoot -Parent)
 function Invoke-Stern4RustGate {
     param(
         [string]$Label,
-        [string[]]$Packages
+        [string[]]$Packages,
+        [string[]]$SkippedRules = @()
     )
 
     Write-Host "$Label..." -ForegroundColor Cyan
@@ -25,6 +26,9 @@ function Invoke-Stern4RustGate {
     $args = @("stern4rust", "--manifest-path", $manifestPath)
     foreach ($package in $Packages) {
         $args += @("--package", $package)
+    }
+    foreach ($rule in $SkippedRules) {
+        $args += @("--skip", $rule)
     }
 
     $previousErrorActionPreference = $ErrorActionPreference
@@ -224,10 +228,27 @@ function Invoke-Iceberg4RustGate {
 
 Invoke-Stern4RustGate "House rules dry4rust" @("cargo-dry4rust")
 
+# validation is gated too, at twenty rules instead of twenty-one.
+#
+# paired-test-file is the one that cannot hold there, and not because the tests
+# are exempt: validation has no src/ at all, so no test file in it can be named
+# after a source file. Every other rule applies -- the header, AAA structure,
+# import naming, ordering, test naming -- and they hold.
+#
+# It is skipped by name on the command line rather than turned off in
+# stern4rust.toml, so a hand-run of `cargo stern4rust` against core still
+# applies all twenty-one, and the report says which rule was not applied.
+Invoke-Stern4RustGate "House rules validation" @("validation") -SkippedRules @("paired-test-file")
+
 # ---------------------------------------------------------------------------
 # CRAP gate
 # ---------------------------------------------------------------------------
 
+# core only, and this one genuinely cannot cover validation. CRAP scores source
+# functions against their coverage, and validation has no source -- only tests.
+# Running it there also fails outright: it drives coverage with `-p validation`,
+# which does not build core's binary, so the 53 tests that spawn it cannot find
+# it.
 Invoke-Crap4RustGate "CRAP dry4rust" @("cargo-dry4rust")
 
 # ---------------------------------------------------------------------------
@@ -237,6 +258,7 @@ Invoke-Crap4RustGate "CRAP dry4rust" @("cargo-dry4rust")
 # ---------------------------------------------------------------------------
 
 Invoke-Twin4RustGate "Mirrored tests dry4rust" @("cargo-dry4rust")
+Invoke-Twin4RustGate "Mirrored tests validation" @("validation")
 
 # ---------------------------------------------------------------------------
 # File-risk gate
@@ -246,6 +268,7 @@ Invoke-Twin4RustGate "Mirrored tests dry4rust" @("cargo-dry4rust")
 # ---------------------------------------------------------------------------
 
 Invoke-Iceberg4RustGate "File risk dry4rust" @("cargo-dry4rust") -Threshold "10"
+Invoke-Iceberg4RustGate "File risk validation" @("validation") -Threshold "10"
 
 # ---------------------------------------------------------------------------
 
