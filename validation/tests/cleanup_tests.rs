@@ -141,7 +141,7 @@ fn run_in_dry_run_leaves_the_ignore_file_alone() {
 }
 
 #[test]
-fn run_outside_dry_run_writes_the_pruned_ignore_file() {
+fn run_outside_dry_run_takes_away_a_file_it_emptied() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (_, result) = analysed("exact_dupes");
@@ -162,10 +162,9 @@ fn run_outside_dry_run_writes_the_pruned_ignore_file() {
         text.contains("stale"),
         "cleanup reports on stale entries by name, got: {text}"
     );
-    let pruned = fs::read_to_string(tmp.path().join(".dry4rust-ignore.toml")).expect("read back");
     assert!(
-        !pruned.contains("deadbeef12345678"),
-        "the entry matching nothing is gone from the file, got: {pruned}"
+        !tmp.path().join(".dry4rust-ignore.toml").exists(),
+        "that entry was the only one, so pruning it leaves no file rather than          one reading `ignore = []`"
     );
 }
 

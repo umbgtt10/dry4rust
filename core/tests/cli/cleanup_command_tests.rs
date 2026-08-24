@@ -46,8 +46,10 @@ fn run_outside_dry_run_prunes_the_entry_that_matches_nothing() {
 
     // Assert
     assert!(text.contains("Removed 1 stale entries"), "{text}");
-    let pruned = fs::read_to_string(IgnoreFile::path_in(tmp.path())).expect("read back");
-    assert!(!pruned.contains("deadbeef12345678"), "{pruned}");
+    assert!(
+        !IgnoreFile::path_in(tmp.path()).exists(),
+        "that was the only entry, so cleanup leaves no file rather than one          reading `ignore = []` -- which is how this repository acquired its own"
+    );
 }
 
 #[test]

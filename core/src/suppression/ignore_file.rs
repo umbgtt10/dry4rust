@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::io::Error as IoError;
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
@@ -54,15 +55,37 @@ impl IgnoreFile {
         )
     }
 
-    /// Write it to the project root.
+    /// Write it to the project root, or take the file away when there is
+    /// nothing left to record.
+    ///
+    /// An empty suppression list makes exactly the claim that no suppression
+    /// list makes, and `load` cannot tell them apart. `cleanup` pruning the
+    /// last entry is the one path that produces one, and a file reading
+    /// `ignore = []` is residue rather than a record.
     ///
     /// # Errors
     ///
-    /// Returns the I/O error if the file cannot be serialized or written.
+    /// Returns the I/O error if the file cannot be serialized, written or
+    /// removed.
     pub fn save(&self, root: &Path) -> io::Result<()> {
+        if self.ignore.is_empty() {
+            return Self::remove_from(root);
+        }
         let content = to_string_pretty(self)
             .map_err(|e| IoError::other(format!("Failed to serialize ignore file: {e}")))?;
         fs::write(Self::path_in(root), content)
+    }
+
+    /// Take the ignore file away, and say nothing if it was not there.
+    ///
+    /// # Errors
+    ///
+    /// Returns the I/O error if the file exists and cannot be removed.
+    pub fn remove_from(root: &Path) -> io::Result<()> {
+        match fs::remove_file(Self::path_in(root)) {
+            Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
+            outcome => outcome,
+        }
     }
 
     /// The same file with `fingerprint` suppressed, or unchanged if it already

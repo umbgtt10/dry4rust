@@ -76,6 +76,21 @@ fn path_in_names_the_file_beside_the_project_root() {
 }
 
 #[test]
+fn remove_from_a_root_with_no_ignore_file_is_not_an_error() {
+    // Arrange
+    let tmp = TempDir::new().unwrap();
+
+    // Act
+    let outcome = IgnoreFile::remove_from(tmp.path());
+
+    // Assert
+    assert!(
+        outcome.is_ok(),
+        "taking away what was never there is the state the caller asked for"
+    );
+}
+
+#[test]
 fn retain_unsuppressed_keeps_a_near_group_with_no_matching_entry() {
     // Arrange
     let fp = test_fingerprint();
@@ -119,6 +134,26 @@ fn retain_unsuppressed_removes_the_group_whose_fingerprint_matches() {
 
     // Assert
     assert_eq!(kept.len(), 1);
+}
+
+#[test]
+fn save_of_an_emptied_file_takes_it_away_rather_than_writing_an_empty_list() {
+    // Arrange
+    let tmp = TempDir::new().unwrap();
+    let fp = test_fingerprint();
+    suppressing(&[(fp, None)])
+        .save(tmp.path())
+        .expect("the first save writes it");
+    let (emptied, _) = IgnoreFile::load(tmp.path()).without(&fp.to_hex());
+
+    // Act
+    emptied.save(tmp.path()).expect("saving nothing succeeds");
+
+    // Assert
+    assert!(
+        !IgnoreFile::path_in(tmp.path()).exists(),
+        "an empty suppression list makes exactly the claim that no file makes,          and load cannot tell them apart"
+    );
 }
 
 #[test]

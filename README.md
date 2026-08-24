@@ -323,7 +323,9 @@ $ cargo dry4rust report
 # The ignored group will not appear
 ```
 
-The ignore list is stored in `.dry4rust-ignore.toml` in the project root.
+The ignore list is stored in `.dry4rust-ignore.toml` in the project root. When `cleanup`
+prunes the last entry it removes the file rather than leaving an empty one behind: an empty
+suppression list says exactly what no file says.
 
 Entries whose fingerprint no longer matches anything go stale — after a refactor, or after
 an upgrade that changed the fingerprint format. `cleanup` prunes them:

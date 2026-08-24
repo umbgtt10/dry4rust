@@ -101,7 +101,7 @@ upstream's history kept as an ancestor rather than a credit line.
 - `config.rs` split into `Config`, `FileConfig` and `AnalysisConfig`, one per file. Three
   structs that existed only to spell out the path `package` → `metadata` → `dry4rust`
   through `Cargo.toml` are gone, replaced by navigating the parsed document.
-- 562 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
+- 565 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
   baseline; `crap4rust` clean at 15 with no override; every source file mirrored; no file
   at or above 10 on `iceberg4rust`.
 - Upstream's changelog is preserved below, under its own heading, rather than replaced.
@@ -118,6 +118,10 @@ upstream's history kept as an ancestor rather than a credit line.
 - The fixture corpus carries the four-line header, and each crate keeps its code in
   `src/target.rs` behind a `src/lib.rs` that only names it -- matching the family, and
   putting productive code out of a `lib.rs` the house rules keep for registries.
+- `cleanup` takes the ignore file away when it prunes the last entry, instead of writing
+  back `ignore = []`. An empty suppression list makes exactly the claim no file makes, and
+  `load` cannot tell them apart -- this repository acquired one of these itself when the
+  fingerprint format changed and all fifty entries went stale at once.
 - `main` is eleven lines. The argument mapping moved into the library as `EntryPoint`, so
   which root, which command and which overrides are things a test can call.
 
