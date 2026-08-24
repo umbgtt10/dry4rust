@@ -263,15 +263,16 @@ fn collect_placeholder_order(
     order: &mut Vec<(PlaceholderKind, usize)>,
     seen: &mut HashSet<(PlaceholderKind, usize)>,
 ) {
-    match &node.kind {
-        NodeKind::Placeholder(kind, idx)
-        | NodeKind::PatPlaceholder(kind, idx)
-        | NodeKind::TypePlaceholder(kind, idx) => {
-            if seen.insert((*kind, *idx)) {
-                order.push((*kind, *idx));
-            }
-        }
-        _ => {}
+    // One `if let` rather than a match whose only arm is an `if`. clippy's
+    // collapsible_match asks for the insert to become a match guard, which
+    // would run a mutation during pattern matching; a let chain keeps the
+    // side effect in the condition where it reads as one.
+    if let NodeKind::Placeholder(kind, idx)
+    | NodeKind::PatPlaceholder(kind, idx)
+    | NodeKind::TypePlaceholder(kind, idx) = &node.kind
+        && seen.insert((*kind, *idx))
+    {
+        order.push((*kind, *idx));
     }
     for child in &node.children {
         collect_placeholder_order(child, order, seen);
