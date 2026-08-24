@@ -12,6 +12,8 @@ use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::threshold::Threshold;
 use predicate::str;
 use predicates::prelude::*;
+use serde_json::Value;
+use serde_json::from_str;
 
 fn checked(fixture: &str, thresholds: &CheckThresholds) -> (CliResult, String) {
     let (config, result) = analysed(fixture);
@@ -78,6 +80,80 @@ fn check_fails_with_percentage_threshold_exceeded() {
         .code(1)
         .stdout(str::contains("Check FAILED"))
         .stdout(str::contains("exact duplicate lines"));
+}
+
+#[test]
+fn check_in_json_is_one_document_carrying_the_verdict() {
+    // Arrange & Act
+    let output = cargo_dry4rust()
+        .args([
+            "--path",
+            fixture_path("mixed").to_str().unwrap(),
+            "--format",
+            "json",
+            "check",
+            "--max-exact",
+            "0",
+            "--max-exact-percent",
+            "0",
+        ])
+        .assert()
+        .code(1)
+        .get_output()
+        .stdout
+        .clone();
+    let text = String::from_utf8(output).unwrap();
+
+    // Assert
+    let document: Value = from_str(&text).expect(
+        "the verdict used to be printed as a sentence between the sections, \
+         which left the whole thing unparseable",
+    );
+    assert_eq!(document["passed"], false);
+    assert_eq!(
+        document["breaches"].as_array().expect("breaches").len(),
+        2,
+        "both exact ceilings were breached and both are named, got: {text}"
+    );
+    assert_eq!(
+        document["exact"].as_array().expect("exact").len(),
+        1,
+        "and the groups behind them are listed once, not once per breach"
+    );
+}
+
+#[test]
+fn check_in_json_says_it_passed_when_nothing_is_breached() {
+    // Arrange & Act
+    let output = cargo_dry4rust()
+        .args([
+            "--path",
+            fixture_path("no_dupes").to_str().unwrap(),
+            "--format",
+            "json",
+            "check",
+            "--max-exact",
+            "0",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+
+    // Assert
+    let document: Value = from_str(&String::from_utf8(output).unwrap()).expect("valid json");
+    assert_eq!(document["passed"], true);
+    assert!(
+        document["breaches"]
+            .as_array()
+            .expect("breaches")
+            .is_empty()
+    );
+    assert!(
+        document.get("exact").is_none(),
+        "nothing breached, so there are no offenders to list"
+    );
 }
 
 #[test]

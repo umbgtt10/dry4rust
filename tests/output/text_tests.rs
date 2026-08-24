@@ -3,10 +3,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::group;
 use dry4rust::code_unit::{CodeUnit, CodeUnitKind};
 use dry4rust::fingerprint::Fingerprint;
+use dry4rust::grouper::compute_stats_with_sub;
 use dry4rust::grouper::{DuplicateGroup, DuplicationStats};
 use dry4rust::node::{NodeKind, NormalizedNode};
+use dry4rust::output::check_breach::CheckBreach;
 use dry4rust::output::reporter::Reporter;
 use dry4rust::output::reporter::display_path;
 use dry4rust::output::text::*;
@@ -40,6 +43,55 @@ fn relative_path_stripping() {
 
     // Assert
     assert_eq!(result, "src/main.rs");
+}
+
+#[test]
+fn text_report_check_puts_each_breach_before_the_groups_behind_it() {
+    // Arrange
+    let reporter = TextReporter::new(None);
+    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let groups = vec![group(0x11, &["process", "compute"])];
+    let breaches = vec![CheckBreach::new(
+        String::from("1 exact duplicate groups (max: 0)"),
+        &groups,
+        true,
+    )];
+    let mut buf = Vec::new();
+
+    // Act
+    reporter
+        .report_check(&stats, &breaches, &mut buf)
+        .expect("reporting succeeds");
+
+    // Assert
+    let output = String::from_utf8(buf).unwrap();
+    let sentence = output.find("Check FAILED").expect("the breach is named");
+    let listing = output
+        .find("Exact Duplicates")
+        .expect("and its groups shown");
+    assert!(
+        sentence < listing,
+        "the sentence comes first and the groups explain it, got: {output}"
+    );
+    assert!(!output.contains("Check passed."), "{output}");
+}
+
+#[test]
+fn text_report_check_with_no_breaches_says_it_passed() {
+    // Arrange
+    let reporter = TextReporter::new(None);
+    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let mut buf = Vec::new();
+
+    // Act
+    reporter
+        .report_check(&stats, &[], &mut buf)
+        .expect("reporting succeeds");
+
+    // Assert
+    let output = String::from_utf8(buf).unwrap();
+    assert!(output.contains("Duplication Statistics"), "{output}");
+    assert!(output.ends_with("\nCheck passed.\n"), "{output}");
 }
 
 #[test]

@@ -3,10 +3,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::group;
 use dry4rust::code_unit::{CodeUnit, CodeUnitKind};
 use dry4rust::fingerprint::Fingerprint;
+use dry4rust::grouper::compute_stats_with_sub;
 use dry4rust::grouper::{DuplicateGroup, DuplicationStats};
 use dry4rust::node::{NodeKind, NormalizedNode};
+use dry4rust::output::check_breach::CheckBreach;
 use dry4rust::output::json::*;
 use dry4rust::output::reporter::Reporter;
 use serde_json::Value;
@@ -64,6 +67,42 @@ fn json_relative_paths() {
     // Assert
     assert!(output.contains("src/main.rs"));
     assert!(!output.contains("/home/user/project"));
+}
+
+#[test]
+fn json_report_check_gathers_the_groups_rather_than_repeating_them() {
+    // Arrange -- two ceilings on the same set, both breached
+    let reporter = JsonReporter::new(None);
+    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let groups = vec![group(0x11, &["process", "compute"])];
+    let breaches = vec![
+        CheckBreach::new(
+            String::from("1 exact duplicate groups (max: 0)"),
+            &groups,
+            true,
+        ),
+        CheckBreach::new(
+            String::from("42.9% exact duplicate lines (max: 0.0%)"),
+            &groups,
+            true,
+        ),
+    ];
+    let mut buf = Vec::new();
+
+    // Act
+    reporter
+        .report_check(&stats, &breaches, &mut buf)
+        .expect("reporting succeeds");
+
+    // Assert
+    let document: Value = from_str(&String::from_utf8(buf).unwrap()).expect("valid json");
+    assert_eq!(document["breaches"].as_array().unwrap().len(), 2);
+    assert_eq!(
+        document["exact"].as_array().unwrap().len(),
+        1,
+        "text lists the groups under each breach; a document names them once"
+    );
+    assert_eq!(document["passed"], false);
 }
 
 #[test]

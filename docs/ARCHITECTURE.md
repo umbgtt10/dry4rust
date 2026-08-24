@@ -92,7 +92,11 @@ bodies as further units, which then travel the same path.
 | `cli::*_command` | One struct per subcommand, each with a single `run`. |
 | `cli::checking` | `Ceiling`, `CheckThresholds`, `StaleReport` -- what `check` and `cleanup` measure with. |
 | `command_dispatcher` | Routes a parsed `Command` to the type that serves it. |
-| `output` | `Reporter`, with `text` and `json` implementations. |
+| `output::reporter` | `Reporter`: five section methods, plus `report` and `report_check` for a whole document. |
+| `output::report` | What a full report shows, handed over in one piece. |
+| `output::check_breach` | One exceeded ceiling and the groups behind it. |
+| `output::group_section` | One headed section of a text report, and how its groups read. |
+| `output` | `text` and `json` implementations of `Reporter`. |
 
 ## Data model
 

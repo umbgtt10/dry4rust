@@ -8,7 +8,6 @@ use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::cli::report_command::ReportCommand;
 use predicate::str;
 use predicates::prelude::*;
-use serde_json::Deserializer;
 use serde_json::Value;
 use serde_json::from_str;
 
@@ -29,15 +28,18 @@ fn json_format_report() {
         .stdout
         .clone();
     let text = String::from_utf8(output).unwrap();
-    let parts: Vec<&str> = text.splitn(2, "\n\n").collect();
 
     // Assert
-    assert!(parts.len() >= 2, "expected stats + groups sections");
-    let stats: Value = from_str(parts[0]).unwrap();
-    assert!(stats["total_code_units"].as_u64().unwrap() > 0);
-    assert!(stats["exact_duplicate_groups"].as_u64().unwrap() > 0);
-    let groups: Value = from_str(parts[1]).unwrap();
-    assert!(!groups.as_array().unwrap().is_empty());
+    let document: Value = from_str(&text).expect("the whole report is one JSON document");
+    assert!(document["stats"]["total_code_units"].as_u64().unwrap() > 0);
+    assert!(
+        document["stats"]["exact_duplicate_groups"]
+            .as_u64()
+            .unwrap()
+            > 0
+    );
+    let groups = document["exact"].as_array().expect("a named exact section");
+    assert!(!groups.is_empty());
     assert!(groups[0]["fingerprint"].is_string());
     assert!(groups[0]["members"].is_array());
 }
@@ -205,23 +207,18 @@ fn sub_function_json_report_carries_the_sub_near_section() {
         .stdout
         .clone();
     let text = String::from_utf8(output).unwrap();
-    // Each section is its own top-level JSON document, written one after
-    // another rather than wrapped in one; a stream reader is what reads that.
-    let sections: Vec<Value> = Deserializer::from_str(&text)
-        .into_iter::<Value>()
-        .collect::<Result<_, _>>()
-        .expect("every section parses");
 
     // Assert
+    let document: Value = from_str(&text).expect("the whole report is one JSON document");
     assert!(
-        sections[0]["total_code_units"].as_u64().expect("a count") > 0,
-        "the first section is the summary, got: {text}"
+        document["stats"]["total_code_units"]
+            .as_u64()
+            .expect("a count")
+            > 0
     );
-    let sub_near = sections
-        .last()
-        .expect("a last section")
+    let sub_near = document["sub_near"]
         .as_array()
-        .expect("the group sections are arrays");
+        .expect("a named sub_near section");
     assert_eq!(sub_near.len(), 1);
     assert!(
         sub_near[0]["similarity"].as_f64().expect("a score") < 1.0,
@@ -229,6 +226,11 @@ fn sub_function_json_report_carries_the_sub_near_section() {
          section, got: {text}"
     );
     assert_eq!(sub_near[0]["members"].as_array().expect("members").len(), 2);
+    assert!(
+        document.get("sub_exact").is_none(),
+        "a section the run produced nothing for is absent, not an empty array \
+         that would suggest it was looked at, got: {text}"
+    );
 }
 
 #[test]

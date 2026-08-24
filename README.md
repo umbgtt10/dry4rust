@@ -152,6 +152,29 @@ $ cargo dry4rust --format json stats
 }
 ```
 
+Every `--format json` run is a **single JSON document**, so `jq` and any ordinary parser
+read it in one call. `report` and `check` name their sections:
+
+```sh
+$ cargo dry4rust --format json report | jq '.exact | length'
+$ cargo dry4rust --format json check --max-exact 0 | jq '.passed, .breaches'
+false
+[
+  "1 exact duplicate groups (max: 0)"
+]
+```
+
+| command | keys |
+|---|---|
+| `stats` | the summary fields, at the top level |
+| `report` | `stats`, `exact`, `near`, and `sub_exact`/`sub_near` when sub-function analysis found any |
+| `check` | `stats`, `passed`, `breaches`, and `exact`/`near` when a ceiling was breached |
+
+`exact` and `near` are always present on `report` because those are always analysed. The
+sub-function sections are absent rather than empty when the analysis was not asked for, so
+`[]` never stands in for "not looked at". On `check`, the groups behind a breach are listed
+once even when two ceilings on the same set are breached together.
+
 **CI check (fail if any exact duplicates exist):**
 
 ```sh

@@ -114,7 +114,7 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Documented**
 
-- Thirteen ADRs with an index; `ARCHITECTURE.md`, `FORMULA.md`,
+- Fourteen ADRs with an index; `ARCHITECTURE.md`, `FORMULA.md`,
   `OPEN_POINTS.md`, `ROADMAP.md`, this file
 - README credits the creator on its first line of body text, and documents
   `--sub-function`, `--min-sub-nodes` and `--baseline`, which were features
@@ -123,10 +123,10 @@ upstream's history kept as an ancestor rather than a credit line.
 
 **Verified**
 
-- 493 tests, up from 213
-- `stern4rust`: 0 offences over 118 files, 21 rules applied, nothing skipped,
+- 513 tests, up from 213
+- `stern4rust`: 0 offences over 124 files, 21 rules applied, nothing skipped,
   nothing baselined, one exclusion (`tests/fixtures/**`)
-- `crap4rust`: 0 crappy functions at 15 over 216 functions, no override
+- `crap4rust`: 0 crappy functions at 15 over 237 functions, no override
 - `twin4rust`: every source file mirrored
 - `iceberg4rust`: no file at or above 10
 - Both stage gates proven to fail, not only to pass

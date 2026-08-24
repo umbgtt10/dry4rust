@@ -3,7 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io;
 use std::io::Write;
 
 use crate::analysis::AnalysisResult;
@@ -12,6 +11,8 @@ use crate::cli::checking::check_thresholds::CheckThresholds;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::config::Config;
+use crate::grouper::DuplicateGroup;
+use crate::output::check_breach::CheckBreach;
 use crate::output::reporter::Reporter;
 
 /// `check`: the summary, then a non-zero exit if any ceiling is breached.
@@ -51,23 +52,32 @@ impl<'a> CheckCommand<'a> {
     /// Returns [`CliError::CheckFailed`] if any ceiling was breached, and
     /// [`CliError::Io`] if the writer fails.
     pub fn run(&self, writer: &mut impl Write) -> CliResult {
-        self.reporter.report_stats(&self.result.stats, writer)?;
-
-        let mut failed = false;
-        for (ceiling, breached_by_exact) in &self.ceilings() {
-            let Some(message) = ceiling.breach() else {
-                continue;
-            };
-            writeln!(writer, "\nCheck FAILED: {message}")?;
-            self.report_offenders(*breached_by_exact, writer)?;
-            failed = true;
-        }
-
-        if failed {
-            Err(CliError::CheckFailed)
-        } else {
-            writeln!(writer, "\nCheck passed.")?;
+        let breaches = self.breaches();
+        self.reporter
+            .report_check(&self.result.stats, &breaches, writer)?;
+        if breaches.is_empty() {
             Ok(())
+        } else {
+            Err(CliError::CheckFailed)
+        }
+    }
+
+    fn breaches(&self) -> Vec<CheckBreach<'a>> {
+        self.ceilings()
+            .into_iter()
+            .filter_map(|(ceiling, of_exact)| {
+                ceiling
+                    .breach()
+                    .map(|message| CheckBreach::new(message, self.offenders(of_exact), of_exact))
+            })
+            .collect()
+    }
+
+    const fn offenders(&self, of_exact: bool) -> &'a [DuplicateGroup] {
+        if of_exact {
+            self.result.exact_groups.as_slice()
+        } else {
+            self.result.near_groups.as_slice()
         }
     }
 
@@ -113,14 +123,5 @@ impl<'a> CheckCommand<'a> {
                 false,
             ),
         ]
-    }
-
-    fn report_offenders(&self, breached_by_exact: bool, writer: &mut impl Write) -> io::Result<()> {
-        if breached_by_exact {
-            self.reporter
-                .report_exact(&self.result.exact_groups, writer)
-        } else {
-            self.reporter.report_near(&self.result.near_groups, writer)
-        }
     }
 }

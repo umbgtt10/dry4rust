@@ -37,6 +37,14 @@ upstream's history kept as an ancestor rather than a credit line.
   section when upgrading.
 - **The tree-sitter and Python backends are gone.** One crate, one language.
   `LanguageAnalyzer` stays as the injection seam.
+- **`--format json` now emits one JSON document per run.** `report` was the summary
+  followed by one bare array per section, each a separate top-level value, so `jq .`
+  failed on it and the number of documents varied with what was found. `check` was worse:
+  it printed `Check FAILED: …` as prose *between* two JSON values, which no parser could
+  read at all. Both are now a single object with named keys — `report` gives
+  `stats`/`exact`/`near`/`sub_exact`/`sub_near`, and `check` gives
+  `stats`/`passed`/`breaches`/`exact`/`near`. Anything splitting the old output on blank
+  lines needs rewriting to index by key. **Text output is unchanged.**
 
 ### Added
 - **Baseline mode.** `cargo dry4rust baseline` records the duplication a codebase already
@@ -46,7 +54,7 @@ upstream's history kept as an ancestor rather than a credit line.
   [ADR-BaselineIsInheritedNotForgiven](docs/ADRs/ADR-BaselineIsInheritedNotForgiven.md).
 - `baseline_suppressed` in the JSON summary, present only when a baseline was in effect.
 - `docs/`: `ARCHITECTURE.md`, `FORMULA.md`, `OPEN_POINTS.md`, `ROADMAP.md`,
-  `IMPLEMENTED-FEATURES.md`, `dry4rust-dossier.md`, and thirteen ADRs with an index.
+  `IMPLEMENTED-FEATURES.md`, `dry4rust-dossier.md`, and fourteen ADRs with an index.
 - `LICENSE` carries both copyright notices, upstream's first, and every source file
   repeats them.
 - Two quality-gate scripts, `scripts/run_stage_1.ps1` and `scripts/run_stage_2.ps1`, both
@@ -87,7 +95,7 @@ upstream's history kept as an ancestor rather than a credit line.
   `CommandDispatcher` — rather than the threshold being raised. See
   [ADR-DecompositionOverThresholdRelaxation](docs/ADRs/ADR-DecompositionOverThresholdRelaxation.md).
 - Nine re-exports removed, so every import names the module where the symbol is defined.
-- 493 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
+- 513 tests, up from 213 at the fork. `stern4rust` clean with all 21 rules applied and no
   baseline; `crap4rust` clean at 15 with no override; every source file mirrored; no file
   at or above 10 on `iceberg4rust`.
 - Upstream's changelog is preserved below, under its own heading, rather than replaced.

@@ -30,21 +30,6 @@ duplicates of each other: their matching internals are then reported again as
 sub-function duplicates. The counts are honest about being distinct sets, but
 the second finding carries no information the first did not.
 
-## `--format json report` is several JSON documents, not one
-
-`stats` in JSON is a single object and parses as it stands. `report` is the
-summary followed by one array per section -- exact, near, sub-exact, sub-near
--- each written as its own top-level document, one after another.
-
-That is not valid JSON as a whole. `jq .` fails on it, and so does any reader
-that expects one value. A stream reader handles it, and so does splitting on
-the section boundaries, but neither is what a caller reaches for first.
-
-Sections that found nothing are omitted rather than written as `[]`, except
-exact duplicates, which are always written. So the number of documents varies
-with what was found, and a positional reader cannot assume which section it is
-looking at.
-
 ## A sub-function unit reports its parent's line range
 
 With `--sub-function`, each extracted branch, arm or loop body carries the

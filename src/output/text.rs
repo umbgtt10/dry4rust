@@ -6,8 +6,10 @@
 use std::io;
 
 use crate::grouper::{DuplicateGroup, DuplicationStats};
+use crate::output::check_breach::CheckBreach;
+use crate::output::group_section::GroupSection;
+use crate::output::report::Report;
 use crate::output::reporter::Reporter;
-use crate::output::reporter::display_path;
 use std::path::PathBuf;
 
 fn format_with_commas(n: usize) -> String {
@@ -32,75 +34,46 @@ impl TextReporter {
     pub const fn new(base_path: Option<PathBuf>) -> Self {
         Self { base_path }
     }
-
-    fn write_groups(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-        title: &str,
-        empty_message: Option<&str>,
-        show_similarity: bool,
-        show_parent: bool,
-    ) -> io::Result<()> {
-        if groups.is_empty() {
-            if let Some(msg) = empty_message {
-                writeln!(writer, "{msg}")?;
-            }
-            return Ok(());
-        }
-
-        writeln!(writer, "{title}")?;
-        writeln!(writer, "{}", "=".repeat(title.len()))?;
-        writeln!(writer)?;
-
-        for (i, group) in groups.iter().enumerate() {
-            let fp = group.fingerprint.to_hex();
-            if show_similarity {
-                writeln!(
-                    writer,
-                    "Group {} (fingerprint: {}, similarity: {:.0}%, {} members):",
-                    i + 1,
-                    fp,
-                    group.similarity * 100.0,
-                    group.members.len()
-                )?;
-            } else {
-                writeln!(
-                    writer,
-                    "Group {} (fingerprint: {}, {} members):",
-                    i + 1,
-                    fp,
-                    group.members.len()
-                )?;
-            }
-            for member in &group.members {
-                let parent = if show_parent {
-                    member
-                        .parent_name
-                        .as_deref()
-                        .map(|p| format!(" in {p}"))
-                        .unwrap_or_default()
-                } else {
-                    String::new()
-                };
-                writeln!(
-                    writer,
-                    "  - {} ({}){} at {}:{}-{}",
-                    member.name,
-                    member.kind,
-                    parent,
-                    display_path(self.base_path.as_deref(), &member.file),
-                    member.line_start,
-                    member.line_end,
-                )?;
-            }
-            writeln!(writer)?;
-        }
-        Ok(())
-    }
 }
 
 impl Reporter for TextReporter {
+    fn report(&self, report: &Report<'_>, writer: &mut dyn io::Write) -> io::Result<()> {
+        self.report_stats(report.stats, writer)?;
+        writeln!(writer)?;
+        self.report_exact(report.exact, writer)?;
+        if !report.near.is_empty() {
+            self.report_near(report.near, writer)?;
+        }
+        if !report.sub_exact.is_empty() {
+            self.report_sub_exact(report.sub_exact, writer)?;
+        }
+        if !report.sub_near.is_empty() {
+            self.report_sub_near(report.sub_near, writer)?;
+        }
+        Ok(())
+    }
+
+    fn report_check(
+        &self,
+        stats: &DuplicationStats,
+        breaches: &[CheckBreach<'_>],
+        writer: &mut dyn io::Write,
+    ) -> io::Result<()> {
+        self.report_stats(stats, writer)?;
+        for breach in breaches {
+            writeln!(writer, "\nCheck FAILED: {}", breach.message())?;
+            if breach.is_of_exact() {
+                self.report_exact(breach.groups(), writer)?;
+            } else {
+                self.report_near(breach.groups(), writer)?;
+            }
+        }
+        if breaches.is_empty() {
+            writeln!(writer, "\nCheck passed.")?;
+        }
+        Ok(())
+    }
+
     fn report_stats(&self, stats: &DuplicationStats, writer: &mut dyn io::Write) -> io::Result<()> {
         writeln!(writer, "Duplication Statistics")?;
         writeln!(writer, "=====================")?;
@@ -162,25 +135,11 @@ impl Reporter for TextReporter {
         groups: &[DuplicateGroup],
         writer: &mut dyn io::Write,
     ) -> io::Result<()> {
-        self.write_groups(
-            groups,
-            writer,
-            "Exact Duplicates",
-            Some("No exact duplicates found."),
-            false,
-            false,
-        )
+        GroupSection::exact().write(groups, self.base_path.as_deref(), writer)
     }
 
     fn report_near(&self, groups: &[DuplicateGroup], writer: &mut dyn io::Write) -> io::Result<()> {
-        self.write_groups(
-            groups,
-            writer,
-            "Near Duplicates",
-            Some("No near duplicates found."),
-            true,
-            false,
-        )
+        GroupSection::near().write(groups, self.base_path.as_deref(), writer)
     }
 
     fn report_sub_exact(
@@ -188,14 +147,7 @@ impl Reporter for TextReporter {
         groups: &[DuplicateGroup],
         writer: &mut dyn io::Write,
     ) -> io::Result<()> {
-        self.write_groups(
-            groups,
-            writer,
-            "Sub-function Exact Duplicates",
-            None,
-            false,
-            true,
-        )
+        GroupSection::sub_exact().write(groups, self.base_path.as_deref(), writer)
     }
 
     fn report_sub_near(
@@ -203,13 +155,6 @@ impl Reporter for TextReporter {
         groups: &[DuplicateGroup],
         writer: &mut dyn io::Write,
     ) -> io::Result<()> {
-        self.write_groups(
-            groups,
-            writer,
-            "Sub-function Near Duplicates",
-            None,
-            true,
-            true,
-        )
+        GroupSection::sub_near().write(groups, self.base_path.as_deref(), writer)
     }
 }
