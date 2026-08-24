@@ -84,7 +84,7 @@ revisiting -- the exclusion would then be hiding a test file.
 ## Enforcement
 
 `stern4rust.toml` holds the exclusion, not the gate script, so a hand-run of
-`cargo stern4rust` checks exactly what `scripts/run_stage_2.ps1` checks.
+`cargo stern4rust` checks exactly what `just stage2` checks.
 
 ## Related
 

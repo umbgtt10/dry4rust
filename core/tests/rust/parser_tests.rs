@@ -20,7 +20,7 @@ fn write_and_parse(code: &str, min_nodes: usize) -> Vec<CodeUnit> {
 #[test]
 fn cfg_test_impl_blocks_tagged_as_test() {
     // Arrange & Act & Assert
-    let code = r#"
+    let code = r"
         struct Foo;
 
         impl Foo {
@@ -37,7 +37,7 @@ fn cfg_test_impl_blocks_tagged_as_test() {
                 x + 1
             }
         }
-    "#;
+    ";
 
     let units = write_and_parse(code, 1);
     let prod: Vec<_> = units
@@ -58,7 +58,7 @@ fn cfg_test_impl_blocks_tagged_as_test() {
 #[test]
 fn cfg_test_module_functions_tagged_as_test() {
     // Arrange & Act
-    let code = r#"
+    let code = r"
         fn production(x: i32) -> i32 {
             let y = x + 1;
             y * 2
@@ -71,7 +71,7 @@ fn cfg_test_module_functions_tagged_as_test() {
                 y * 2
             }
         }
-    "#;
+    ";
 
     let units = write_and_parse(code, 1);
     let prod: Vec<_> = units.iter().filter(|u| u.name == "production").collect();
@@ -88,7 +88,7 @@ fn cfg_test_module_functions_tagged_as_test() {
 fn code_unit_has_line_numbers() {
     // Arrange & Act
     let units = write_and_parse(
-        r#"
+        r"
 fn first() {
 let x = 1;
 }
@@ -96,7 +96,7 @@ let x = 1;
 fn second() {
 let y = 2;
 }
-        "#,
+        ",
         1,
     );
 
@@ -119,14 +119,14 @@ fn code_unit_kind_display() {
 fn different_functions_different_fingerprint() {
     // Arrange & Act
     let units = write_and_parse(
-        r#"
+        r"
         fn add(x: i32) -> i32 {
             x + 1
         }
         fn mul(x: i32) -> i32 {
             x * 2
         }
-        "#,
+        ",
         1,
     );
     let fns: Vec<_> = units
@@ -144,7 +144,7 @@ fn different_functions_different_fingerprint() {
 fn duplicate_functions_same_fingerprint() {
     // Arrange & Act
     let units = write_and_parse(
-        r#"
+        r"
         fn foo(x: i32) -> i32 {
             let y = x + 1;
             y * 2
@@ -153,7 +153,7 @@ fn duplicate_functions_same_fingerprint() {
             let b = a + 1;
             b * 2
         }
-        "#,
+        ",
         1,
     );
     let fns: Vec<_> = units
@@ -171,7 +171,7 @@ fn duplicate_functions_same_fingerprint() {
 fn extracts_methods_from_impl() {
     // Arrange & Act
     let units = write_and_parse(
-        r#"
+        r"
         struct Foo;
         impl Foo {
             fn bar(&self) -> i32 {
@@ -181,7 +181,7 @@ fn extracts_methods_from_impl() {
                 let _ = val + 1;
             }
         }
-        "#,
+        ",
         1,
     );
     let methods: Vec<_> = units
@@ -227,7 +227,7 @@ fn extracts_top_level_functions() {
 fn extracts_trait_impl_methods() {
     // Arrange & Act
     let units = write_and_parse(
-        r#"
+        r"
         struct Foo;
         trait MyTrait {
             fn do_thing(&self) -> i32;
@@ -238,7 +238,7 @@ fn extracts_trait_impl_methods() {
                 x + 1
             }
         }
-        "#,
+        ",
         1,
     );
     let trait_impls: Vec<_> = units
@@ -269,7 +269,7 @@ fn handles_parse_errors_gracefully() {
 #[test]
 fn min_line_count_filters_short_functions() {
     // Arrange & Act
-    let code = r#"
+    let code = r"
 fn short(x: i32) -> i32 {
 x + 1
 }
@@ -281,7 +281,7 @@ let c = b - 3;
 let d = c + 4;
 a + b + c + d
 }
-    "#;
+    ";
     let tmp = TempDir::new().unwrap();
     let file = tmp.path().join("test.rs");
     fs::write(&file, code).unwrap();
@@ -305,7 +305,7 @@ a + b + c + d
 #[test]
 fn non_test_code_not_tagged() {
     // Arrange & Act
-    let code = r#"
+    let code = r"
         fn production(x: i32) -> i32 {
             let y = x + 1;
             y * 2
@@ -316,7 +316,7 @@ fn non_test_code_not_tagged() {
             let y = x + 1;
             assert_eq!(y, 2);
         }
-    "#;
+    ";
 
     let units = write_and_parse(code, 1);
     let non_test: Vec<_> = units.iter().filter(|u| !u.is_test).collect();
@@ -347,7 +347,7 @@ fn parse_files_collects_warnings() {
 fn parse_source_extracts_closures_as_their_own_units() {
     // Arrange & Act
     let units = write_and_parse(
-        r#"
+        r"
         fn foo() {
             let f = |x: i32, y: i32| {
                 let sum = x + y;
@@ -355,17 +355,17 @@ fn parse_source_extracts_closures_as_their_own_units() {
                 sum + product
             };
         }
-        "#,
+        ",
         1,
     );
-    let closures: Vec<_> = units
+    let closures = units
         .iter()
         .filter(|u| u.kind == CodeUnitKind::Closure)
-        .collect();
+        .count();
 
     // Assert
 
-    assert!(!closures.is_empty());
+    assert!(closures > 0);
 }
 
 #[test]
@@ -385,25 +385,25 @@ fn parse_source_works() {
 fn respects_min_node_count() {
     // Arrange & Act
     let units_low = write_and_parse(
-        r#"
+        r"
         fn tiny() -> i32 { 1 }
         fn bigger(x: i32) -> i32 {
             let a = x + 1;
             let b = a * 2;
             a + b
         }
-        "#,
+        ",
         1,
     );
     let units_high = write_and_parse(
-        r#"
+        r"
         fn tiny() -> i32 { 1 }
         fn bigger(x: i32) -> i32 {
             let a = x + 1;
             let b = a * 2;
             a + b
         }
-        "#,
+        ",
         20,
     );
 
@@ -415,7 +415,7 @@ fn respects_min_node_count() {
 #[test]
 fn test_functions_tagged_as_test() {
     // Arrange & Act
-    let code = r#"
+    let code = r"
         fn production(x: i32) -> i32 {
             let y = x + 1;
             y * 2
@@ -426,7 +426,7 @@ fn test_functions_tagged_as_test() {
             let y = x + 1;
             assert_eq!(y, 2);
         }
-    "#;
+    ";
 
     let units = write_and_parse(code, 1);
     let prod: Vec<_> = units.iter().filter(|u| u.name == "production").collect();
@@ -444,11 +444,11 @@ fn test_functions_tagged_as_test() {
 fn test_has_cfg_test_attr() {
     // Arrange & Act
     let file: File = parse_str(
-        r#"
+        r"
         #[cfg(test)]
         mod tests {}
         mod normal {}
-        "#,
+        ",
     )
     .unwrap();
 
@@ -471,11 +471,11 @@ fn test_has_cfg_test_attr() {
 fn test_has_test_attr() {
     // Arrange & Act
     let file: File = parse_str(
-        r#"
+        r"
         #[test]
         fn my_test() {}
         fn normal() {}
-        "#,
+        ",
     )
     .unwrap();
 

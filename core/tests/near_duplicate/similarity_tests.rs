@@ -14,11 +14,11 @@ fn block_of(kinds: &[NodeKind]) -> NormalizedNode {
     )
 }
 
-fn int_lit() -> NormalizedNode {
+const fn int_lit() -> NormalizedNode {
     NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Int))
 }
 
-fn var(idx: usize) -> NormalizedNode {
+const fn var(idx: usize) -> NormalizedNode {
     NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, idx))
 }
 

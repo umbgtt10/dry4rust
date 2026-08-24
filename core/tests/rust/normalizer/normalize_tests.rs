@@ -95,7 +95,7 @@ fn cast_expression_normalized() {
 #[test]
 fn complex_function_normalization() {
     // Arrange & Act
-    let code1 = r#"
+    let code1 = r"
         fn process(data: Vec<i32>) -> Result<i32, String> {
             let mut sum = 0;
             for item in data.iter() {
@@ -105,8 +105,8 @@ fn complex_function_normalization() {
             }
             Ok(sum)
         }
-    "#;
-    let code2 = r#"
+    ";
+    let code2 = r"
         fn compute(values: Vec<i32>) -> Result<i32, String> {
             let mut total = 0;
             for val in values.iter() {
@@ -116,7 +116,7 @@ fn complex_function_normalization() {
             }
             Ok(total)
         }
-    "#;
+    ";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
     let (sig1, body1) = normalize_item_fn(&f1);
@@ -197,12 +197,12 @@ fn if_vs_if_else_different() {
 #[test]
 fn impl_block_methods_normalized() {
     // Arrange & Act
-    let code = r#"
+    let code = r"
         impl Foo {
             fn bar(&self) -> i32 { self.x + 1 }
             fn baz(&mut self, val: i32) { self.x = val; }
         }
-    "#;
+    ";
     let item: ItemImpl = parse_str(code).unwrap();
     let methods = normalize_impl_block(&item);
 
@@ -258,7 +258,7 @@ fn macro_invocations_produce_macro_call() {
                 NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Str))
             );
         }
-        _ => panic!("Expected MacroCall node, got {:?}", n),
+        _ => panic!("Expected MacroCall node, got {n:?}"),
     }
 }
 
@@ -297,7 +297,7 @@ fn multi_segment_macro_path_uses_last_segment() {
         NodeKind::MacroCall { name } => {
             assert_eq!(name, "println");
         }
-        _ => panic!("Expected MacroCall node, got {:?}", n),
+        _ => panic!("Expected MacroCall node, got {n:?}"),
     }
 }
 
@@ -602,7 +602,7 @@ fn unparseable_macro_args_produce_opaque() {
             assert_eq!(n.children.len(), 1);
             assert_eq!(n.children[0], NormalizedNode::leaf(NodeKind::Opaque));
         }
-        _ => panic!("Expected MacroCall node, got {:?}", n),
+        _ => panic!("Expected MacroCall node, got {n:?}"),
     }
 }
 
@@ -637,7 +637,7 @@ fn vec_macro_normalized() {
             assert_eq!(name, "vec");
             assert_eq!(n.children.len(), 3);
         }
-        _ => panic!("Expected MacroCall node, got {:?}", n),
+        _ => panic!("Expected MacroCall node, got {n:?}"),
     }
 }
 

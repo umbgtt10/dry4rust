@@ -18,7 +18,7 @@ fn encoded(node: &NormalizedNode) -> u64 {
     encoder.finish()
 }
 
-fn leaf(kind: NodeKind) -> NormalizedNode {
+const fn leaf(kind: NodeKind) -> NormalizedNode {
     NormalizedNode::leaf(kind)
 }
 

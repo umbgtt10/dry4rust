@@ -92,9 +92,10 @@ here.
 
 ## Enforcement
 
-`scripts/run_stage_2.ps1` calls `Invoke-Crap4RustGate` with no `-Threshold`
-and no `-UseProjectThreshold`, so it fails when `crappy_functions` is greater
-than zero.
+`xtask`'s `CrapGate`, run by `just stage2`, judges the parsed report rather
+than the exit code and fails when `crappy_functions` is greater than zero. The
+`--threshold` it passes decides only what crap4rust *labels* crappy; the gate
+itself tolerates none.
 
 ## Related
 

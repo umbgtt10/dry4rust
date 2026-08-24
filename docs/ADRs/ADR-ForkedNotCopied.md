@@ -74,8 +74,8 @@ network page. No notification is sent to the owner.
 
 ## Enforcement
 
-`cargo stern4rust`'s `header` rule, run first in `scripts/run_stage_2.ps1`,
-fails on any `.rs` file that does not carry both notices.
+`cargo stern4rust`'s `header` rule, run first in `just stage2`, fails on any
+`.rs` file that does not carry both notices.
 
 ## Related
 

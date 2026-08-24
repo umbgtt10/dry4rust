@@ -14,9 +14,9 @@ fn config_with_exclude_tests() {
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dry4rust.toml"),
-        r#"
+        r"
         exclude_tests = true
-        "#,
+        ",
     )
     .unwrap();
     let config = Config::load(tmp.path()).expect("every value is in range");
@@ -31,9 +31,9 @@ fn config_with_min_lines() {
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dry4rust.toml"),
-        r#"
+        r"
         min_lines = 5
-        "#,
+        ",
     )
     .unwrap();
     let config = Config::load(tmp.path()).expect("every value is in range");
@@ -48,10 +48,10 @@ fn config_with_percentage_thresholds() {
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dry4rust.toml"),
-        r#"
+        r"
         max_exact_percent = 5.0
         max_near_percent = 10.5
-        "#,
+        ",
     )
     .unwrap();
     let config = Config::load(tmp.path()).expect("every value is in range");
@@ -73,10 +73,10 @@ fn config_with_thresholds() {
     let tmp = TempDir::new().unwrap();
     fs::write(
         tmp.path().join("dry4rust.toml"),
-        r#"
+        r"
         max_exact_duplicates = 0
         max_near_duplicates = 5
-        "#,
+        ",
     )
     .unwrap();
     let config = Config::load(tmp.path()).expect("every value is in range");
@@ -116,9 +116,9 @@ fn dry4rust_toml_overrides_cargo_toml() {
     .unwrap();
     fs::write(
         tmp.path().join("dry4rust.toml"),
-        r#"
+        r"
         min_nodes = 25
-        "#,
+        ",
     )
     .unwrap();
     let config = Config::load(tmp.path()).expect("every value is in range");

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+- `xtask/`, a real crate replacing the stage 2 PowerShell script. Each gate is a
+  `Gate` implementation constructed against a `CommandRunner` trait, so the
+  argument lists and failure messages are covered by 63 integration tests rather
+  than being unobservable shell. It is a workspace member and is gated like the
+  rest -- the crate that runs the gates is not exempt from them.
+- `.github/workflows/ci.yml`: both stages on Ubuntu, Windows and macOS, for
+  every pull request and every push to `main`. CI runs `just stage1` /
+  `just stage2` -- the same two commands a developer runs -- so there is no
+  second definition of the gates to drift out of step.
+
+### Changed
+- Gates run through `just stage1` / `just stage2` on all three platforms.
+- Stage 1 now lints test targets too (`cargo clippy --workspace --all-targets`),
+  which the PowerShell script never did. Combined with the `pedantic` and
+  `nursery` groups `core` already enables, that surfaced 68 pre-existing
+  offences across thirteen files under `core/tests/`, all fixed. Fifty-seven
+  were `cargo clippy --fix` material; the rest were `collect()` into a `Vec`
+  only to call `.len()`, single-item `into_iter()`, and two unseparated hex
+  literals. No assertion was weakened -- `collect().len()` and `count()` yield
+  the same number, so every asserted value is unchanged.
+- CI checks formatting instead of applying it (`cargo fmt --check` when `CI` is
+  set), so drift fails the build rather than being silently rewritten where
+  nobody is there to review it. A local `just stage1` still formats in place.
+- `twin4rust` and `iceberg4rust` each ran twice, once per member. They now take
+  both members in a single call, verified equivalent: scoping either to
+  `validation` alone scans nothing and passes vacuously, because it has no
+  source files to mirror or to score.
+
+### Removed
+- `scripts/run_stage_1.ps1` and `scripts/run_stage_2.ps1`. A Windows-only gate
+  is not a gate contributors on Linux or macOS can run.
+
 ## [0.2.0] - 2026-08-24
 
 Version 0.2.0 is the first release with an engine in it. It is a fork of

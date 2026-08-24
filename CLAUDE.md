@@ -37,15 +37,26 @@ Upstream is the exception worth naming: `git fetch upstream` reaches
 
 Run:
 
-`powershell -File scripts\run_stage_1.ps1`
-`powershell -File scripts\run_stage_2.ps1`
+`just stage1`
+`just stage2`
 
 If either gate is not green, the work is not complete.
 
+Both run identically on Windows, Linux and macOS, and CI runs the same two
+commands -- there is no second definition of the gates to drift out of step.
+
 Stage 1 is formatting, clippy and tests -- cargo built-ins only, so it works on
-a fresh checkout. It runs with `RUSTFLAGS=-D warnings`, which is stricter than
-a bare `cargo test`. Stage 2 is four installed cargo subcommands, run in this
-order:
+a fresh checkout. It runs with `RUSTFLAGS=-D warnings` and
+`cargo clippy --workspace --all-targets`, which is stricter than a bare
+`cargo test` in two ways: warnings are errors, and test targets are linted too.
+Because `core` and `xtask` both set clippy's `pedantic` and `nursery` groups to
+warn, that combination is what holds the tests to the same bar as the sources.
+
+Stage 2 is `cargo xtask stage2` -- a real crate under `xtask/`, gated like any
+other code, rather than a script. Each gate is a `Gate` implementation
+constructed against a `CommandRunner` trait, so the argument lists and the
+failure messages are covered by `xtask`'s own integration tests. It runs four
+installed cargo subcommands, in this order:
 
 | gate | asks |
 |---|---|
@@ -58,11 +69,19 @@ stern4rust runs **first** because its corrections are renames, file moves and
 directory splits: a layout it is about to reject is a layout the other three
 would have measured for nothing. Its findings are also the cheapest to act on.
 
-All twenty-one of its rules are enforced, with nothing skipped, nothing
-unconfigured and no baseline file. `docs/header.txt` holds the four-line header
-every `.rs` file carries and `stern4rust.toml` names it -- in the config rather
-than the gate script, so a hand-run of `cargo stern4rust` checks exactly what
-the gate checks.
+All twenty-one of its rules are enforced, with nothing unconfigured and no
+baseline file. `docs/header.txt` holds the four-line header every `.rs` file
+carries and `stern4rust.toml` names it -- in the config rather than the gate
+script, so a hand-run of `cargo stern4rust` checks exactly what the gate checks.
+
+The stern gate passes no `--package` at all, so one call judges every member
+against its own rules. `core` and `xtask` take all twenty-one; `validation`
+stands down `paired-test-file` alone, because it has no `src/` for a test file
+to be named after. That split lives in `stern4rust.toml`, which is why a
+hand-run sees exactly what the gate sees.
+
+`xtask` is a member and is gated like the rest. The crate that runs the gates is
+not exempt from them.
 
 Four lines rather than the three its sibling repositories use, because MIT
 requires upstream's copyright notice to travel with the code.
