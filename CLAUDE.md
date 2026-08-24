@@ -76,16 +76,16 @@ Stage 1 covers the workspace. Stage 2 gates **both members**, which is one
 step stricter than the rest of the family: the other workspaces here gate
 `core` and leave `validation` unmeasured.
 
-`core` takes all twenty-one rules. `validation` takes twenty, and the one it
-does not take is named on the command line rather than switched off in
-`stern4rust.toml`, so a hand-run against core still applies all twenty-one and
-the report says which rule was skipped and where.
+`core` takes all twenty-one rules. `validation` takes twenty, standing down
+`paired-test-file` because it has no `src/` at all -- no file in it can be
+named after a source file. Everything else applies -- the four-line header,
+AAA structure, import naming, ordering, test naming -- and holds.
 
-The skipped rule is `paired-test-file`, and it is skipped because it cannot
-hold rather than because the tests are exempt: `validation/` has no `src/` at
-all, so no file in it can be named after a source file. Everything else
-applies -- the four-line header, AAA structure, import naming, ordering, test
-naming -- and holds.
+The stand-down is a `[package.validation]` section in `stern4rust.toml`, not
+a flag on the command line, so a hand-run of `cargo stern4rust` from the
+repository root sees exactly what the gate sees: one call judges every
+workspace member against its own rules, and the report carries a block per
+member and one roll-up `summary:` line.
 
 `crap4rust` is the one gate that stays on core. It scores source functions
 against their coverage and `validation` has no source, only tests; pointed

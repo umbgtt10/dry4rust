@@ -9,8 +9,7 @@ Push-Location (Split-Path $PSScriptRoot -Parent)
 function Invoke-Stern4RustGate {
     param(
         [string]$Label,
-        [string[]]$Packages,
-        [string[]]$SkippedRules = @()
+        [string[]]$Packages
     )
 
     Write-Host "$Label..." -ForegroundColor Cyan
@@ -26,9 +25,6 @@ function Invoke-Stern4RustGate {
     $args = @("stern4rust", "--manifest-path", $manifestPath)
     foreach ($package in $Packages) {
         $args += @("--package", $package)
-    }
-    foreach ($rule in $SkippedRules) {
-        $args += @("--skip", $rule)
     }
 
     $previousErrorActionPreference = $ErrorActionPreference
@@ -222,23 +218,19 @@ function Invoke-Iceberg4RustGate {
 # a layout it is about to reject is one the other three would have measured for
 # nothing. Its findings are also the cheapest to act on.
 #
-# Twenty-one rules apply, none skipped, nothing baselined, zero offences. That
-# is the state this gate exists to hold.
+# One call judges both workspace members against their own rules: core takes
+# all twenty-one, validation stands down paired-test-file because it has no
+# src/ for a test file to be named after. That split lives in the
+# [package.validation] section of stern4rust.toml, not here -- a hand-run of
+# `cargo stern4rust` from the repository root sees exactly what this gate
+# sees, which is the same reason the header file is named in the config
+# rather than on a command line.
+#
+# Zero offences, nothing baselined. That is the state this gate exists to
+# hold.
 # ---------------------------------------------------------------------------
 
-Invoke-Stern4RustGate "House rules dry4rust" @("cargo-dry4rust")
-
-# validation is gated too, at twenty rules instead of twenty-one.
-#
-# paired-test-file is the one that cannot hold there, and not because the tests
-# are exempt: validation has no src/ at all, so no test file in it can be named
-# after a source file. Every other rule applies -- the header, AAA structure,
-# import naming, ordering, test naming -- and they hold.
-#
-# It is skipped by name on the command line rather than turned off in
-# stern4rust.toml, so a hand-run of `cargo stern4rust` against core still
-# applies all twenty-one, and the report says which rule was not applied.
-Invoke-Stern4RustGate "House rules validation" @("validation") -SkippedRules @("paired-test-file")
+Invoke-Stern4RustGate "House rules dry4rust" @()
 
 # ---------------------------------------------------------------------------
 # CRAP gate

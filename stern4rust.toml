@@ -21,3 +21,10 @@
 # it. Files written from scratch here carry the same four lines, because a
 # header rule that compares against one file needs one header.
 header-file = "docs/header.txt"
+
+# validation has no src/ at all -- every file in it is a test named for a
+# scenario the binary is driven through, not for a source file -- so
+# paired-test-file has nothing to match its tests against. Every offence it
+# ever reported there was that shape and no other.
+[package.validation]
+skip = ["paired-test-file"]

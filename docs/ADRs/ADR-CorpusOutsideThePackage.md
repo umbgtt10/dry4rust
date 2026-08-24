@@ -104,9 +104,10 @@ cannot run.
 
 `validation/` is gated at twenty rules rather than left alone. The one it
 cannot take is `paired-test-file`: with no `src/` in that crate, no test file
-can be named after a source file. It is skipped by name on the command line, so
-the report states which rule was not applied -- a silence would have been the
-thing worth objecting to, not the skip.
+can be named after a source file. The stand-down is a `[package.validation]`
+section in `stern4rust.toml` -- stern4rust's own per-package configuration --
+so the report still states which rule was not applied for that member; a
+silence would have been the thing worth objecting to, not the skip.
 
 `crap4rust` stays on core. It scores source functions against coverage and
 validation has none; pointed at validation it also fails outright, because it
