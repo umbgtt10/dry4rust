@@ -210,7 +210,7 @@ pub enum NodeKind {
 ///   - `Match` -> [expr, arm0, arm1, ...]
 ///   - `StructInit` -> [rest_or_None, field0, field1, ...]
 ///   - `MacroCall` -> [arg0, arg1, ...]
-/// - **Variable-length (0 or 1)**: `Return`, `Break` -> [] or [value]
+/// - **Variable-length (0 or 1)**: `Return`, `Break` -> `[]` or `[value]`
 /// - **Homogeneous**: `Block`, `Tuple`, `Array`, `Path`, `PatTuple`, etc. -> [elem0, ...]
 /// - **All other fixed**: e.g. `BinaryOp` -> [left, right], `ForLoop` -> [pat, iter, body]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -241,7 +241,8 @@ impl NormalizedNode {
         Self::leaf(NodeKind::None)
     }
 
-    /// Convert an Option<NormalizedNode> to a node, using None sentinel for absent values.
+    /// Convert an `Option<NormalizedNode>` to a node, using the [`Self::none`] sentinel for
+    /// absent values.
     pub fn opt(node: Option<Self>) -> Self {
         node.unwrap_or_else(Self::none)
     }

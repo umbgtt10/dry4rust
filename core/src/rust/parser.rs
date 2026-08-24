@@ -280,7 +280,7 @@ pub fn parse_source(
 
 /// Parse a single Rust file and extract code units.
 ///
-/// This is a lower-level convenience function. Prefer using [`crate::RustAnalyzer`]
+/// This is a lower-level convenience function. Prefer using [`crate::rust::rust_analyzer::RustAnalyzer`]
 /// with [`crate::analysis::analyze`] for the full pipeline.
 pub fn parse_file(
     path: &Path,
@@ -295,7 +295,7 @@ pub fn parse_file(
 
 /// Parse multiple files and collect all code units, skipping files that fail to parse.
 ///
-/// This is a lower-level convenience function. Prefer using [`crate::RustAnalyzer`]
+/// This is a lower-level convenience function. Prefer using [`crate::rust::rust_analyzer::RustAnalyzer`]
 /// with [`crate::analysis::analyze`] for the full pipeline.
 #[must_use]
 pub fn parse_files(

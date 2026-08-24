@@ -16,7 +16,7 @@ use std::error::Error;
 ///
 /// **Test code handling:** Analyzers should set [`CodeUnit::is_test`] to `true`
 /// for test functions, test modules, etc. The [`crate::analysis::analyze`] function will
-/// filter them out when `Config::exclude_tests` is enabled, using [`is_test_code`].
+/// filter them out when `Config::exclude_tests` is enabled, using [`LanguageAnalyzer::is_test_code`].
 pub trait LanguageAnalyzer: Send + Sync {
     /// File extensions this analyzer handles (without the leading dot).
     fn file_extensions(&self) -> &[&str];
