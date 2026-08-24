@@ -437,7 +437,8 @@ The scanner automatically:
 
 ## Development
 
-**Requirements:** Rust 1.85+ (edition 2024)
+**Requirements:** Rust 1.91+ (edition 2024), matching the `rust-version` every
+workspace crate declares.
 
 The repository is a workspace: `core/` is the published crate, `validation/` holds the
 end-to-end tests, `xtask/` runs the stage 2 gates, and `fixture/` is the corpus both
