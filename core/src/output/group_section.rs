@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io;
+use std::fmt::Write as _;
 use std::path::Path;
 
 use crate::code_unit::CodeUnit;
@@ -70,48 +70,37 @@ impl GroupSection {
         }
     }
 
-    /// Write the section under its heading, or its empty message, or nothing.
-    ///
-    /// # Errors
-    ///
-    /// Returns whatever the writer returns.
-    pub fn write(
-        &self,
-        groups: &[DuplicateGroup],
-        base: Option<&Path>,
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
+    /// Build the section under its heading, or its empty message, or nothing.
+    #[must_use]
+    pub fn write(&self, groups: &[DuplicateGroup], base: Option<&Path>) -> String {
         if groups.is_empty() {
-            return self.write_empty(writer);
+            return self.write_empty();
         }
-        writeln!(writer, "{}", self.title)?;
-        writeln!(writer, "{}", "=".repeat(self.title.len()))?;
-        writeln!(writer)?;
+        let mut out = String::new();
+        let _ = writeln!(out, "{}", self.title);
+        let _ = writeln!(out, "{}", "=".repeat(self.title.len()));
+        let _ = writeln!(out);
         for (index, group) in groups.iter().enumerate() {
-            self.write_group(index + 1, group, base, writer)?;
+            out.push_str(&self.write_group(index + 1, group, base));
         }
-        Ok(())
+        out
     }
 
-    fn write_empty(&self, writer: &mut dyn io::Write) -> io::Result<()> {
+    fn write_empty(&self) -> String {
         match self.empty_message {
-            Some(message) => writeln!(writer, "{message}"),
-            None => Ok(()),
+            Some(message) => format!("{message}\n"),
+            None => String::new(),
         }
     }
 
-    fn write_group(
-        &self,
-        number: usize,
-        group: &DuplicateGroup,
-        base: Option<&Path>,
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        writeln!(writer, "{}", self.heading(number, group))?;
+    fn write_group(&self, number: usize, group: &DuplicateGroup, base: Option<&Path>) -> String {
+        let mut out = String::new();
+        let _ = writeln!(out, "{}", self.heading(number, group));
         for member in &group.members {
-            writeln!(writer, "{}", self.member_line(member, base))?;
+            let _ = writeln!(out, "{}", self.member_line(member, base));
         }
-        writeln!(writer)
+        let _ = writeln!(out);
+        out
     }
 
     fn heading(&self, number: usize, group: &DuplicateGroup) -> String {

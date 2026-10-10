@@ -5,6 +5,7 @@
 
 use std::env::current_dir;
 use std::io;
+use std::io::Write as _;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -100,10 +101,21 @@ impl EntryPoint {
         let analyzer = RustAnalyzer::new();
         let root = self.root();
         let dispatcher = CommandDispatcher::new(&analyzer, &root, self.format, self.overrides());
-        let stdout = io::stdout();
-        let mut writer = stdout.lock();
-        match dispatcher.dispatch(&self.command(), &mut writer) {
-            Ok(()) => ExitCode::SUCCESS,
+        match dispatcher.dispatch(&self.command()) {
+            Ok(outcome) => {
+                let stdout = io::stdout();
+                let mut writer = stdout.lock();
+                match writer
+                    .write_all(outcome.text.as_bytes())
+                    .and_then(|()| writer.flush())
+                {
+                    Ok(()) => match outcome.result {
+                        Ok(()) => ExitCode::SUCCESS,
+                        Err(e) => Self::reported(&e),
+                    },
+                    Err(e) => Self::reported(&CliError::Io(e)),
+                }
+            }
             Err(e) => Self::reported(&e),
         }
     }

@@ -6,8 +6,10 @@
 use crate::common::group;
 use crate::common::result_with;
 use dry4rust::cli::baseline_command::BaselineCommand;
+use dry4rust::cli::cli_error::CliError;
 use dry4rust::config::Config;
 use dry4rust::suppression::baseline_file::BaselineFile;
+use std::fs;
 use tempfile::TempDir;
 
 fn recorded(dry_run: bool) -> (TempDir, String) {
@@ -22,13 +24,13 @@ fn recorded(dry_run: bool) -> (TempDir, String) {
         root: tmp.path().to_path_buf(),
         ..Config::default()
     };
-    let mut out = Vec::new();
 
-    BaselineCommand::new(tmp.path(), &config, &result, dry_run)
-        .run(&mut out)
-        .expect("recording succeeds");
+    let text = BaselineCommand::new(tmp.path(), &config, &result, dry_run)
+        .run()
+        .expect("recording succeeds")
+        .text;
 
-    (tmp, String::from_utf8(out).expect("utf-8"))
+    (tmp, text)
 }
 
 #[test]
@@ -63,18 +65,49 @@ fn run_over_a_clean_result_records_nothing_and_says_so() {
         root: tmp.path().to_path_buf(),
         ..Config::default()
     };
-    let mut out = Vec::new();
 
     // Act
-    BaselineCommand::new(tmp.path(), &config, &result, false)
-        .run(&mut out)
-        .expect("recording succeeds");
+    let text = BaselineCommand::new(tmp.path(), &config, &result, false)
+        .run()
+        .expect("recording succeeds")
+        .text;
 
     // Assert
     assert!(
-        String::from_utf8(out)
-            .expect("utf-8")
-            .contains("Recorded 0 groups"),
+        text.contains("Recorded 0 groups"),
         "a clean codebase has nothing to inherit"
     );
+}
+
+// The entries are listed before the file is written, so a write that fails
+// still leaves them on stdout ahead of the error -- as it did while they were
+// streamed to a writer rather than returned.
+#[test]
+fn run_with_an_unwritable_baseline_keeps_the_entries_it_listed_and_fails() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    fs::write(tmp.path().join("blocker"), "a file, not a directory").expect("blocker");
+    let result = result_with(
+        vec![group(0x11, &["process_data", "compute_total"])],
+        vec![],
+        vec![],
+        vec![],
+    );
+    let config = Config {
+        root: tmp.path().to_path_buf(),
+        baseline: Some(tmp.path().join("blocker").join("baseline.json")),
+        ..Config::default()
+    };
+
+    // Act
+    let outcome = BaselineCommand::new(tmp.path(), &config, &result, false)
+        .run()
+        .expect("the entries are produced before the write is attempted");
+
+    // Assert
+    assert_eq!(
+        outcome.text,
+        "  exact 0000000000000011 (2 members: process_data, compute_total)\n"
+    );
+    assert!(matches!(outcome.result, Err(CliError::Analysis(_))));
 }

@@ -7,7 +7,6 @@ use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::helpers::member_to_string;
 use dry4rust::rust::normalizer::helpers::normalize_bin_op;
 use dry4rust::rust::normalizer::helpers::normalize_lit;
-use dry4rust::rust::normalizer::helpers::normalize_macro;
 use dry4rust::rust::normalizer::helpers::normalize_un_op;
 use syn::BinOp;
 use syn::Lit;
@@ -64,8 +63,8 @@ fn normalize_macro_gives_the_same_macro_the_same_node() {
     let b: Macro = parse_str(r#"println!("two")"#).expect("parses");
 
     // Act
-    let na = normalize_macro(&a, &mut NormalizationContext::new());
-    let nb = normalize_macro(&b, &mut NormalizationContext::new());
+    let na = NormalizationContext::new().normalize_macro(&a);
+    let nb = NormalizationContext::new().normalize_macro(&b);
 
     // Assert
     assert_eq!(na, nb);

@@ -20,6 +20,7 @@ pub mod node;
 pub mod node_encoder;
 pub mod normalization_context;
 pub mod output;
+pub mod placeholder_order_collector;
 pub mod rust;
 pub mod scanner;
 pub mod stable_hasher;

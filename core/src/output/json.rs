@@ -97,7 +97,7 @@ struct JsonMember {
 }
 
 impl Reporter for JsonReporter {
-    fn report(&self, report: &Report<'_>, writer: &mut dyn io::Write) -> io::Result<()> {
+    fn report(&self, report: &Report<'_>) -> io::Result<String> {
         let document = JsonReport {
             stats: Self::to_json_stats(report.stats),
             exact: self.to_json_groups(report.exact),
@@ -105,15 +105,14 @@ impl Reporter for JsonReporter {
             sub_exact: self.to_json_groups(report.sub_exact),
             sub_near: self.to_json_groups(report.sub_near),
         };
-        Self::write_document(&document, writer)
+        Self::write_document(&document)
     }
 
     fn report_check(
         &self,
         stats: &DuplicationStats,
         breaches: &[CheckBreach<'_>],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
+    ) -> io::Result<String> {
         let groups_of = |exact: bool| {
             breaches
                 .iter()
@@ -130,57 +129,38 @@ impl Reporter for JsonReporter {
             exact: groups_of(true),
             near: groups_of(false),
         };
-        Self::write_document(&document, writer)
+        Self::write_document(&document)
     }
 
-    fn report_stats(&self, stats: &DuplicationStats, writer: &mut dyn io::Write) -> io::Result<()> {
-        Self::write_document(&Self::to_json_stats(stats), writer)
+    fn report_stats(&self, stats: &DuplicationStats) -> io::Result<String> {
+        Self::write_document(&Self::to_json_stats(stats))
     }
 
-    fn report_exact(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        self.write_groups(groups, writer)
+    fn report_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        self.write_groups(groups)
     }
 
-    fn report_near(&self, groups: &[DuplicateGroup], writer: &mut dyn io::Write) -> io::Result<()> {
-        self.write_groups(groups, writer)
+    fn report_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        self.write_groups(groups)
     }
 
-    fn report_sub_exact(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        self.write_groups(groups, writer)
+    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        self.write_groups(groups)
     }
 
-    fn report_sub_near(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        self.write_groups(groups, writer)
+    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        self.write_groups(groups)
     }
 }
 
 impl JsonReporter {
-    fn write_document<T: serde::Serialize>(
-        document: &T,
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
+    fn write_document<T: serde::Serialize>(document: &T) -> io::Result<String> {
         let json = to_string_pretty(document).map_err(io::Error::other)?;
-        writeln!(writer, "{json}")
+        Ok(format!("{json}\n"))
     }
 
-    fn write_groups(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        Self::write_document(&self.to_json_groups(groups), writer)
+    fn write_groups(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        Self::write_document(&self.to_json_groups(groups))
     }
 
     fn to_json_groups(&self, groups: &[DuplicateGroup]) -> Vec<JsonGroup> {

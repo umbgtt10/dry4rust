@@ -3,11 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
 use std::path::Path;
 
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
+use crate::cli::command_outcome::CommandOutcome;
 use crate::fingerprint::Fingerprint;
 use crate::suppression::ignore_file::IgnoreFile;
 
@@ -35,13 +35,15 @@ impl<'a> IgnoreCommand<'a> {
     /// Returns [`CliError::InvalidFingerprint`] if the string is not a
     /// fingerprint this tool could have produced, and [`CliError::Io`] if the
     /// ignore file cannot be written.
-    pub fn run(&self, writer: &mut impl Write) -> CliResult {
+    pub fn run(&self) -> CliResult<CommandOutcome> {
         let fingerprint = Fingerprint::from_hex(self.fingerprint)
             .ok_or_else(|| CliError::InvalidFingerprint(self.fingerprint.to_owned()))?;
         IgnoreFile::load(self.root)
             .with_ignored(&fingerprint, self.reason.map(ToOwned::to_owned), vec![])
             .save(self.root)?;
-        writeln!(writer, "Added {} to ignore list.", self.fingerprint)?;
-        Ok(())
+        Ok(CommandOutcome::succeeded(format!(
+            "Added {} to ignore list.\n",
+            self.fingerprint
+        )))
     }
 }

@@ -4,7 +4,8 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::HashMap;
-use std::collections::HashSet;
+
+use crate::placeholder_order_collector::PlaceholderOrderCollector;
 
 /// Kinds of literals — preserves type but erases value.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -256,29 +257,6 @@ impl NormalizedNode {
 
 // -- Placeholder re-indexing --------------------------------------------------
 
-/// Collects all placeholder occurrences in depth-first order, building
-/// a mapping from (kind, old_index) -> new_sequential_index.
-fn collect_placeholder_order(
-    node: &NormalizedNode,
-    order: &mut Vec<(PlaceholderKind, usize)>,
-    seen: &mut HashSet<(PlaceholderKind, usize)>,
-) {
-    // One `if let` rather than a match whose only arm is an `if`. clippy's
-    // collapsible_match asks for the insert to become a match guard, which
-    // would run a mutation during pattern matching; a let chain keeps the
-    // side effect in the condition where it reads as one.
-    if let NodeKind::Placeholder(kind, idx)
-    | NodeKind::PatPlaceholder(kind, idx)
-    | NodeKind::TypePlaceholder(kind, idx) = &node.kind
-        && seen.insert((*kind, *idx))
-    {
-        order.push((*kind, *idx));
-    }
-    for child in &node.children {
-        collect_placeholder_order(child, order, seen);
-    }
-}
-
 /// Applies the reindex mapping to a node, returning a new node with remapped indices.
 fn apply_reindex(
     node: &NormalizedNode,
@@ -312,9 +290,9 @@ fn apply_reindex(
 /// This allows comparing sub-trees extracted from different function contexts.
 #[must_use]
 pub fn reindex_placeholders(node: &NormalizedNode) -> NormalizedNode {
-    let mut order = Vec::new();
-    let mut seen = HashSet::new();
-    collect_placeholder_order(node, &mut order, &mut seen);
+    let mut collector = PlaceholderOrderCollector::new();
+    collector.collect(node);
+    let order = collector.into_order();
 
     // Build mapping: (kind, old_index) -> new sequential index per kind
     let mut counters: HashMap<PlaceholderKind, usize> = HashMap::new();

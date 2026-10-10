@@ -41,9 +41,7 @@ fn json_is_valid() {
         members: vec![make_unit("foo", "/project/src/a.rs", 10, 20)],
         similarity: 1.0,
     };
-    let mut buf = Vec::new();
-    reporter.report_exact(&[group], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_exact(&[group]).unwrap();
     // Should be valid JSON
 
     // Assert
@@ -60,9 +58,7 @@ fn json_relative_paths() {
         members: vec![make_unit("foo", "/home/user/project/src/main.rs", 1, 10)],
         similarity: 0.9,
     };
-    let mut buf = Vec::new();
-    reporter.report_near(&[group], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_near(&[group]).unwrap();
 
     // Assert
     assert!(output.contains("src/main.rs"));
@@ -87,15 +83,14 @@ fn json_report_check_gathers_the_groups_rather_than_repeating_them() {
             true,
         ),
     ];
-    let mut buf = Vec::new();
 
     // Act
-    reporter
-        .report_check(&stats, &breaches, &mut buf)
+    let output = reporter
+        .report_check(&stats, &breaches)
         .expect("reporting succeeds");
 
     // Assert
-    let document: Value = from_str(&String::from_utf8(buf).unwrap()).expect("valid json");
+    let document: Value = from_str(&output).expect("valid json");
     assert_eq!(document["breaches"].as_array().unwrap().len(), 2);
     assert_eq!(
         document["exact"].as_array().unwrap().len(),
@@ -109,9 +104,7 @@ fn json_report_check_gathers_the_groups_rather_than_repeating_them() {
 fn json_report_exact_empty() {
     // Arrange & Act
     let reporter = JsonReporter::new(None);
-    let mut buf = Vec::new();
-    reporter.report_exact(&[], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_exact(&[]).unwrap();
     let parsed: Value = from_str(&output).unwrap();
 
     // Assert
@@ -130,9 +123,7 @@ fn json_report_exact_with_groups() {
         ],
         similarity: 1.0,
     };
-    let mut buf = Vec::new();
-    reporter.report_exact(&[group], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_exact(&[group]).unwrap();
     let parsed: Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
 
@@ -156,9 +147,7 @@ fn json_report_near_with_groups() {
         ],
         similarity: 0.85,
     };
-    let mut buf = Vec::new();
-    reporter.report_near(&[group], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_near(&[group]).unwrap();
     let parsed: Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
 
@@ -187,9 +176,7 @@ fn json_report_stats() {
         sub_near_units: 0,
         baseline_suppressed: None,
     };
-    let mut buf = Vec::new();
-    reporter.report_stats(&stats, &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_stats(&stats).unwrap();
     let parsed: Value = from_str(&output).unwrap();
 
     // Assert
@@ -207,13 +194,12 @@ fn json_report_sub_exact_with_groups() {
         members: vec![make_unit("if-then branch", "/src/a.rs", 10, 25)],
         similarity: 1.0,
     };
-    let mut buf = Vec::new();
 
     // Act
-    reporter.report_sub_exact(&[group], &mut buf).unwrap();
+    let output = reporter.report_sub_exact(&[group]).unwrap();
 
     // Assert
-    let parsed: Value = from_str(&String::from_utf8(buf).unwrap()).unwrap();
+    let parsed: Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0]["fingerprint"].as_str().unwrap(), fp.to_hex());
@@ -230,13 +216,12 @@ fn json_report_sub_near_with_groups() {
         members: vec![make_unit("for body", "/src/a.rs", 10, 25)],
         similarity: 0.95,
     };
-    let mut buf = Vec::new();
 
     // Act
-    reporter.report_sub_near(&[group], &mut buf).unwrap();
+    let output = reporter.report_sub_near(&[group]).unwrap();
 
     // Assert
-    let parsed: Value = from_str(&String::from_utf8(buf).unwrap()).unwrap();
+    let parsed: Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0]["fingerprint"].as_str().unwrap(), fp.to_hex());

@@ -7,7 +7,6 @@ use crate::node::{BinOpKind, LiteralKind, NodeKind, NormalizedNode, UnOpKind};
 use crate::normalization_context::NormalizationContext;
 use syn::punctuated::Punctuated;
 
-use super::expr::normalize_expr;
 use syn::BinOp;
 use syn::Expr;
 use syn::Lit;
@@ -23,22 +22,24 @@ pub fn member_to_string(member: &Member) -> String {
     }
 }
 
-pub fn normalize_macro(mac: &Macro, ctx: &mut NormalizationContext) -> NormalizedNode {
-    let name = mac
-        .path
-        .segments
-        .last()
-        .map(|s| s.ident.to_string())
-        .unwrap_or_default();
-    let args = if mac.tokens.is_empty() {
-        Vec::new()
-    } else {
-        match mac.parse_body_with(Punctuated::<Expr, syn::Token![,]>::parse_terminated) {
-            Ok(punct) => punct.into_iter().map(|e| normalize_expr(&e, ctx)).collect(),
-            Err(_) => vec![NormalizedNode::leaf(NodeKind::Opaque)],
-        }
-    };
-    NormalizedNode::with_children(NodeKind::MacroCall { name }, args)
+impl NormalizationContext {
+    pub fn normalize_macro(&mut self, mac: &Macro) -> NormalizedNode {
+        let name = mac
+            .path
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default();
+        let args = if mac.tokens.is_empty() {
+            Vec::new()
+        } else {
+            match mac.parse_body_with(Punctuated::<Expr, syn::Token![,]>::parse_terminated) {
+                Ok(punct) => punct.into_iter().map(|e| self.normalize_expr(&e)).collect(),
+                Err(_) => vec![NormalizedNode::leaf(NodeKind::Opaque)],
+            }
+        };
+        NormalizedNode::with_children(NodeKind::MacroCall { name }, args)
+    }
 }
 
 #[must_use]

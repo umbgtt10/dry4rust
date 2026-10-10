@@ -20,11 +20,12 @@ use serde_json::from_str;
 fn checked(fixture: &str, thresholds: &CheckThresholds) -> (CliResult, String) {
     let (config, result) = analysed(fixture);
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
 
-    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds).run(&mut out);
+    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds)
+        .run()
+        .expect("check produces a report");
 
-    (outcome, String::from_utf8(out).expect("utf-8"))
+    (outcome.result, outcome.text)
 }
 
 fn percent(value: f64) -> Threshold {
@@ -305,14 +306,15 @@ fn run_with_a_near_duplicate_ceiling_fails_when_it_is_exceeded() {
     // Arrange
     let (config, result) = analysed("near_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
     let thresholds = CheckThresholds {
         max_near: Some(0),
         ..CheckThresholds::default()
     };
 
     // Act
-    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), &thresholds).run(&mut out);
+    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), &thresholds)
+        .run()
+        .expect("check produces a report");
 
     // Assert
     assert_eq!(
@@ -321,7 +323,7 @@ fn run_with_a_near_duplicate_ceiling_fails_when_it_is_exceeded() {
         "the fixture holding a near-duplicate group is why the ceiling is \
          breached; without that this test would prove nothing"
     );
-    assert!(matches!(outcome, Err(CliError::CheckFailed)));
+    assert!(matches!(outcome.result, Err(CliError::CheckFailed)));
 }
 
 #[test]
@@ -329,14 +331,15 @@ fn run_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
     // Arrange
     let (config, result) = analysed("near_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
     let thresholds = CheckThresholds {
         max_near_percent: Some(percent(0.0)),
         ..CheckThresholds::default()
     };
 
     // Act
-    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), &thresholds).run(&mut out);
+    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), &thresholds)
+        .run()
+        .expect("check produces a report");
 
     // Assert
     assert!(
@@ -344,7 +347,7 @@ fn run_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
         "a ceiling of zero percent is only breached because the fixture has \
          near-duplicated lines to measure"
     );
-    assert!(matches!(outcome, Err(CliError::CheckFailed)));
+    assert!(matches!(outcome.result, Err(CliError::CheckFailed)));
 }
 
 #[test]

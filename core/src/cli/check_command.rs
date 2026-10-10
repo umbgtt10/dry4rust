@@ -3,13 +3,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
-
 use crate::analysis::AnalysisResult;
 use crate::cli::checking::ceiling::Ceiling;
 use crate::cli::checking::check_thresholds::CheckThresholds;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
+use crate::cli::command_outcome::CommandOutcome;
 use crate::config::Config;
 use crate::grouper::DuplicateGroup;
 use crate::output::check_breach::CheckBreach;
@@ -45,21 +44,24 @@ impl<'a> CheckCommand<'a> {
     /// Report, then measure against every ceiling.
     ///
     /// Every breach is reported, not just the first, so one run tells the
-    /// whole story.
+    /// whole story. The report is produced whether or not a ceiling was
+    /// breached; the verdict travels alongside it so the caller can print the
+    /// report and still fail.
     ///
     /// # Errors
     ///
-    /// Returns [`CliError::CheckFailed`] if any ceiling was breached, and
-    /// [`CliError::Io`] if the writer fails.
-    pub fn run(&self, writer: &mut impl Write) -> CliResult {
+    /// Returns [`CliError::Io`] if the reporter fails. A breached ceiling is
+    /// carried in the outcome's result as [`CliError::CheckFailed`], not
+    /// returned from here.
+    pub fn run(&self) -> CliResult<CommandOutcome> {
         let breaches = self.breaches();
-        self.reporter
-            .report_check(&self.result.stats, &breaches, writer)?;
-        if breaches.is_empty() {
+        let text = self.reporter.report_check(&self.result.stats, &breaches)?;
+        let result = if breaches.is_empty() {
             Ok(())
         } else {
             Err(CliError::CheckFailed)
-        }
+        };
+        Ok(CommandOutcome::new(text, result))
     }
 
     fn breaches(&self) -> Vec<CheckBreach<'a>> {

@@ -3,6 +3,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+// `clippy::assert_is_empty` landed in the 1.99 toolchain and fires on
+// `assert!(x.is_empty())` assertions that predate this work across the suite.
+// Allowing it here keeps every existing assertion's exact value rather than
+// rewriting unrelated tests.
+#![allow(clippy::assert_is_empty)]
+
 pub mod analysis_config_tests;
 pub mod analysis_tests;
 pub mod cli;
@@ -19,6 +25,7 @@ pub mod node_encoder_tests;
 pub mod node_tests;
 pub mod normalization_context_tests;
 pub mod output;
+pub mod placeholder_order_collector_tests;
 pub mod rust;
 pub mod scanner_tests;
 pub mod stable_hasher_tests;

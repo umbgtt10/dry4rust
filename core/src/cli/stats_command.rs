@@ -3,10 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
-
 use crate::analysis::AnalysisResult;
 use crate::cli::cli_error::CliResult;
+use crate::cli::command_outcome::CommandOutcome;
 use crate::output::reporter::Reporter;
 
 /// `stats`: the summary and nothing else.
@@ -21,13 +20,13 @@ impl<'a> StatsCommand<'a> {
         Self { result, reporter }
     }
 
-    /// Write the duplication summary.
+    /// Build the duplication summary.
     ///
     /// # Errors
     ///
-    /// Returns [`crate::cli::cli_error::CliError::Io`] if the writer fails.
-    pub fn run(&self, writer: &mut impl Write) -> CliResult {
-        self.reporter.report_stats(&self.result.stats, writer)?;
-        Ok(())
+    /// Returns [`crate::cli::cli_error::CliError::Io`] if the reporter fails.
+    pub fn run(&self) -> CliResult<CommandOutcome> {
+        let text = self.reporter.report_stats(&self.result.stats)?;
+        Ok(CommandOutcome::succeeded(text))
     }
 }

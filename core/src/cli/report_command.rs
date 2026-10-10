@@ -3,10 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
-
 use crate::analysis::AnalysisResult;
 use crate::cli::cli_error::CliResult;
+use crate::cli::command_outcome::CommandOutcome;
 use crate::output::report::Report;
 use crate::output::reporter::Reporter;
 
@@ -27,22 +26,19 @@ impl<'a> ReportCommand<'a> {
         Self { result, reporter }
     }
 
-    /// Write the summary and the groups.
+    /// Build the summary and the groups.
     ///
     /// # Errors
     ///
-    /// Returns [`crate::cli::cli_error::CliError::Io`] if the writer fails.
-    pub fn run(&self, writer: &mut impl Write) -> CliResult {
-        self.reporter.report(
-            &Report {
-                stats: &self.result.stats,
-                exact: &self.result.exact_groups,
-                near: &self.result.near_groups,
-                sub_exact: &self.result.sub_exact_groups,
-                sub_near: &self.result.sub_near_groups,
-            },
-            writer,
-        )?;
-        Ok(())
+    /// Returns [`crate::cli::cli_error::CliError::Io`] if the reporter fails.
+    pub fn run(&self) -> CliResult<CommandOutcome> {
+        let text = self.reporter.report(&Report {
+            stats: &self.result.stats,
+            exact: &self.result.exact_groups,
+            near: &self.result.near_groups,
+            sub_exact: &self.result.sub_exact_groups,
+            sub_near: &self.result.sub_near_groups,
+        })?;
+        Ok(CommandOutcome::succeeded(text))
     }
 }

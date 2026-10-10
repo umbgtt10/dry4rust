@@ -3,10 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
+use std::fmt::Write as _;
 use std::path::Path;
 
 use crate::cli::cli_error::CliResult;
+use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_entry_line::IgnoreEntryLine;
 use crate::suppression::ignore_file::IgnoreFile;
 
@@ -21,21 +22,23 @@ impl<'a> IgnoredCommand<'a> {
         Self { root }
     }
 
-    /// Write every ignore entry, or say there are none.
+    /// Build every ignore entry, or say there are none.
     ///
     /// # Errors
     ///
-    /// Returns [`crate::cli::cli_error::CliError::Io`] if the writer fails.
-    pub fn run(&self, writer: &mut impl Write) -> CliResult {
+    /// Never fails; the signature matches its siblings so the dispatcher can
+    /// treat every command alike.
+    pub fn run(&self) -> CliResult<CommandOutcome> {
         let ignore_file = IgnoreFile::load(self.root);
+        let mut out = String::new();
         if ignore_file.ignore.is_empty() {
-            writeln!(writer, "No ignored fingerprints.")?;
-            return Ok(());
+            let _ = writeln!(out, "No ignored fingerprints.");
+            return Ok(CommandOutcome::succeeded(out));
         }
-        writeln!(writer, "Ignored fingerprints:")?;
+        let _ = writeln!(out, "Ignored fingerprints:");
         for entry in &ignore_file.ignore {
-            writeln!(writer, "{}", IgnoreEntryLine::new(entry))?;
+            let _ = writeln!(out, "{}", IgnoreEntryLine::new(entry));
         }
-        Ok(())
+        Ok(CommandOutcome::succeeded(out))
     }
 }

@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::normalization_context::NormalizationContext;
-use dry4rust::rust::normalizer::pat::normalize_pat;
-use dry4rust::rust::normalizer::pat::normalize_type;
 use syn::Pat;
 use syn::Type;
 use syn::parse::Parser;
@@ -16,13 +14,13 @@ fn pat_of(source: &str) -> String {
         .parse_str(source)
         .expect("the pattern parses");
     let mut ctx = NormalizationContext::new();
-    format!("{:?}", normalize_pat(&pat, &mut ctx))
+    format!("{:?}", ctx.normalize_pat(&pat))
 }
 
 fn type_of(source: &str) -> String {
     let ty: Type = parse_str(source).expect("the type parses");
     let mut ctx = NormalizationContext::new();
-    format!("{:?}", normalize_type(&ty, &mut ctx))
+    format!("{:?}", ctx.normalize_type(&ty))
 }
 
 #[test]
@@ -51,8 +49,8 @@ fn normalize_pat_gives_differently_named_bindings_the_same_node() {
     let b: Pat = Pat::parse_single.parse_str("y").expect("parses");
 
     // Act
-    let na = normalize_pat(&a, &mut NormalizationContext::new());
-    let nb = normalize_pat(&b, &mut NormalizationContext::new());
+    let na = NormalizationContext::new().normalize_pat(&a);
+    let nb = NormalizationContext::new().normalize_pat(&b);
 
     // Assert
     assert_eq!(na, nb);
@@ -127,7 +125,7 @@ fn normalize_pat_over_an_alternation_yields_an_or_node() {
     let mut ctx = NormalizationContext::new();
 
     // Act
-    let node = format!("{:?}", normalize_pat(&pat, &mut ctx));
+    let node = format!("{:?}", ctx.normalize_pat(&pat));
 
     // Assert
     assert!(node.contains("PatOr"), "got {node}");
@@ -143,8 +141,8 @@ fn normalize_type_gives_distinct_types_distinct_placeholders_in_one_context() {
     let mut ctx = NormalizationContext::new();
 
     // Act
-    let na = normalize_type(&a, &mut ctx);
-    let nb = normalize_type(&b, &mut ctx);
+    let na = ctx.normalize_type(&a);
+    let nb = ctx.normalize_type(&b);
 
     // Assert
     assert_ne!(na, nb);
@@ -158,8 +156,8 @@ fn normalize_type_gives_the_same_type_the_same_node() {
 
     // Act
     let mut ctx = NormalizationContext::new();
-    let na = normalize_type(&a, &mut ctx);
-    let nb = normalize_type(&b, &mut ctx);
+    let na = ctx.normalize_type(&a);
+    let nb = ctx.normalize_type(&b);
 
     // Assert
     assert_eq!(na, nb);
@@ -189,7 +187,7 @@ fn normalize_type_handles_every_type_form_it_claims_to() {
         .iter()
         .map(|src| {
             let ty: Type = parse_str(src).unwrap_or_else(|e| panic!("{src} parses: {e}"));
-            normalize_type(&ty, &mut ctx)
+            ctx.normalize_type(&ty)
         })
         .collect();
 
@@ -205,8 +203,8 @@ fn normalize_type_keeps_never_and_infer_apart() {
 
     // Act
     let mut ctx = NormalizationContext::new();
-    let a = normalize_type(&never, &mut ctx);
-    let b = normalize_type(&infer, &mut ctx);
+    let a = ctx.normalize_type(&never);
+    let b = ctx.normalize_type(&infer);
 
     // Assert
     assert_ne!(a, b);
@@ -279,8 +277,8 @@ fn normalize_type_sees_through_parentheses_to_the_inner_type() {
     let parenthesised: Type = parse_str("(i32)").expect("parses");
 
     // Act
-    let a = normalize_type(&bare, &mut NormalizationContext::new());
-    let b = normalize_type(&parenthesised, &mut NormalizationContext::new());
+    let a = NormalizationContext::new().normalize_type(&bare);
+    let b = NormalizationContext::new().normalize_type(&parenthesised);
 
     // Assert
     assert_eq!(a, b);

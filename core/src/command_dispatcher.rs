@@ -3,7 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
 use std::path::Path;
 
 use crate::analyzer::LanguageAnalyzer;
@@ -16,6 +15,7 @@ use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::cli_overrides::CliOverrides;
 use crate::cli::command::Command;
+use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_command::IgnoreCommand;
 use crate::cli::ignored_command::IgnoredCommand;
 use crate::cli::output_format::OutputFormat;
@@ -52,25 +52,25 @@ impl<'a> CommandDispatcher<'a> {
         }
     }
 
-    /// Run `command`, writing whatever it produces to `writer`.
+    /// Run `command` and return the text it produced and its verdict.
     ///
     /// # Errors
     ///
-    /// Returns whatever the command returns: a failed analysis, an I/O
-    /// failure, or [`crate::cli::cli_error::CliError::CheckFailed`] when
-    /// `check` finds more duplication than its ceilings allow.
-    pub fn dispatch(&self, command: &Command, writer: &mut impl Write) -> CliResult {
+    /// Returns whatever the command returns before it can produce text: a
+    /// failed analysis, an I/O failure, or an invalid fingerprint. A breached
+    /// `check` ceiling is carried in the outcome rather than returned here.
+    pub fn dispatch(&self, command: &Command) -> CliResult<CommandOutcome> {
         match command {
             Command::Ignore {
                 fingerprint,
                 reason,
-            } => IgnoreCommand::new(self.root, fingerprint, reason.as_deref()).run(writer),
-            Command::Ignored => IgnoredCommand::new(self.root).run(writer),
-            _ => self.dispatch_analysed(command, writer),
+            } => IgnoreCommand::new(self.root, fingerprint, reason.as_deref()).run(),
+            Command::Ignored => IgnoredCommand::new(self.root).run(),
+            _ => self.dispatch_analysed(command),
         }
     }
 
-    fn dispatch_analysed(&self, command: &Command, writer: &mut impl Write) -> CliResult {
+    fn dispatch_analysed(&self, command: &Command) -> CliResult<CommandOutcome> {
         let output = if matches!(command, Command::Baseline { .. }) {
             AnalysisOutput::produce_ignoring_baseline(
                 self.analyzer,
@@ -82,7 +82,7 @@ impl<'a> CommandDispatcher<'a> {
             AnalysisOutput::produce(self.analyzer, self.root, self.format, &self.overrides)?
         };
         Self::report_warnings(&output);
-        self.render(command, &output, writer)
+        self.render(command, &output)
     }
 
     fn report_warnings(output: &AnalysisOutput) {
@@ -91,16 +91,11 @@ impl<'a> CommandDispatcher<'a> {
         }
     }
 
-    fn render(
-        &self,
-        command: &Command,
-        output: &AnalysisOutput,
-        writer: &mut impl Write,
-    ) -> CliResult {
+    fn render(&self, command: &Command, output: &AnalysisOutput) -> CliResult<CommandOutcome> {
         let reporter: &dyn Reporter = &*output.reporter;
         match command {
-            Command::Stats => StatsCommand::new(&output.result, reporter).run(writer),
-            Command::Report => ReportCommand::new(&output.result, reporter).run(writer),
+            Command::Stats => StatsCommand::new(&output.result, reporter).run(),
+            Command::Report => ReportCommand::new(&output.result, reporter).run(),
             Command::Check {
                 max_exact,
                 max_near,
@@ -114,14 +109,13 @@ impl<'a> CommandDispatcher<'a> {
                     *max_near_percent,
                 )
                 .map_err(|e| CliError::InvalidConfig(e.to_string()))?;
-                CheckCommand::new(&output.config, &output.result, reporter, &thresholds).run(writer)
+                CheckCommand::new(&output.config, &output.result, reporter, &thresholds).run()
             }
             Command::Cleanup { dry_run } => {
-                CleanupCommand::new(self.root, &output.result, *dry_run).run(writer)
+                CleanupCommand::new(self.root, &output.result, *dry_run).run()
             }
             Command::Baseline { dry_run } => {
-                BaselineCommand::new(self.root, &output.config, &output.result, *dry_run)
-                    .run(writer)
+                BaselineCommand::new(self.root, &output.config, &output.result, *dry_run).run()
             }
             Command::Ignore { .. } | Command::Ignored => unreachable!(),
         }

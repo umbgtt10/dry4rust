@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::fmt::Write as _;
 use std::io;
 
 use crate::grouper::{DuplicateGroup, DuplicationStats};
@@ -37,124 +38,108 @@ impl TextReporter {
 }
 
 impl Reporter for TextReporter {
-    fn report(&self, report: &Report<'_>, writer: &mut dyn io::Write) -> io::Result<()> {
-        self.report_stats(report.stats, writer)?;
-        writeln!(writer)?;
-        self.report_exact(report.exact, writer)?;
+    fn report(&self, report: &Report<'_>) -> io::Result<String> {
+        let mut out = self.report_stats(report.stats)?;
+        let _ = writeln!(out);
+        out.push_str(&self.report_exact(report.exact)?);
         if !report.near.is_empty() {
-            self.report_near(report.near, writer)?;
+            out.push_str(&self.report_near(report.near)?);
         }
         if !report.sub_exact.is_empty() {
-            self.report_sub_exact(report.sub_exact, writer)?;
+            out.push_str(&self.report_sub_exact(report.sub_exact)?);
         }
         if !report.sub_near.is_empty() {
-            self.report_sub_near(report.sub_near, writer)?;
+            out.push_str(&self.report_sub_near(report.sub_near)?);
         }
-        Ok(())
+        Ok(out)
     }
 
     fn report_check(
         &self,
         stats: &DuplicationStats,
         breaches: &[CheckBreach<'_>],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        self.report_stats(stats, writer)?;
+    ) -> io::Result<String> {
+        let mut out = self.report_stats(stats)?;
         for breach in breaches {
-            writeln!(writer, "\nCheck FAILED: {}", breach.message())?;
+            let _ = writeln!(out, "\nCheck FAILED: {}", breach.message());
             if breach.is_of_exact() {
-                self.report_exact(breach.groups(), writer)?;
+                out.push_str(&self.report_exact(breach.groups())?);
             } else {
-                self.report_near(breach.groups(), writer)?;
+                out.push_str(&self.report_near(breach.groups())?);
             }
         }
         if breaches.is_empty() {
-            writeln!(writer, "\nCheck passed.")?;
+            let _ = writeln!(out, "\nCheck passed.");
         }
-        Ok(())
+        Ok(out)
     }
 
-    fn report_stats(&self, stats: &DuplicationStats, writer: &mut dyn io::Write) -> io::Result<()> {
-        writeln!(writer, "Duplication Statistics")?;
-        writeln!(writer, "=====================")?;
-        writeln!(
-            writer,
-            "Total code units analyzed: {}",
-            stats.total_code_units
-        )?;
-        writeln!(writer)?;
-        writeln!(
-            writer,
+    fn report_stats(&self, stats: &DuplicationStats) -> io::Result<String> {
+        let mut out = String::new();
+        let _ = writeln!(out, "Duplication Statistics");
+        let _ = writeln!(out, "=====================");
+        let _ = writeln!(out, "Total code units analyzed: {}", stats.total_code_units);
+        let _ = writeln!(out);
+        let _ = writeln!(
+            out,
             "Exact duplicates: {} groups ({} code units)",
             stats.exact_duplicate_groups, stats.exact_duplicate_units
-        )?;
-        writeln!(
-            writer,
+        );
+        let _ = writeln!(
+            out,
             "Near duplicates:  {} groups ({} code units)",
             stats.near_duplicate_groups, stats.near_duplicate_units
-        )?;
-        writeln!(writer)?;
-        writeln!(
-            writer,
+        );
+        let _ = writeln!(out);
+        let _ = writeln!(
+            out,
             "Duplicated lines (exact): {}",
             stats.exact_duplicate_lines
-        )?;
-        writeln!(
-            writer,
+        );
+        let _ = writeln!(
+            out,
             "Duplicated lines (near):  {}",
             stats.near_duplicate_lines
-        )?;
-        writeln!(
-            writer,
+        );
+        let _ = writeln!(
+            out,
             "Duplication: {:.1}% exact, {:.1}% near (of {} total lines)",
             stats.exact_duplicate_percent(),
             stats.near_duplicate_percent(),
             format_with_commas(stats.total_lines),
-        )?;
+        );
         if let Some(suppressed) = stats.baseline_suppressed {
-            writeln!(writer, "Baseline: {suppressed} groups suppressed")?;
+            let _ = writeln!(out, "Baseline: {suppressed} groups suppressed");
         }
         if stats.sub_exact_groups > 0 || stats.sub_near_groups > 0 {
-            writeln!(writer)?;
-            writeln!(
-                writer,
+            let _ = writeln!(out);
+            let _ = writeln!(
+                out,
                 "Sub-function exact: {} groups ({} units)",
                 stats.sub_exact_groups, stats.sub_exact_units
-            )?;
-            writeln!(
-                writer,
+            );
+            let _ = writeln!(
+                out,
                 "Sub-function near:  {} groups ({} units)",
                 stats.sub_near_groups, stats.sub_near_units
-            )?;
+            );
         }
-        Ok(())
+        Ok(out)
     }
 
-    fn report_exact(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        GroupSection::exact().write(groups, self.base_path.as_deref(), writer)
+    fn report_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        Ok(GroupSection::exact().write(groups, self.base_path.as_deref()))
     }
 
-    fn report_near(&self, groups: &[DuplicateGroup], writer: &mut dyn io::Write) -> io::Result<()> {
-        GroupSection::near().write(groups, self.base_path.as_deref(), writer)
+    fn report_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        Ok(GroupSection::near().write(groups, self.base_path.as_deref()))
     }
 
-    fn report_sub_exact(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        GroupSection::sub_exact().write(groups, self.base_path.as_deref(), writer)
+    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        Ok(GroupSection::sub_exact().write(groups, self.base_path.as_deref()))
     }
 
-    fn report_sub_near(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()> {
-        GroupSection::sub_near().write(groups, self.base_path.as_deref(), writer)
+    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        Ok(GroupSection::sub_near().write(groups, self.base_path.as_deref()))
     }
 }

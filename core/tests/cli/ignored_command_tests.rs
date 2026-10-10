@@ -11,19 +11,17 @@ use tempfile::TempDir;
 fn run_after_ignore_lists_what_was_added() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let mut added = Vec::new();
-    let mut listed = Vec::new();
 
     // Act
     IgnoreCommand::new(tmp.path(), "deadbeef12345678", Some("known duplicate"))
-        .run(&mut added)
+        .run()
         .expect("a valid fingerprint is accepted");
-    IgnoredCommand::new(tmp.path())
-        .run(&mut listed)
-        .expect("listing succeeds");
+    let listed = IgnoredCommand::new(tmp.path())
+        .run()
+        .expect("listing succeeds")
+        .text;
 
     // Assert
-    let listed = String::from_utf8(listed).expect("utf-8");
     assert!(listed.contains("Ignored fingerprints:"), "{listed}");
     assert!(listed.contains("deadbeef12345678"), "{listed}");
     assert!(listed.contains("known duplicate"), "{listed}");
@@ -33,14 +31,13 @@ fn run_after_ignore_lists_what_was_added() {
 fn run_without_an_ignore_file_says_there_is_nothing_ignored() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let mut listed = Vec::new();
 
     // Act
-    IgnoredCommand::new(tmp.path())
-        .run(&mut listed)
-        .expect("listing succeeds");
+    let listed = IgnoredCommand::new(tmp.path())
+        .run()
+        .expect("listing succeeds")
+        .text;
 
     // Assert
-    let listed = String::from_utf8(listed).expect("utf-8");
     assert_eq!(listed, "No ignored fingerprints.\n");
 }

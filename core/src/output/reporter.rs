@@ -30,29 +30,19 @@ pub fn display_path<'a>(base: Option<&Path>, path: &'a Path) -> Cow<'a, str> {
 /// how its parts fit together, because only it knows whether they can be
 /// concatenated.
 pub trait Reporter {
-    /// Write a full report as one document.
-    fn report(&self, report: &Report<'_>, writer: &mut dyn io::Write) -> io::Result<()>;
+    /// Build a full report as one document.
+    fn report(&self, report: &Report<'_>) -> io::Result<String>;
 
-    /// Write a check verdict as one document. No breaches means it passed.
+    /// Build a check verdict as one document. No breaches means it passed.
     fn report_check(
         &self,
         stats: &DuplicationStats,
         breaches: &[CheckBreach<'_>],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()>;
+    ) -> io::Result<String>;
 
-    fn report_stats(&self, stats: &DuplicationStats, writer: &mut dyn io::Write) -> io::Result<()>;
-    fn report_exact(&self, groups: &[DuplicateGroup], writer: &mut dyn io::Write)
-    -> io::Result<()>;
-    fn report_near(&self, groups: &[DuplicateGroup], writer: &mut dyn io::Write) -> io::Result<()>;
-    fn report_sub_exact(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()>;
-    fn report_sub_near(
-        &self,
-        groups: &[DuplicateGroup],
-        writer: &mut dyn io::Write,
-    ) -> io::Result<()>;
+    fn report_stats(&self, stats: &DuplicationStats) -> io::Result<String>;
+    fn report_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String>;
+    fn report_near(&self, groups: &[DuplicateGroup]) -> io::Result<String>;
+    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String>;
+    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> io::Result<String>;
 }

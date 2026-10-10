@@ -13,18 +13,17 @@ use tempfile::TempDir;
 
 fn cleaned(dry_run: bool) -> (TempDir, String) {
     let tmp = TempDir::new().expect("temp dir");
-    let mut added = Vec::new();
     IgnoreCommand::new(tmp.path(), "deadbeef12345678", None)
-        .run(&mut added)
+        .run()
         .expect("ignore accepted");
     let result = result_with(vec![], vec![], vec![], vec![]);
-    let mut out = Vec::new();
 
-    CleanupCommand::new(tmp.path(), &result, dry_run)
-        .run(&mut out)
-        .expect("cleanup succeeds");
+    let text = CleanupCommand::new(tmp.path(), &result, dry_run)
+        .run()
+        .expect("cleanup succeeds")
+        .text;
 
-    (tmp, String::from_utf8(out).expect("utf-8"))
+    (tmp, text)
 }
 
 #[test]
@@ -57,18 +56,15 @@ fn run_with_nothing_stale_says_so_and_writes_no_file() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let result = result_with(vec![], vec![], vec![], vec![]);
-    let mut out = Vec::new();
     let _ = OutputFormat::Text;
 
     // Act
-    CleanupCommand::new(tmp.path(), &result, false)
-        .run(&mut out)
-        .expect("cleanup succeeds");
+    let text = CleanupCommand::new(tmp.path(), &result, false)
+        .run()
+        .expect("cleanup succeeds")
+        .text;
 
     // Assert
-    assert_eq!(
-        String::from_utf8(out).expect("utf-8"),
-        "No stale entries found.\n"
-    );
+    assert_eq!(text, "No stale entries found.\n");
     assert!(!IgnoreFile::path_in(tmp.path()).exists());
 }

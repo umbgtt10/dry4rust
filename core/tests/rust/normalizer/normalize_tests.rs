@@ -9,12 +9,10 @@ use dry4rust::node::NormalizedNode;
 use dry4rust::node::count_nodes;
 use dry4rust::node::reindex_placeholders;
 use dry4rust::normalization_context::NormalizationContext;
-use dry4rust::rust::normalizer::expr::normalize_expr;
 use dry4rust::rust::normalizer::normalize::normalize_closure_expr;
 use dry4rust::rust::normalizer::normalize::normalize_impl_block;
 use dry4rust::rust::normalizer::normalize::normalize_impl_item_fn;
 use dry4rust::rust::normalizer::normalize::normalize_item_fn;
-use dry4rust::rust::normalizer::normalize::normalize_signature;
 use syn::Expr;
 use syn::ExprClosure;
 use syn::ItemFn;
@@ -24,7 +22,7 @@ use syn::parse_str;
 fn normalize_code_expr(code: &str) -> NormalizedNode {
     let expr = parse_expr(code);
     let mut ctx = NormalizationContext::new();
-    normalize_expr(&expr, &mut ctx)
+    ctx.normalize_expr(&expr)
 }
 
 fn parse_expr(code: &str) -> Expr {
@@ -375,8 +373,8 @@ fn normalize_signature_gives_alpha_equivalent_signatures_the_same_node() {
     let b: ItemFn = parse_str("fn g(y: i32) -> i32 { y }").expect("parses");
 
     // Act
-    let na = normalize_signature(&a.sig, &mut NormalizationContext::new());
-    let nb = normalize_signature(&b.sig, &mut NormalizationContext::new());
+    let na = NormalizationContext::new().normalize_signature(&a.sig);
+    let nb = NormalizationContext::new().normalize_signature(&b.sig);
 
     // Assert
     assert_eq!(na, nb);

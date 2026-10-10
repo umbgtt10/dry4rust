@@ -110,15 +110,14 @@ fn run_over_a_clean_fixture_says_so_rather_than_printing_an_empty_section() {
     // Arrange
     let (_, result) = analysed("no_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
 
     // Act
-    ReportCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
+    let text = ReportCommand::new(&result, reporter.as_ref())
+        .run()
+        .expect("reporting succeeds")
+        .text;
 
     // Assert
-    let text = String::from_utf8(out).expect("utf-8");
     assert!(text.contains("No exact duplicates found."), "{text}");
     assert!(
         !text.contains("Near Duplicates"),
@@ -131,15 +130,14 @@ fn run_writes_both_the_stats_and_the_groups() {
     // Arrange
     let (_, result) = analysed("exact_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
 
     // Act
-    ReportCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
+    let text = ReportCommand::new(&result, reporter.as_ref())
+        .run()
+        .expect("reporting succeeds")
+        .text;
 
     // Assert
-    let text = String::from_utf8(out).expect("utf-8");
     assert!(text.contains("Duplication Statistics"), "{text}");
     assert!(text.contains("Exact Duplicates"), "{text}");
 }
@@ -149,15 +147,14 @@ fn run_writes_the_sub_function_sections_when_there_are_any() {
     // Arrange
     let (_, result) = analysed_with_sub_function("sub_function_near_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
 
     // Act
-    ReportCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
+    let text = ReportCommand::new(&result, reporter.as_ref())
+        .run()
+        .expect("reporting succeeds")
+        .text;
 
     // Assert
-    let text = String::from_utf8(out).expect("utf-8");
     assert_eq!(
         result.sub_near_groups.len(),
         1,

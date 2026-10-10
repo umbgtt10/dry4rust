@@ -3,12 +3,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
+use std::fmt::Write as _;
 use std::path::Path;
 
 use crate::analysis::AnalysisResult;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
+use crate::cli::command_outcome::CommandOutcome;
 use crate::config::Config;
 use crate::suppression::baseline_file::BaselineFile;
 use crate::suppression::baseline_file::baseline_path;
@@ -46,40 +47,44 @@ impl<'a> BaselineCommand<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`CliError::Analysis`] if the baseline cannot be written, and
-    /// [`CliError::Io`] if the writer fails.
-    pub fn run(&self, writer: &mut impl Write) -> CliResult {
+    /// Never returns an error itself. A baseline that cannot be written is
+    /// carried in the outcome's result as [`CliError::Analysis`], beside the
+    /// entries already listed, so they still reach stdout ahead of the error.
+    pub fn run(&self) -> CliResult<CommandOutcome> {
         let path = baseline_path(self.root, self.config.baseline.as_deref());
         let recorded = BaselineFile::record(self.result);
 
+        let mut out = String::new();
         for entry in &recorded.entries {
-            writeln!(
-                writer,
+            let _ = writeln!(
+                out,
                 "  {} {} ({} members: {})",
                 entry.kind,
                 entry.fingerprint,
                 entry.members,
                 entry.names.join(", ")
-            )?;
+            );
         }
 
         if self.dry_run {
-            writeln!(
-                writer,
+            let _ = writeln!(
+                out,
                 "{} groups would be recorded in {}.",
                 recorded.len(),
                 path.display()
-            )?;
-            return Ok(());
+            );
+            return Ok(CommandOutcome::succeeded(out));
         }
 
-        recorded.save(&path).map_err(CliError::Analysis)?;
-        writeln!(
-            writer,
+        if let Err(error) = recorded.save(&path) {
+            return Ok(CommandOutcome::new(out, Err(CliError::Analysis(error))));
+        }
+        let _ = writeln!(
+            out,
             "Recorded {} groups in {}.",
             recorded.len(),
             path.display()
-        )?;
-        Ok(())
+        );
+        Ok(CommandOutcome::succeeded(out))
     }
 }

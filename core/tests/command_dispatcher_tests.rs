@@ -16,9 +16,10 @@ fn dispatch_in(root: &Path, command: &Command) -> (Result<(), CliError>, String)
     let analyzer = RustAnalyzer::new();
     let dispatcher =
         CommandDispatcher::new(&analyzer, root, OutputFormat::Text, CliOverrides::default());
-    let mut out = Vec::new();
-    let outcome = dispatcher.dispatch(command, &mut out);
-    (outcome, String::from_utf8(out).expect("utf-8"))
+    match dispatcher.dispatch(command) {
+        Ok(outcome) => (outcome.result, outcome.text),
+        Err(error) => (Err(error), String::new()),
+    }
 }
 
 #[test]

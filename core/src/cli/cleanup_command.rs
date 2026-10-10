@@ -3,12 +3,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::Write;
+use std::fmt::Write as _;
 use std::path::Path;
 
 use crate::analysis::AnalysisResult;
 use crate::cli::checking::stale_report::StaleReport;
 use crate::cli::cli_error::CliResult;
+use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_entry_line::IgnoreEntryLine;
 use crate::suppression::ignore_file::IgnoreFile;
 
@@ -37,8 +38,8 @@ impl<'a> CleanupCommand<'a> {
     /// # Errors
     ///
     /// Returns [`crate::cli::cli_error::CliError::Io`] if the ignore file
-    /// cannot be written or the writer fails.
-    pub fn run(&self, writer: &mut impl Write) -> CliResult {
+    /// cannot be written.
+    pub fn run(&self) -> CliResult<CommandOutcome> {
         let ignore_file = IgnoreFile::load(self.root);
         let taken;
 
@@ -53,16 +54,17 @@ impl<'a> CleanupCommand<'a> {
             StaleReport::removed(taken.iter().collect())
         };
 
+        let mut out = String::new();
         if report.is_empty() {
-            writeln!(writer, "No stale entries found.")?;
-            return Ok(());
+            let _ = writeln!(out, "No stale entries found.");
+            return Ok(CommandOutcome::succeeded(out));
         }
 
-        writeln!(writer, "{}", report.heading())?;
+        let _ = writeln!(out, "{}", report.heading());
         for entry in report.entries() {
-            writeln!(writer, "{}", IgnoreEntryLine::new(entry))?;
+            let _ = writeln!(out, "{}", IgnoreEntryLine::new(entry));
         }
-        writeln!(writer, "{}", report.summary())?;
-        Ok(())
+        let _ = writeln!(out, "{}", report.summary());
+        Ok(CommandOutcome::succeeded(out))
     }
 }

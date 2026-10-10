@@ -56,15 +56,13 @@ fn text_report_check_puts_each_breach_before_the_groups_behind_it() {
         &groups,
         true,
     )];
-    let mut buf = Vec::new();
 
     // Act
-    reporter
-        .report_check(&stats, &breaches, &mut buf)
+    let output = reporter
+        .report_check(&stats, &breaches)
         .expect("reporting succeeds");
 
     // Assert
-    let output = String::from_utf8(buf).unwrap();
     let sentence = output.find("Check FAILED").expect("the breach is named");
     let listing = output
         .find("Exact Duplicates")
@@ -81,15 +79,13 @@ fn text_report_check_with_no_breaches_says_it_passed() {
     // Arrange
     let reporter = TextReporter::new(None);
     let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
-    let mut buf = Vec::new();
 
     // Act
-    reporter
-        .report_check(&stats, &[], &mut buf)
+    let output = reporter
+        .report_check(&stats, &[])
         .expect("reporting succeeds");
 
     // Assert
-    let output = String::from_utf8(buf).unwrap();
     assert!(output.contains("Duplication Statistics"), "{output}");
     assert!(output.ends_with("\nCheck passed.\n"), "{output}");
 }
@@ -98,9 +94,7 @@ fn text_report_check_with_no_breaches_says_it_passed() {
 fn text_report_exact_empty() {
     // Arrange & Act
     let reporter = TextReporter::new(None);
-    let mut buf = Vec::new();
-    reporter.report_exact(&[], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_exact(&[]).unwrap();
 
     // Assert
     assert!(output.contains("No exact duplicates"));
@@ -118,9 +112,7 @@ fn text_report_exact_with_groups() {
         ],
         similarity: 1.0,
     };
-    let mut buf = Vec::new();
-    reporter.report_exact(&[group], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_exact(&[group]).unwrap();
 
     // Assert
     assert!(output.contains("Group 1"));
@@ -134,9 +126,7 @@ fn text_report_exact_with_groups() {
 fn text_report_near_empty() {
     // Arrange & Act
     let reporter = TextReporter::new(None);
-    let mut buf = Vec::new();
-    reporter.report_near(&[], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_near(&[]).unwrap();
 
     // Assert
     assert!(output.contains("No near duplicates"));
@@ -155,9 +145,7 @@ fn text_report_near_with_groups() {
         ],
         similarity: 0.85,
     };
-    let mut buf = Vec::new();
-    reporter.report_near(&[group], &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_near(&[group]).unwrap();
 
     // Assert
     assert!(output.contains("fingerprint:"));
@@ -186,9 +174,7 @@ fn text_report_stats() {
         sub_near_units: 0,
         baseline_suppressed: None,
     };
-    let mut buf = Vec::new();
-    reporter.report_stats(&stats, &mut buf).unwrap();
-    let output = String::from_utf8(buf).unwrap();
+    let output = reporter.report_stats(&stats).unwrap();
 
     // Assert
     assert!(output.contains("100"));
@@ -207,13 +193,11 @@ fn text_report_sub_exact_heads_its_own_section_and_names_the_parent() {
         members: vec![member],
         similarity: 1.0,
     };
-    let mut buf = Vec::new();
 
     // Act
-    reporter.report_sub_exact(&[group], &mut buf).unwrap();
+    let output = reporter.report_sub_exact(&[group]).unwrap();
 
     // Assert
-    let output = String::from_utf8(buf).unwrap();
     assert!(output.contains("Sub-function Exact Duplicates"), "{output}");
     assert!(
         output.contains("in handle_positive"),
@@ -236,13 +220,11 @@ fn text_report_sub_near_heads_its_own_section_and_states_the_similarity() {
         members: vec![member],
         similarity: 0.95,
     };
-    let mut buf = Vec::new();
 
     // Act
-    reporter.report_sub_near(&[group], &mut buf).unwrap();
+    let output = reporter.report_sub_near(&[group]).unwrap();
 
     // Assert
-    let output = String::from_utf8(buf).unwrap();
     assert!(output.contains("Sub-function Near Duplicates"), "{output}");
     assert!(output.contains("95%"), "{output}");
     assert!(output.contains("in total_rising"), "{output}");
@@ -252,14 +234,13 @@ fn text_report_sub_near_heads_its_own_section_and_states_the_similarity() {
 fn text_report_sub_near_with_nothing_to_report_writes_nothing_at_all() {
     // Arrange
     let reporter = TextReporter::new(None);
-    let mut buf = Vec::new();
 
     // Act
-    reporter.report_sub_near(&[], &mut buf).unwrap();
+    let output = reporter.report_sub_near(&[]).unwrap();
 
     // Assert
     assert!(
-        buf.is_empty(),
+        output.is_empty(),
         "the two sub-function sections have no empty message, unlike the exact \
          one, so an absent section is absent rather than announced"
     );

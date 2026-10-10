@@ -17,7 +17,6 @@ use dry4rust::near_duplicate::similarity::similarity_score;
 use dry4rust::node::reindex_placeholders;
 use dry4rust::node::{NodeKind, NormalizedNode};
 use dry4rust::normalization_context::NormalizationContext;
-use dry4rust::rust::normalizer::expr::normalize_expr;
 use dry4rust::rust::normalizer::normalize::normalize_item_fn;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
@@ -54,8 +53,8 @@ fn expr_similarity(code1: &str, code2: &str) -> f64 {
     let e2 = parse_expr(code2);
     let mut ctx1 = NormalizationContext::new();
     let mut ctx2 = NormalizationContext::new();
-    let n1 = normalize_expr(&e1, &mut ctx1);
-    let n2 = normalize_expr(&e2, &mut ctx2);
+    let n1 = ctx1.normalize_expr(&e1);
+    let n2 = ctx2.normalize_expr(&e2);
     similarity_score(&n1, &n2)
 }
 
@@ -380,7 +379,7 @@ fn fingerprint_from_node() {
     // Arrange & Act
     let expr = parse_expr("x + 1");
     let mut ctx = NormalizationContext::new();
-    let node = normalize_expr(&expr, &mut ctx);
+    let node = ctx.normalize_expr(&expr);
     let fp = Fingerprint::from_node(&node);
 
     // Assert
@@ -860,10 +859,7 @@ fn sub_units_are_reindexed() {
         .unwrap();
 
     let mut ctx = NormalizationContext::new();
-    let fresh_expr = normalize_expr(
-        &parse_str::<Expr>("{ let d = c + 1; d }").unwrap(),
-        &mut ctx,
-    );
+    let fresh_expr = ctx.normalize_expr(&parse_str::<Expr>("{ let d = c + 1; d }").unwrap());
     let reindexed_fresh = reindex_placeholders(&fresh_expr);
 
     // Assert

@@ -19,11 +19,12 @@ fn checked(exact: usize, thresholds: &CheckThresholds) -> (CliResult, String) {
     let result = result_with(groups, vec![], vec![], vec![]);
     let config = Config::default();
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
 
-    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds).run(&mut out);
+    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds)
+        .run()
+        .expect("check produces a report");
 
-    (outcome, String::from_utf8(out).expect("utf-8"))
+    (outcome.result, outcome.text)
 }
 
 #[test]

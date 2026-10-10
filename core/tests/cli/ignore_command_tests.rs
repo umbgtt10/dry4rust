@@ -12,14 +12,13 @@ use tempfile::TempDir;
 fn run_over_the_same_fingerprint_twice_records_it_once() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let mut out = Vec::new();
     IgnoreCommand::new(tmp.path(), "deadbeef12345678", None)
-        .run(&mut out)
+        .run()
         .expect("the first is accepted");
 
     // Act
     IgnoreCommand::new(tmp.path(), "deadbeef12345678", None)
-        .run(&mut out)
+        .run()
         .expect("the second is accepted");
 
     // Assert
@@ -30,7 +29,6 @@ fn run_over_the_same_fingerprint_twice_records_it_once() {
 fn run_records_the_fingerprint_with_the_reason_it_was_given() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let mut out = Vec::new();
 
     // Act
     IgnoreCommand::new(
@@ -38,7 +36,7 @@ fn run_records_the_fingerprint_with_the_reason_it_was_given() {
         "deadbeef12345678",
         Some("trait impls are meant to look alike"),
     )
-    .run(&mut out)
+    .run()
     .expect("a valid fingerprint is accepted");
 
     // Assert
@@ -55,10 +53,9 @@ fn run_records_the_fingerprint_with_the_reason_it_was_given() {
 fn run_with_a_malformed_fingerprint_is_rejected() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let mut out = Vec::new();
 
     // Act
-    let outcome = IgnoreCommand::new(tmp.path(), "not-a-fingerprint", None).run(&mut out);
+    let outcome = IgnoreCommand::new(tmp.path(), "not-a-fingerprint", None).run();
 
     // Assert
     assert!(matches!(outcome, Err(CliError::InvalidFingerprint(_))));

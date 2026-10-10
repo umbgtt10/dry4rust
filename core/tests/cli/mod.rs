@@ -10,6 +10,7 @@ pub mod checking;
 pub mod cleanup_command_tests;
 pub mod cli_error_tests;
 pub mod cli_overrides_tests;
+pub mod command_outcome_tests;
 pub mod command_tests;
 pub mod entry_point_tests;
 pub mod ignore_command_tests;

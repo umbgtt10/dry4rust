@@ -194,15 +194,14 @@ fn run_in_dry_run_names_what_it_would_record_without_writing_it() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (config, result) = analysed("exact_dupes");
-    let mut out = Vec::new();
 
     // Act
-    BaselineCommand::new(tmp.path(), &config, &result, true)
-        .run(&mut out)
-        .expect("a dry run succeeds");
+    let text = BaselineCommand::new(tmp.path(), &config, &result, true)
+        .run()
+        .expect("a dry run succeeds")
+        .text;
 
     // Assert
-    let text = String::from_utf8(out).expect("utf-8");
     assert!(text.contains("1 groups would be recorded"), "{text}");
     assert!(text.contains("process_data"), "{text}");
     assert!(!tmp.path().join("dry4rust-baseline.json").exists());
@@ -213,15 +212,14 @@ fn run_outside_dry_run_writes_a_baseline_that_loads_back() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (config, result) = analysed("exact_dupes");
-    let mut out = Vec::new();
 
     // Act
-    BaselineCommand::new(tmp.path(), &config, &result, false)
-        .run(&mut out)
-        .expect("recording succeeds");
+    let text = BaselineCommand::new(tmp.path(), &config, &result, false)
+        .run()
+        .expect("recording succeeds")
+        .text;
 
     // Assert
-    let text = String::from_utf8(out).expect("utf-8");
     assert!(text.contains("Recorded 1 groups"), "{text}");
     let written = BaselineFile::load(&tmp.path().join("dry4rust-baseline.json"))
         .expect("what was written is what this build reads");
@@ -237,16 +235,16 @@ fn run_over_a_clean_codebase_records_nothing_and_says_so() {
         root: tmp.path().to_path_buf(),
         ..Config::default()
     };
-    let mut out = Vec::new();
 
     // Act
-    BaselineCommand::new(tmp.path(), &config, &result, false)
-        .run(&mut out)
-        .expect("recording succeeds");
+    let text = BaselineCommand::new(tmp.path(), &config, &result, false)
+        .run()
+        .expect("recording succeeds")
+        .text;
 
     // Assert
     assert_eq!(
-        String::from_utf8(out).expect("utf-8"),
+        text,
         format!(
             "Recorded 0 groups in {}.\n",
             tmp.path().join("dry4rust-baseline.json").display()

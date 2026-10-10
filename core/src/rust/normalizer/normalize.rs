@@ -3,12 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-// Re-export core node types used by the normalizer's public API and tests.
 use crate::node::{NodeKind, NormalizedNode, PlaceholderKind};
 use crate::normalization_context::NormalizationContext;
 
-use super::expr::{normalize_block, normalize_expr};
-use super::pat::{normalize_pat, normalize_type};
 use syn::Block;
 use syn::ExprClosure;
 use syn::ImplItemFn;
@@ -16,44 +13,46 @@ use syn::ItemFn;
 use syn::ItemImpl;
 use syn::Signature;
 
-pub fn normalize_signature(sig: &Signature, ctx: &mut NormalizationContext) -> NormalizedNode {
-    // FnSignature -> [return_type_or_None, param0, param1, ...]
-    let return_type = match &sig.output {
-        syn::ReturnType::Default => NormalizedNode::none(),
-        syn::ReturnType::Type(_, ty) => normalize_type(ty, ctx),
-    };
-    let mut children = vec![return_type];
-    children.extend(sig.inputs.iter().map(|arg| match arg {
-        syn::FnArg::Receiver(r) => {
-            let idx = ctx.placeholder("self", PlaceholderKind::Variable);
-            let self_node =
-                NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, idx));
-            if r.reference.is_some() {
-                NormalizedNode::with_children(
-                    NodeKind::Reference {
-                        mutable: r.mutability.is_some(),
-                    },
-                    vec![self_node],
-                )
-            } else {
-                self_node
+impl NormalizationContext {
+    pub fn normalize_signature(&mut self, sig: &Signature) -> NormalizedNode {
+        // FnSignature -> [return_type_or_None, param0, param1, ...]
+        let return_type = match &sig.output {
+            syn::ReturnType::Default => NormalizedNode::none(),
+            syn::ReturnType::Type(_, ty) => self.normalize_type(ty),
+        };
+        let mut children = vec![return_type];
+        children.extend(sig.inputs.iter().map(|arg| match arg {
+            syn::FnArg::Receiver(r) => {
+                let idx = self.placeholder("self", PlaceholderKind::Variable);
+                let self_node =
+                    NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, idx));
+                if r.reference.is_some() {
+                    NormalizedNode::with_children(
+                        NodeKind::Reference {
+                            mutable: r.mutability.is_some(),
+                        },
+                        vec![self_node],
+                    )
+                } else {
+                    self_node
+                }
             }
-        }
-        syn::FnArg::Typed(pt) => {
-            let pat = normalize_pat(&pt.pat, ctx);
-            let ty = normalize_type(&pt.ty, ctx);
-            NormalizedNode::with_children(NodeKind::FieldValue, vec![pat, ty])
-        }
-    }));
-    NormalizedNode::with_children(NodeKind::FnSignature, children)
+            syn::FnArg::Typed(pt) => {
+                let pat = self.normalize_pat(&pt.pat);
+                let ty = self.normalize_type(&pt.ty);
+                NormalizedNode::with_children(NodeKind::FieldValue, vec![pat, ty])
+            }
+        }));
+        NormalizedNode::with_children(NodeKind::FnSignature, children)
+    }
 }
 
 // -- Public entry points ------------------------------------------------------
 
 fn normalize_fn_parts(sig: &Signature, block: &Block) -> (NormalizedNode, NormalizedNode) {
     let mut ctx = NormalizationContext::new();
-    let sig = normalize_signature(sig, &mut ctx);
-    let body = normalize_block(block, &mut ctx);
+    let sig = ctx.normalize_signature(sig);
+    let body = ctx.normalize_block(block);
     (sig, body)
 }
 
@@ -73,8 +72,8 @@ pub fn normalize_impl_item_fn(method: &ImplItemFn) -> (NormalizedNode, Normalize
 #[must_use]
 pub fn normalize_closure_expr(closure: &ExprClosure) -> NormalizedNode {
     let mut ctx = NormalizationContext::new();
-    let mut children = vec![normalize_expr(&closure.body, &mut ctx)];
-    children.extend(closure.inputs.iter().map(|p| normalize_pat(p, &mut ctx)));
+    let mut children = vec![ctx.normalize_expr(&closure.body)];
+    children.extend(closure.inputs.iter().map(|p| ctx.normalize_pat(p)));
     NormalizedNode::with_children(NodeKind::Closure, children)
 }
 

@@ -16,11 +16,7 @@ fn parented(name: &str, parent: &str) -> DuplicateGroup {
 }
 
 fn written(section: &GroupSection, groups: &[DuplicateGroup], base: Option<&Path>) -> String {
-    let mut buf = Vec::new();
-    section
-        .write(groups, base, &mut buf)
-        .expect("writing succeeds");
-    String::from_utf8(buf).expect("utf-8")
+    section.write(groups, base)
 }
 
 #[test]

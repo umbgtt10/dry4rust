@@ -129,11 +129,10 @@ fn run_in_dry_run_leaves_the_ignore_file_alone() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (_, result) = analysed("exact_dupes");
-    let mut out = Vec::new();
 
     // Act
     CleanupCommand::new(tmp.path(), &result, true)
-        .run(&mut out)
+        .run()
         .expect("dry run succeeds");
 
     // Assert
@@ -145,19 +144,17 @@ fn run_outside_dry_run_takes_away_a_file_it_emptied() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (_, result) = analysed("exact_dupes");
-    let mut added = Vec::new();
     IgnoreCommand::new(tmp.path(), "deadbeef12345678", None)
-        .run(&mut added)
+        .run()
         .expect("ignore accepted");
-    let mut out = Vec::new();
 
     // Act
-    CleanupCommand::new(tmp.path(), &result, false)
-        .run(&mut out)
-        .expect("cleanup succeeds");
+    let text = CleanupCommand::new(tmp.path(), &result, false)
+        .run()
+        .expect("cleanup succeeds")
+        .text;
 
     // Assert
-    let text = String::from_utf8(out).expect("utf-8");
     assert!(
         text.contains("stale"),
         "cleanup reports on stale entries by name, got: {text}"
@@ -173,17 +170,14 @@ fn run_with_nothing_stale_says_so_and_writes_no_file() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (_, result) = analysed("exact_dupes");
-    let mut out = Vec::new();
 
     // Act
-    CleanupCommand::new(tmp.path(), &result, false)
-        .run(&mut out)
-        .expect("cleanup succeeds");
+    let text = CleanupCommand::new(tmp.path(), &result, false)
+        .run()
+        .expect("cleanup succeeds")
+        .text;
 
     // Assert
-    assert_eq!(
-        String::from_utf8(out).expect("utf-8"),
-        "No stale entries found.\n"
-    );
+    assert_eq!(text, "No stale entries found.\n");
     assert!(!tmp.path().join(".dry4rust-ignore.toml").exists());
 }

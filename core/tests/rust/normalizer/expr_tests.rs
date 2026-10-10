@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::normalization_context::NormalizationContext;
-use dry4rust::rust::normalizer::expr::normalize_block;
-use dry4rust::rust::normalizer::expr::normalize_stmt;
 use syn::Block;
 use syn::Stmt;
 use syn::parse_str;
@@ -17,8 +15,8 @@ fn normalize_block_erases_the_names_its_statements_bind() {
     let b: Block = parse_str("{ let y = 1; y + 1 }").expect("parses");
 
     // Act
-    let na = normalize_block(&a, &mut NormalizationContext::new());
-    let nb = normalize_block(&b, &mut NormalizationContext::new());
+    let na = NormalizationContext::new().normalize_block(&a);
+    let nb = NormalizationContext::new().normalize_block(&b);
 
     // Assert
     assert_eq!(na, nb);
@@ -31,8 +29,8 @@ fn normalize_block_keeps_blocks_of_different_shape_apart() {
     let b: Block = parse_str("{ let x = 1; }").expect("parses");
 
     // Act
-    let na = normalize_block(&a, &mut NormalizationContext::new());
-    let nb = normalize_block(&b, &mut NormalizationContext::new());
+    let na = NormalizationContext::new().normalize_block(&a);
+    let nb = NormalizationContext::new().normalize_block(&b);
 
     // Assert
     assert_ne!(na, nb);
@@ -45,8 +43,8 @@ fn normalize_stmt_gives_alpha_equivalent_lets_the_same_node() {
     let b: Stmt = parse_str("let y = 1;").expect("parses");
 
     // Act
-    let na = normalize_stmt(&a, &mut NormalizationContext::new());
-    let nb = normalize_stmt(&b, &mut NormalizationContext::new());
+    let na = NormalizationContext::new().normalize_stmt(&a);
+    let nb = NormalizationContext::new().normalize_stmt(&b);
 
     // Assert
     assert_eq!(na, nb);

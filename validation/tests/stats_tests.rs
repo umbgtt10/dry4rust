@@ -76,15 +76,14 @@ fn run_over_a_clean_fixture_still_writes_the_summary() {
     // Arrange
     let (_, result) = analysed("no_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
 
     // Act
-    StatsCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
+    let text = StatsCommand::new(&result, reporter.as_ref())
+        .run()
+        .expect("reporting succeeds")
+        .text;
 
     // Assert
-    let text = String::from_utf8(out).expect("utf-8");
     assert!(text.contains("Exact duplicates: 0 groups"), "{text}");
 }
 
@@ -93,15 +92,14 @@ fn run_writes_the_summary_and_nothing_else() {
     // Arrange
     let (_, result) = analysed("exact_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
 
     // Act
-    StatsCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
+    let text = StatsCommand::new(&result, reporter.as_ref())
+        .run()
+        .expect("reporting succeeds")
+        .text;
 
     // Assert
-    let text = String::from_utf8(out).expect("utf-8");
     assert!(text.contains("Duplication Statistics"), "{text}");
     assert!(!text.contains("Exact Duplicates"), "{text}");
 }

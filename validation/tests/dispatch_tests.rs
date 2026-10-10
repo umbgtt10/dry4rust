@@ -25,9 +25,10 @@ fn dispatch_in(root: &Path, command: &Command) -> (Result<(), CliError>, String)
     let analyzer = RustAnalyzer::new();
     let dispatcher =
         CommandDispatcher::new(&analyzer, root, OutputFormat::Text, CliOverrides::default());
-    let mut out = Vec::new();
-    let outcome = dispatcher.dispatch(command, &mut out);
-    (outcome, String::from_utf8(out).expect("utf-8"))
+    match dispatcher.dispatch(command) {
+        Ok(outcome) => (outcome.result, outcome.text),
+        Err(error) => (Err(error), String::new()),
+    }
 }
 
 #[test]
@@ -135,10 +136,9 @@ fn new_stores_the_overrides_it_is_given_and_applies_them_to_the_analysis() {
         ..CliOverrides::default()
     };
     let dispatcher = CommandDispatcher::new(&analyzer, &root, OutputFormat::Text, overrides);
-    let mut out = Vec::new();
 
     // Act
-    let outcome = dispatcher.dispatch(&breaching_check(), &mut out);
+    let outcome = dispatcher.dispatch(&breaching_check());
 
     // Assert
     assert!(

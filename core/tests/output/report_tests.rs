@@ -14,11 +14,7 @@ use serde_json::Value;
 use serde_json::from_str;
 
 fn rendered(reporter: &dyn Reporter, report: &Report<'_>) -> String {
-    let mut buf = Vec::new();
-    reporter
-        .report(report, &mut buf)
-        .expect("reporting succeeds");
-    String::from_utf8(buf).expect("utf-8")
+    reporter.report(report).expect("reporting succeeds")
 }
 
 #[test]

@@ -12,13 +12,11 @@ use serde_json::from_str;
 fn summary_in(format: OutputFormat) -> String {
     let result = result_with(vec![], vec![], vec![], vec![]);
     let reporter = format.reporter(None);
-    let mut out = Vec::new();
 
     StatsCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
-
-    String::from_utf8(out).expect("utf-8")
+        .run()
+        .expect("reporting succeeds")
+        .text
 }
 
 #[test]

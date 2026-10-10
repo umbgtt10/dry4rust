@@ -69,9 +69,10 @@ bodies as further units, which then travel the same path.
 | `scanner` | Walk a root, apply exclude globs and extension filters. |
 | `analyzer` | `LanguageAnalyzer`, the trait every backend implements. One implementation today. |
 | `rust::parser` | `syn` -> `CodeUnit`, one per function, method and closure. |
-| `rust::normalizer` | The normalisation rules, split by syntax category: `expr`, `pat`, `helpers`, `normalize`. |
+| `rust::normalizer` | The normalisation rules, split by syntax category: `expr`, `pat`, `helpers`, `normalize`. Each is an `impl NormalizationContext` block, so the context that numbers the placeholders is `self` rather than a `&mut` threaded through every call. |
 | `normalization_context` | The placeholder counters. Two identifiers map to the same placeholder only within one context. |
 | `node` | `NormalizedNode` and `NodeKind` -- the normalised tree, plus `count_nodes` and `reindex_placeholders`. |
+| `placeholder_order_collector` | The placeholders of a tree in first-occurrence order, which is what `reindex_placeholders` renumbers by. |
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
 | `node_encoder` | The byte format a fingerprint is computed over -- variants by name, children counted. |
 | `stable_hasher` | FNV-1a 64, defined here so a fingerprint survives a toolchain upgrade. |
@@ -95,6 +96,7 @@ bodies as further units, which then travel the same path.
 | `analysis` | `analyze` and `analyze_units` -- the pipeline as one call. |
 | `cli::cli_error` | `CliError` and the exit code each variant maps to. |
 | `cli::command` | The subcommands, as `clap` sees them. |
+| `cli::command_outcome` | What a command produced: the text to print, and the verdict that sets the exit code once it is printed. |
 | `cli::entry_point` | The command line and what it means: which root, which command, which overrides. |
 | `cli::cli_overrides` | What the command line said, applied over what the files said. |
 | `cli::output_format` | Text or JSON, and the reporter each builds. |
@@ -161,9 +163,12 @@ library, so a test can call it, and everything after it is there too: `CommandDi
 touch only the ignore file from the five that need an analysis first, runs the
 analysis once, and hands the result to the command struct that serves it.
 
-Each command is a type with a constructor and a single `run`, taking a writer
-rather than printing, so each is driven directly against a fixture in tests and
-its output read back. `baseline` is the one command dispatched through
+Each command is a type with a constructor and a single `run`, returning a
+`CommandOutcome` -- the text it means to print and the verdict that sets the
+exit code -- rather than printing, so each is driven directly against a fixture
+in tests and its output read back. `EntryPoint` is the one place that writes to
+stdout, and it writes the text before it acts on the verdict, which is how
+`check` prints its report and still exits 1. `baseline` is the one command dispatched through
 `AnalysisOutput::produce_ignoring_baseline`: a recording that judged against
 the previous recording would hold only what had been added since, and the
 second run would empty the file.

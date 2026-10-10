@@ -12,13 +12,11 @@ use dry4rust::grouper::DuplicateGroup;
 fn report_of(exact: Vec<DuplicateGroup>, near: Vec<DuplicateGroup>) -> String {
     let result = result_with(exact, near, vec![], vec![]);
     let reporter = OutputFormat::Text.reporter(None);
-    let mut out = Vec::new();
 
     ReportCommand::new(&result, reporter.as_ref())
-        .run(&mut out)
-        .expect("reporting succeeds");
-
-    String::from_utf8(out).expect("utf-8")
+        .run()
+        .expect("reporting succeeds")
+        .text
 }
 
 #[test]
