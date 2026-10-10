@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod crap_gate_tests;
+pub mod dry_self_gate_tests;
 pub mod gate_tests;
 pub mod iceberg_gate_tests;
 pub mod stage2_tests;

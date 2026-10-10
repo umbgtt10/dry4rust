@@ -55,19 +55,55 @@ warn, that combination is what holds the tests to the same bar as the sources.
 Stage 2 is `cargo xtask stage2` -- a real crate under `xtask/`, gated like any
 other code, rather than a script. Each gate is a `Gate` implementation
 constructed against a `CommandRunner` trait, so the argument lists and the
-failure messages are covered by `xtask`'s own integration tests. It runs four
-installed cargo subcommands, in this order:
+failure messages are covered by `xtask`'s own integration tests. It runs five
+gates, in this order -- four installed cargo subcommands and this checkout's own
+dry4rust, built from source:
 
 | gate | asks |
 |---|---|
 | `cargo stern4rust` | do the house coding rules hold |
+| own duplication (`dry4rust`, from source) | did this change add duplicated code |
 | `cargo crap4rust` | is any function complex and untested |
 | `cargo twin4rust` | does every source file have a mirrored test file |
 | `cargo iceberg4rust` | is any file's private implementation risk too high |
 
 stern4rust runs **first** because its corrections are renames, file moves and
-directory splits: a layout it is about to reject is a layout the other three
-would have measured for nothing. Its findings are also the cheapest to act on.
+directory splits: a layout it is about to reject is a layout the others would
+have measured for nothing. Its findings are also the cheapest to act on.
+
+dry4rust runs **second**, for the same reason: removing a duplicate moves code
+between files, which changes what the three behind it measure. It is this
+checkout's dry4rust, run with `cargo run --bin cargo-dry4rust`, never an
+installed copy. A tool that enforces a check it does not pass is not worth
+installing -- and a duplicate this checkout carries is one it is about to
+publish.
+
+It scans `core/src` only -- tests repeat their arrangement by design, and
+`fixture/` is duplicated on purpose -- and checks with zero ceilings against
+`dry4rust-baseline.json`, the duplication still there when the gate arrived. So
+it fails on what a change adds, not on what it inherited; a duplicate removed is
+admitted, a copy added to a recorded group is not. Exit 1 is the tool's own
+"ceiling exceeded" and reads as duplication added; anything else -- 2 for a
+configuration or a baseline it refused, cargo's 101 for a build that failed --
+is reported as the exit code, never as a verdict.
+
+It counts only code units of 25 AST nodes or more. Below that sit units whose
+whole body is one call or one short struct literal -- accessors, two-field
+constructors, the four `Reporter` section methods every format must write --
+and at the default of 10 they form fifteen exact groups whose sameness is a
+signature's, not a copy. At 25 there were four groups when the gate arrived.
+Two were shared away: `TextReporter::section` now sits behind the four section
+methods, and `Threshold::share_of` behind `fraction` and `percent`. The
+baseline records the two that remain, neither of which sharing would improve:
+the four-field constructors of `CommandDispatcher`, `CheckCommand` and
+`BaselineCommand`, which store what they are given; and `NodeEncoder`'s
+`placeholder_name` and `un_op_name`, two lookup tables over different enums
+whose strings every fingerprint is computed from.
+
+Re-record the baseline only to drop groups that are gone, never to admit new
+ones, and at the same floor -- a baseline matches only at the floor it was
+recorded at:
+`cargo run --bin cargo-dry4rust -- dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
 All twenty-two of its rules apply to every member -- `core`, `validation` and
 `xtask` -- with nothing skipped, nothing selected and nothing unconfigured.
@@ -131,6 +167,9 @@ move is the one taken here: split the function.
 `cargo install cargo-crap4rust`
 `cargo install cargo-twin4rust`
 `cargo install cargo-iceberg4rust`
+
+cargo-dry4rust is deliberately not in that list; the gate builds it from this
+checkout.
 
 ## Strict Rules
 

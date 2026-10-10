@@ -35,6 +35,10 @@ impl TextReporter {
     pub const fn new(base_path: Option<PathBuf>) -> Self {
         Self { base_path }
     }
+
+    fn section(&self, section: &GroupSection, groups: &[DuplicateGroup]) -> String {
+        section.write(groups, self.base_path.as_deref())
+    }
 }
 
 impl Reporter for TextReporter {
@@ -128,18 +132,18 @@ impl Reporter for TextReporter {
     }
 
     fn report_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
-        Ok(GroupSection::exact().write(groups, self.base_path.as_deref()))
+        Ok(self.section(&GroupSection::exact(), groups))
     }
 
     fn report_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
-        Ok(GroupSection::near().write(groups, self.base_path.as_deref()))
+        Ok(self.section(&GroupSection::near(), groups))
     }
 
     fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
-        Ok(GroupSection::sub_exact().write(groups, self.base_path.as_deref()))
+        Ok(self.section(&GroupSection::sub_exact(), groups))
     }
 
     fn report_sub_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
-        Ok(GroupSection::sub_near().write(groups, self.base_path.as_deref()))
+        Ok(self.section(&GroupSection::sub_near(), groups))
     }
 }

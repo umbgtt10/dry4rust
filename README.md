@@ -37,7 +37,8 @@ The surrounding repository is under this family's house rules and gates: `cargo 
 reports no offences with all twenty-two rules applied to every workspace member and none
 skipped -- its one baseline holds the ten end-to-end scenario files that have no source
 file to be named after -- `cargo crap4rust` finds no function at or above 15, every source
-file has a mirrored test file, and no file reaches 10 on `cargo iceberg4rust`.
+file has a mirrored test file, no file reaches 10 on `cargo iceberg4rust`, and `dry4rust`
+run on its own source finds nothing beyond the two near-duplicate groups its baseline records.
 
 Commands below are `cargo dry4rust`; the upstream `cargo dupes` spelling is gone.
 
@@ -457,7 +458,7 @@ the same way on Windows, Linux and macOS:
 
 ```sh
 just stage1   # fmt, clippy under -D warnings across all targets, tests
-just stage2   # stern4rust, crap4rust, twin4rust, iceberg4rust
+just stage2   # stern4rust, dry4rust on itself, crap4rust, twin4rust, iceberg4rust
 ```
 
 Stage 1 is cargo built-ins only, so it works on a fresh checkout with none of the
@@ -469,6 +470,12 @@ Stage 2 is `cargo xtask stage2`, a real crate rather than a script, so the gate
 argument lists and failure messages are covered by its own integration tests.
 `xtask` is itself a workspace member and is gated like everything else — the
 crate that runs the gates is not exempt from them.
+
+Its second gate is dry4rust run on itself: this checkout's binary, built from
+source rather than installed, over `core/src` with zero ceilings against
+`dry4rust-baseline.json`, at a floor of 25 AST nodes. A tool that enforces a
+check it does not pass is not worth installing. It needs nothing beyond cargo,
+which is why it is not in the table below.
 
 Everything the two stages need, none of which ships with cargo:
 

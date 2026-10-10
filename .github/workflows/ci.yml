@@ -46,6 +46,9 @@ jobs:
       # Not cached: caching cargo-installed binaries makes `cargo install` skip
       # a reinstall even when a newer version is published, so the gate would
       # quietly keep testing against a stale tool.
+      #
+      # cargo-dry4rust is not installed: stage 2's duplication gate builds it
+      # from this checkout and runs it on itself.
       - name: Install house gate tools
         if: matrix.stage == 'stage2'
         run: |

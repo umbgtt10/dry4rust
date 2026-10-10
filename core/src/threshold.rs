@@ -31,15 +31,7 @@ impl Threshold {
     /// Returns [`Error::InvalidConfig`] naming `field` when `value` is
     /// outside `0.0..=1.0`, which `NaN` also is.
     pub fn fraction(field: &'static str, value: f64) -> Result<Self> {
-        if (0.0..=1.0).contains(&value) {
-            Ok(Self(value))
-        } else {
-            Err(Error::InvalidConfig {
-                field,
-                value: value.to_string(),
-                expected: "a fraction between 0.0 and 1.0",
-            })
-        }
+        Self::share_of(field, value, 1.0, "a fraction between 0.0 and 1.0")
     }
 
     /// A threshold written as a percentage, as the `check` ceilings are.
@@ -49,13 +41,26 @@ impl Threshold {
     /// Returns [`Error::InvalidConfig`] naming `field` when `value` is
     /// outside `0.0..=100.0`, which `NaN` also is.
     pub fn percent(field: &'static str, value: f64) -> Result<Self> {
-        if (0.0..=100.0).contains(&value) {
-            Ok(Self(value / 100.0))
+        Self::share_of(field, value, 100.0, "a percentage between 0.0 and 100.0")
+    }
+
+    /// `value` as a share of `whole`, refused unless it lies in `0.0..=whole`.
+    ///
+    /// Dividing by a `whole` of one is exact in floating point, so a fraction
+    /// is stored as the very value it was written as.
+    fn share_of(
+        field: &'static str,
+        value: f64,
+        whole: f64,
+        expected: &'static str,
+    ) -> Result<Self> {
+        if (0.0..=whole).contains(&value) {
+            Ok(Self(value / whole))
         } else {
             Err(Error::InvalidConfig {
                 field,
                 value: value.to_string(),
-                expected: "a percentage between 0.0 and 100.0",
+                expected,
             })
         }
     }
