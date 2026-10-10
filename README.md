@@ -34,9 +34,10 @@ near-duplicate detection that no longer hides what exact detection reports. Adde
 baseline mode, and configuration that cannot hold an impossible threshold.
 
 The surrounding repository is under this family's house rules and gates: `cargo stern4rust`
-reports no offences with all twenty-one rules applied and no baseline of its own,
-`cargo crap4rust` finds no function at or above 15, every source file has a mirrored test
-file, and no file reaches 10 on `cargo iceberg4rust`.
+reports no offences with all twenty-two rules applied to every workspace member and none
+skipped -- its one baseline holds the ten end-to-end scenario files that have no source
+file to be named after -- `cargo crap4rust` finds no function at or above 15, every source
+file has a mirrored test file, and no file reaches 10 on `cargo iceberg4rust`.
 
 Commands below are `cargo dry4rust`; the upstream `cargo dupes` spelling is gone.
 

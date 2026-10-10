@@ -69,42 +69,43 @@ stern4rust runs **first** because its corrections are renames, file moves and
 directory splits: a layout it is about to reject is a layout the other three
 would have measured for nothing. Its findings are also the cheapest to act on.
 
-All twenty-one of its rules are enforced, with nothing unconfigured and no
-baseline file. `docs/header.txt` holds the four-line header every `.rs` file
-carries and `stern4rust.toml` names it -- in the config rather than the gate
-script, so a hand-run of `cargo stern4rust` checks exactly what the gate checks.
-
-The stern gate passes no `--package` at all, so one call judges every member
-against its own rules. `core` and `xtask` take all twenty-one; `validation`
-stands down `paired-test-file` alone, because it has no `src/` for a test file
-to be named after. That split lives in `stern4rust.toml`, which is why a
-hand-run sees exactly what the gate sees.
-
-`xtask` is a member and is gated like the rest. The crate that runs the gates is
-not exempt from them.
+All twenty-two of its rules apply to every member -- `core`, `validation` and
+`xtask` -- with nothing skipped, nothing selected and nothing unconfigured.
+`stern4rust.toml` carries no `skip`, no `rules` and no `[package.*]` section,
+and the report ends `rules_applied=22 rules_skipped=0 rules_unconfigured=0`.
+`docs/header.txt` holds the four-line header every `.rs` file carries and
+`stern4rust.toml` names it -- in the config rather than the gate script, so a
+hand-run of `cargo stern4rust` checks exactly what the gate checks.
 
 Four lines rather than the three its sibling repositories use, because MIT
 requires upstream's copyright notice to travel with the code.
 
-Nothing is excluded, and that is new. The corpus used to live under
-`tests/fixtures/` and had to be excluded from the header rule; it now lives in
-`fixture/`, outside both workspace members, so there is nothing for a rule to
-reach and nothing to exclude.
+The stern gate passes no `--package` at all, so one call judges every member
+and the report carries one roll-up `summary:` line. `xtask` is a member and is
+gated like the rest. The crate that runs the gates is not exempt from them.
 
-Stage 1 covers the workspace. Stage 2 gates **both members**, which is one
+One baseline, `stern4rust-baseline.json`, holds ten offences of one kind:
+`paired-test-file` against `validation`'s scenario files. `validation` has no
+`src/` -- its tests drive the whole tool against `fixture/` and are named for
+behaviours, `check_tests.rs` and `cleanup_tests.rs`, rather than for a file of
+their own -- so no rename can pair them, and inventing a `src/check.rs` for one
+to point at is the answer the rule's own ADR rejects. Moving them into `core/`
+would ship a test suite that cannot find its corpus, which is what the
+workspace split was for. The rule used to be stood down for `validation` with a
+`skip`; the baseline keeps it running there instead, so a scenario file added
+later is reported until somebody decides about it. Re-record it with
+`cargo stern4rust --write-baseline` only to admit a new scenario file -- never
+any other offence -- and the summary's `baselined=` count says how many it holds.
+
+Nothing is excluded. The corpus used to live under `tests/fixtures/` and had to
+be excluded from the header rule; it now lives in `fixture/`, outside every
+workspace member, so there is nothing for a rule to reach and nothing to
+exclude. Its duplication is deliberate -- it is what the validation tests
+measure -- and is never "fixed".
+
+Stage 1 covers the workspace. The stern gate covers every member, which is one
 step stricter than the rest of the family: the other workspaces here gate
 `core` and leave `validation` unmeasured.
-
-`core` takes all twenty-one rules. `validation` takes twenty, standing down
-`paired-test-file` because it has no `src/` at all -- no file in it can be
-named after a source file. Everything else applies -- the four-line header,
-AAA structure, import naming, ordering, test naming -- and holds.
-
-The stand-down is a `[package.validation]` section in `stern4rust.toml`, not
-a flag on the command line, so a hand-run of `cargo stern4rust` from the
-repository root sees exactly what the gate sees: one call judges every
-workspace member against its own rules, and the report carries a block per
-member and one roll-up `summary:` line.
 
 `crap4rust` is the one gate that stays on core. It scores source functions
 against their coverage and `validation` has no source, only tests; pointed

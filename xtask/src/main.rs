@@ -37,11 +37,10 @@ fn run_stage2() -> ExitCode {
     let runner = SystemCommandRunner::new();
     let parser = CrapReportParser::new();
 
-    // No --package at all. One call judges every member against its own rules:
-    // core and xtask take all twenty-one, validation stands down
-    // paired-test-file because it has no src/ for a test file to be named
-    // after. That split lives in stern4rust.toml, so a hand-run of
-    // `cargo stern4rust` from the repository root sees exactly what this sees.
+    // No --package at all. One call judges every member against every rule,
+    // and stern4rust.toml names the header and the baseline rather than this
+    // call, so a hand-run of `cargo stern4rust` from the repository root sees
+    // exactly what this sees.
     let stern = SternGate::new(&runner, manifest_path.clone(), Vec::new());
 
     // core only, and this one genuinely cannot cover the others. CRAP scores

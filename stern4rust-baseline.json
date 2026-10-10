@@ -1,0 +1,14 @@
+{
+  "offences": {
+    "tests/baseline_tests.rs\u001fpaired-test-file\u001ftests/baseline_tests.rs": 1,
+    "tests/check_tests.rs\u001fpaired-test-file\u001ftests/check_tests.rs": 1,
+    "tests/cleanup_tests.rs\u001fpaired-test-file\u001ftests/cleanup_tests.rs": 1,
+    "tests/dispatch_tests.rs\u001fpaired-test-file\u001ftests/dispatch_tests.rs": 1,
+    "tests/format_tests.rs\u001fpaired-test-file\u001ftests/format_tests.rs": 1,
+    "tests/ignore_tests.rs\u001fpaired-test-file\u001ftests/ignore_tests.rs": 1,
+    "tests/options_tests.rs\u001fpaired-test-file\u001ftests/options_tests.rs": 1,
+    "tests/pipeline_tests.rs\u001fpaired-test-file\u001ftests/pipeline_tests.rs": 1,
+    "tests/report_tests.rs\u001fpaired-test-file\u001ftests/report_tests.rs": 1,
+    "tests/stats_tests.rs\u001fpaired-test-file\u001ftests/stats_tests.rs": 1
+  }
+}
