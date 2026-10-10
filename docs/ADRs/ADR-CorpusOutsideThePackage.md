@@ -33,7 +33,7 @@ this family already use:
 ```
 Cargo.toml     [workspace] members = ["core", "validation"], exclude = ["fixture"]
 core/          cargo-dry4rust -- the published crate
-validation/    publish = false -- the tests with no mirror to be named after
+validation/    publish = false -- the end-to-end tests and the harness they share
 fixture/       the corpus, outside both members
 ```
 
@@ -54,8 +54,9 @@ like the rest of the family is one a reader is not surprised by. It changed no
 measurement, which is the property that made it safe to do at all.
 
 Stage 1 covers the workspace. Stage 2 gates both members: `core` at all
-twenty-one rules, `validation` at twenty. This is a step stricter than the rest
-of the family, which gates `core` and leaves `validation` unmeasured.
+twenty-one rules, `validation` at first at twenty (see Consequences; it has
+since taken every rule). This is a step stricter than the rest of the family,
+which gates `core` and leaves `validation` unmeasured.
 
 ## Forcing constraints / Evidence
 
@@ -102,17 +103,24 @@ cannot run.
 
 ## Consequences
 
-`validation/` is gated at twenty rules rather than left alone. The one it
-cannot take is `paired-test-file`: with no `src/` in that crate, no test file
-can be named after a source file. The stand-down is a `[package.validation]`
-section in `stern4rust.toml` -- stern4rust's own per-package configuration --
-so the report still states which rule was not applied for that member; a
-silence would have been the thing worth objecting to, not the skip.
+`validation/` was gated at twenty rules rather than left alone. The one it
+could not take was `paired-test-file`: with no `src/` in that crate, no test
+file could be named after a source file. The stand-down was a
+`[package.validation]` section in `stern4rust.toml`, later replaced by a
+baseline of the ten scenario files so the rule kept running there.
 
-`crap4rust` stays on core. It scores source functions against coverage and
-validation has none; pointed at validation it also fails outright, because it
-drives coverage with `-p validation`, which does not build the binary those
-tests spawn.
+Updated 2026-10-10: both are gone, and `validation/` takes every rule.
+`validation/src/` holds the harness the scenarios share -- `Fixture`,
+`DryBinary`, `TextReport`, `DuplicateGroupFixture` -- and one thin type per
+scenario, `<scenario>_scenario.rs`, which `tests/<scenario>_scenario_tests.rs`
+pairs with and calls. The split criterion above is unchanged: the subject of
+those tests is still the whole tool, and the corpus still sits outside both
+members.
+
+`crap4rust` stays on core. validation's source is the harness its tests call,
+and pointed at validation crap4rust drives coverage with `-p validation`, which
+does not build the binary those tests spawn: on a clean target they fail
+outright, and on a used one they run whatever binary an earlier run left.
 
 The one house-rule exclusion is gone. `stern4rust.toml` no longer names
 `tests/fixtures/**`, because with the corpus outside the package there is

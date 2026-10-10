@@ -1,9 +1,15 @@
 # End-to-end validation of the cargo-dry4rust binary.
 #
 # These tests drive the built binary against the crates in fixture/ and assert
-# on what it prints. Their subject is the whole tool, not any one source file,
-# so there is no source file for them to be named after -- paired-test-file
-# reports each of them, and stern4rust-baseline.json holds exactly those.
+# on what it prints. Their subject is a scenario -- check, baseline, cleanup --
+# rather than any one source file in core/, which is why they live here.
+#
+# The scenario is what src/ names. Each `<scenario>_scenario.rs` holds the entry
+# point its tests repeat, and `tests/<scenario>_scenario_tests.rs` pairs with it
+# and calls it, so paired-test-file holds here with nothing skipped and nothing
+# baselined. The harness the scenarios share -- `Fixture`, `DryBinary`,
+# `TextReport`, `DuplicateGroupFixture` -- sits beside them, each with a test
+# file of its own.
 #
 # A workspace member rather than an excluded crate, so `cargo test` at the root
 # still runs every one of them, and the house rules judge it like the others.
@@ -21,14 +27,20 @@ publish = false
 
 autotests = false
 
+[lib]
+name = "validation"
+path = "src/lib.rs"
+
 [[test]]
 name = "all_tests"
 path = "tests/all_tests.rs"
 
-[dev-dependencies]
+[dependencies]
 cargo-dry4rust = { workspace = true }
 assert_cmd = { workspace = true }
+tempfile = { workspace = true }
+
+[dev-dependencies]
 predicates = { workspace = true }
 serde_json = { workspace = true }
-tempfile = { workspace = true }
 toml = { workspace = true }

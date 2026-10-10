@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Repository structure only. The published `cargo-dry4rust` crate is unchanged:
+no file under `core/` moved or changed, so its library, binary, output, exit
+codes and file formats are exactly 0.4.0's.
+
+### Changed
+- `validation` pairs its scenario files with source instead of baselining
+  `paired-test-file`. Its shared harness moved out of `tests/common.rs` into
+  `validation/src/`, one type per file -- `Fixture` (`path`, `analysed`,
+  `analysed_with_sub_function`, `duplicated_crate_in`), `DryBinary`
+  (`command`, `command_in`), `TextReport` (`fingerprint_in`) and
+  `DuplicateGroupFixture` (`of`) -- each with a test file of its own. The ten
+  scenario files are renamed `<scenario>_scenario_tests.rs`, and each pairs
+  with a `src/<scenario>_scenario.rs` holding the entry point its tests call:
+  the private helpers `check`, `dispatch` and `format` carried, the
+  `AnalysisOutput::produce` call `pipeline` repeats, and for the other six the
+  binary with `--path` already set. No test was removed and no assertion
+  changed; `validation` runs 109 tests, up from 94.
+- `stern4rust-baseline.json` is deleted and `stern4rust.toml` names no
+  baseline. All twenty-two rules apply to every member with nothing skipped and
+  nothing baselined: `offences=0 baselined=0 rules_applied=22`.
+
 ## [0.4.0] - 2026-10-10
 
 What the library hands back, not what the tool does. The command line, the text

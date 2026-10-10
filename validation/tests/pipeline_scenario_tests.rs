@@ -3,8 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::analysed;
-use crate::common::fixture_path;
 use dry4rust::cli::analysis_output::AnalysisOutput;
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::output_format::OutputFormat;
@@ -14,11 +12,13 @@ use dry4rust::suppression::baseline_file::BaselineFile;
 use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
+use validation::fixture::Fixture;
+use validation::pipeline_scenario::PipelineScenario;
 
 #[test]
 fn analyze_over_a_duplicated_fixture_reports_exact_groups() {
     // Arrange & Act
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
 
     // Assert
     assert!(result.stats.total_code_units > 0);
@@ -28,16 +28,14 @@ fn analyze_over_a_duplicated_fixture_reports_exact_groups() {
 #[test]
 fn produce_applies_the_overrides_before_scanning() {
     // Arrange
-    let root = fixture_path("exact_dupes");
+    let root = Fixture::path("exact_dupes");
     let overrides = CliOverrides {
         min_nodes: Some(1000),
         ..CliOverrides::default()
     };
 
     // Act
-    let output =
-        AnalysisOutput::produce(&RustAnalyzer::new(), &root, OutputFormat::Text, &overrides)
-            .expect("the fixture analyses cleanly");
+    let output = PipelineScenario::produced(&root, &overrides);
 
     // Assert
     assert_eq!(output.config.min_nodes, 1000);
@@ -53,17 +51,11 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     let tmp = TempDir::new().expect("temp dir");
     fs::create_dir_all(tmp.path().join("src")).expect("src");
     fs::copy(
-        fixture_path("exact_dupes").join("src/target.rs"),
+        Fixture::path("exact_dupes").join("src/target.rs"),
         tmp.path().join("src/lib.rs"),
     )
     .expect("copy the fixture");
-    let judged = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        tmp.path(),
-        OutputFormat::Text,
-        &CliOverrides::default(),
-    )
-    .expect("the fixture analyses cleanly");
+    let judged = PipelineScenario::produced(tmp.path(), &CliOverrides::default());
     BaselineFile::record(&judged.result)
         .save(&tmp.path().join("dry4rust-baseline.json"))
         .expect("the baseline is written");
@@ -109,16 +101,10 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
 #[test]
 fn produce_over_a_fixture_returns_config_and_result_together() {
     // Arrange
-    let root = fixture_path("exact_dupes");
+    let root = Fixture::path("exact_dupes");
 
     // Act
-    let output = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        &root,
-        OutputFormat::Text,
-        &CliOverrides::default(),
-    )
-    .expect("the fixture analyses cleanly");
+    let output = PipelineScenario::produced(&root, &CliOverrides::default());
 
     // Assert
     assert!(output.result.stats.total_code_units > 0);

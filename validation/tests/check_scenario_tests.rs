@@ -3,42 +3,25 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::analysed;
-use crate::common::cargo_dry4rust;
-use crate::common::fixture_path;
 use dry4rust::cli::check_command::CheckCommand;
 use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::cli_error::CliError;
-use dry4rust::cli::cli_error::CliResult;
 use dry4rust::cli::output_format::OutputFormat;
-use dry4rust::threshold::Threshold;
 use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
-
-fn checked(fixture: &str, thresholds: &CheckThresholds) -> (CliResult, String) {
-    let (config, result) = analysed(fixture);
-    let reporter = OutputFormat::Text.reporter(None);
-
-    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds)
-        .run()
-        .expect("check produces a report");
-
-    (outcome.result, outcome.text)
-}
-
-fn percent(value: f64) -> Threshold {
-    Threshold::percent("a ceiling", value).expect("the test states a share of a hundred")
-}
+use validation::check_scenario::CheckScenario;
+use validation::dry_binary::DryBinary;
+use validation::fixture::Fixture;
 
 #[test]
 fn check_absolute_passes_percentage_fails() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args([
             "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
+            Fixture::path("exact_dupes").to_str().unwrap(),
             "check",
             "--max-exact",
             "100",
@@ -53,10 +36,10 @@ fn check_absolute_passes_percentage_fails() {
 #[test]
 fn check_fails_with_duplicates() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args([
             "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
+            Fixture::path("exact_dupes").to_str().unwrap(),
             "check",
             "--max-exact",
             "0",
@@ -69,10 +52,10 @@ fn check_fails_with_duplicates() {
 #[test]
 fn check_fails_with_percentage_threshold_exceeded() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args([
             "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
+            Fixture::path("exact_dupes").to_str().unwrap(),
             "check",
             "--max-exact",
             "100",
@@ -88,10 +71,10 @@ fn check_fails_with_percentage_threshold_exceeded() {
 #[test]
 fn check_in_json_is_one_document_carrying_the_verdict() {
     // Arrange & Act
-    let output = cargo_dry4rust()
+    let output = DryBinary::command()
         .args([
             "--path",
-            fixture_path("mixed").to_str().unwrap(),
+            Fixture::path("mixed").to_str().unwrap(),
             "--format",
             "json",
             "check",
@@ -128,10 +111,10 @@ fn check_in_json_is_one_document_carrying_the_verdict() {
 #[test]
 fn check_in_json_says_it_passed_when_nothing_is_breached() {
     // Arrange & Act
-    let output = cargo_dry4rust()
+    let output = DryBinary::command()
         .args([
             "--path",
-            fixture_path("no_dupes").to_str().unwrap(),
+            Fixture::path("no_dupes").to_str().unwrap(),
             "--format",
             "json",
             "check",
@@ -162,10 +145,10 @@ fn check_in_json_says_it_passed_when_nothing_is_breached() {
 #[test]
 fn check_no_dupes_passes() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args([
             "--path",
-            fixture_path("no_dupes").to_str().unwrap(),
+            Fixture::path("no_dupes").to_str().unwrap(),
             "check",
             "--max-exact",
             "0",
@@ -178,10 +161,10 @@ fn check_no_dupes_passes() {
 #[test]
 fn check_no_thresholds_passes_with_duplicates() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args([
             "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
+            Fixture::path("exact_dupes").to_str().unwrap(),
             "check",
         ])
         .assert()
@@ -192,10 +175,10 @@ fn check_no_thresholds_passes_with_duplicates() {
 #[test]
 fn check_passes_with_generous_percentage_threshold() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args([
             "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
+            Fixture::path("exact_dupes").to_str().unwrap(),
             "check",
             "--max-exact",
             "100",
@@ -210,10 +193,10 @@ fn check_passes_with_generous_percentage_threshold() {
 #[test]
 fn check_passes_with_high_threshold() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args([
             "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
+            Fixture::path("exact_dupes").to_str().unwrap(),
             "check",
             "--max-exact",
             "100",
@@ -226,10 +209,10 @@ fn check_passes_with_high_threshold() {
 #[test]
 fn check_with_a_percentage_ceiling_above_a_hundred_is_rejected() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args([
             "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
+            Fixture::path("exact_dupes").to_str().unwrap(),
             "check",
             "--max-exact-percent",
             "150",
@@ -244,12 +227,12 @@ fn check_with_a_percentage_ceiling_above_a_hundred_is_rejected() {
 #[test]
 fn main_dispatches_the_check_subcommand_and_exits_one_when_a_ceiling_is_breached() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .arg("check")
         .arg("--max-exact")
         .arg("0")
         .arg("--path")
-        .arg(fixture_path("exact_dupes"))
+        .arg(Fixture::path("exact_dupes"))
         .assert()
         .code(1);
 }
@@ -257,12 +240,12 @@ fn main_dispatches_the_check_subcommand_and_exits_one_when_a_ceiling_is_breached
 #[test]
 fn main_dispatches_the_check_subcommand_and_succeeds_on_a_clean_fixture() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .arg("check")
         .arg("--max-exact")
         .arg("0")
         .arg("--path")
-        .arg(fixture_path("no_dupes"))
+        .arg(Fixture::path("no_dupes"))
         .assert()
         .success();
 }
@@ -273,12 +256,12 @@ fn run_over_a_clean_fixture_passes_with_every_ceiling_at_zero() {
     let thresholds = CheckThresholds {
         max_exact: Some(0),
         max_near: Some(0),
-        max_exact_percent: Some(percent(0.0)),
-        max_near_percent: Some(percent(0.0)),
+        max_exact_percent: Some(CheckScenario::percent(0.0)),
+        max_near_percent: Some(CheckScenario::percent(0.0)),
     };
 
     // Act
-    let (outcome, text) = checked("no_dupes", &thresholds);
+    let (outcome, text) = CheckScenario::checked("no_dupes", &thresholds);
 
     // Assert
     assert!(outcome.is_ok());
@@ -289,13 +272,13 @@ fn run_over_a_clean_fixture_passes_with_every_ceiling_at_zero() {
 fn run_with_a_generous_percentage_ceiling_passes() {
     // Arrange
     let thresholds = CheckThresholds {
-        max_exact_percent: Some(percent(100.0)),
-        max_near_percent: Some(percent(100.0)),
+        max_exact_percent: Some(CheckScenario::percent(100.0)),
+        max_near_percent: Some(CheckScenario::percent(100.0)),
         ..CheckThresholds::default()
     };
 
     // Act
-    let (outcome, _) = checked("exact_dupes", &thresholds);
+    let (outcome, _) = CheckScenario::checked("exact_dupes", &thresholds);
 
     // Assert
     assert!(outcome.is_ok());
@@ -304,7 +287,7 @@ fn run_with_a_generous_percentage_ceiling_passes() {
 #[test]
 fn run_with_a_near_duplicate_ceiling_fails_when_it_is_exceeded() {
     // Arrange
-    let (config, result) = analysed("near_dupes");
+    let (config, result) = Fixture::analysed("near_dupes");
     let reporter = OutputFormat::Text.reporter(None);
     let thresholds = CheckThresholds {
         max_near: Some(0),
@@ -329,10 +312,10 @@ fn run_with_a_near_duplicate_ceiling_fails_when_it_is_exceeded() {
 #[test]
 fn run_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
     // Arrange
-    let (config, result) = analysed("near_dupes");
+    let (config, result) = Fixture::analysed("near_dupes");
     let reporter = OutputFormat::Text.reporter(None);
     let thresholds = CheckThresholds {
-        max_near_percent: Some(percent(0.0)),
+        max_near_percent: Some(CheckScenario::percent(0.0)),
         ..CheckThresholds::default()
     };
 
@@ -354,12 +337,12 @@ fn run_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
 fn run_with_a_percentage_ceiling_of_zero_fails_on_any_duplication() {
     // Arrange
     let thresholds = CheckThresholds {
-        max_exact_percent: Some(percent(0.0)),
+        max_exact_percent: Some(CheckScenario::percent(0.0)),
         ..CheckThresholds::default()
     };
 
     // Act
-    let (outcome, _) = checked("exact_dupes", &thresholds);
+    let (outcome, _) = CheckScenario::checked("exact_dupes", &thresholds);
 
     // Assert
     assert!(outcome.is_err());
@@ -374,7 +357,7 @@ fn run_with_a_zero_threshold_fails_on_duplicates() {
     };
 
     // Act
-    let (outcome, _) = checked("exact_dupes", &thresholds);
+    let (outcome, _) = CheckScenario::checked("exact_dupes", &thresholds);
 
     // Assert
     assert!(outcome.is_err());
@@ -390,7 +373,7 @@ fn run_with_an_exact_count_ceiling_above_the_findings_passes() {
     };
 
     // Act
-    let (outcome, _) = checked("exact_dupes", &thresholds);
+    let (outcome, _) = CheckScenario::checked("exact_dupes", &thresholds);
 
     // Assert
     assert!(outcome.is_ok());
@@ -402,12 +385,12 @@ fn run_with_every_ceiling_set_reports_each_breach_it_finds() {
     let thresholds = CheckThresholds {
         max_exact: Some(0),
         max_near: Some(0),
-        max_exact_percent: Some(percent(0.0)),
-        max_near_percent: Some(percent(0.0)),
+        max_exact_percent: Some(CheckScenario::percent(0.0)),
+        max_near_percent: Some(CheckScenario::percent(0.0)),
     };
 
     // Act
-    let (outcome, text) = checked("exact_dupes", &thresholds);
+    let (outcome, text) = CheckScenario::checked("exact_dupes", &thresholds);
 
     // Assert
     assert!(
@@ -423,7 +406,7 @@ fn run_with_every_ceiling_set_reports_each_breach_it_finds() {
 #[test]
 fn run_without_thresholds_passes_even_with_duplicates() {
     // Arrange & Act
-    let (outcome, _) = checked("exact_dupes", &CheckThresholds::default());
+    let (outcome, _) = CheckScenario::checked("exact_dupes", &CheckThresholds::default());
 
     // Assert
     assert!(outcome.is_ok());

@@ -3,11 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::analysed;
-use crate::common::cargo_dry4rust;
-use crate::common::duplicated_crate_in;
-use crate::common::fixture_path;
-use crate::common::group;
 use dry4rust::cli::baseline_command::BaselineCommand;
 use dry4rust::config::Config;
 use dry4rust::suppression::baseline_file::BaselineFile;
@@ -17,11 +12,15 @@ use predicate::str;
 use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
+use validation::baseline_scenario::BaselineScenario;
+use validation::dry_binary::DryBinary;
+use validation::duplicate_group_fixture::DuplicateGroupFixture;
+use validation::fixture::Fixture;
 
 #[test]
 fn admits_a_group_some_entry_recorded() {
     // Arrange
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
     let recorded = BaselineFile::record(&result);
     let already_there = result.exact_groups[0].clone();
 
@@ -35,11 +34,14 @@ fn admits_a_group_some_entry_recorded() {
 #[test]
 fn admits_nothing_a_group_it_never_saw() {
     // Arrange
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
     let recorded = BaselineFile::record(&result);
 
     // Act
-    let admitted = recorded.admits(BaselineKind::Exact, &group(0xdead_beef, &["new", "copy"]));
+    let admitted = recorded.admits(
+        BaselineKind::Exact,
+        &DuplicateGroupFixture::of(0xdead_beef, &["new", "copy"]),
+    );
 
     // Assert
     assert!(!admitted);
@@ -49,7 +51,7 @@ fn admits_nothing_a_group_it_never_saw() {
 fn baseline_reads_its_path_from_dry4rust_toml() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    duplicated_crate_in(&tmp);
+    Fixture::duplicated_crate_in(&tmp);
     fs::write(
         tmp.path().join("dry4rust.toml"),
         "baseline = \"ci/recorded.json\"\n",
@@ -58,15 +60,15 @@ fn baseline_reads_its_path_from_dry4rust_toml() {
     let root = tmp.path().to_str().expect("utf-8 path");
 
     // Act
-    cargo_dry4rust()
-        .args(["--path", root, "baseline"])
+    BaselineScenario::command_in(root)
+        .args(["baseline"])
         .assert()
         .success();
 
     // Assert
     assert!(tmp.path().join("ci/recorded.json").exists());
-    cargo_dry4rust()
-        .args(["--path", root, "check", "--max-exact", "0"])
+    BaselineScenario::command_in(root)
+        .args(["check", "--max-exact", "0"])
         .assert()
         .success()
         .stdout(str::contains("Baseline: 1 groups suppressed"));
@@ -76,24 +78,22 @@ fn baseline_reads_its_path_from_dry4rust_toml() {
 fn baseline_then_check_passes_on_what_was_inherited_and_fails_on_what_is_added() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    duplicated_crate_in(&tmp);
+    Fixture::duplicated_crate_in(&tmp);
     let root = tmp.path().to_str().expect("utf-8 path");
 
-    cargo_dry4rust()
-        .args(["--path", root, "check", "--max-exact", "0"])
+    BaselineScenario::command_in(root)
+        .args(["check", "--max-exact", "0"])
         .assert()
         .code(1);
 
-    cargo_dry4rust()
-        .args(["--path", root, "baseline"])
+    BaselineScenario::command_in(root)
+        .args(["baseline"])
         .assert()
         .success();
 
     // Act & Assert
-    cargo_dry4rust()
+    BaselineScenario::command_in(root)
         .args([
-            "--path",
-            root,
             "--baseline",
             "dry4rust-baseline.json",
             "check",
@@ -113,10 +113,8 @@ fn baseline_then_check_passes_on_what_was_inherited_and_fails_on_what_is_added()
     );
     fs::write(tmp.path().join("src/lib.rs"), grown).expect("write");
 
-    cargo_dry4rust()
+    BaselineScenario::command_in(root)
         .args([
-            "--path",
-            root,
             "--baseline",
             "dry4rust-baseline.json",
             "check",
@@ -131,7 +129,7 @@ fn baseline_then_check_passes_on_what_was_inherited_and_fails_on_what_is_added()
 #[test]
 fn is_empty_reports_a_recording_of_a_clean_codebase() {
     // Arrange
-    let (_, result) = analysed("no_dupes");
+    let (_, result) = Fixture::analysed("no_dupes");
 
     // Act
     let recorded = BaselineFile::record(&result);
@@ -144,11 +142,11 @@ fn is_empty_reports_a_recording_of_a_clean_codebase() {
 #[test]
 fn main_dispatches_the_baseline_subcommand_in_dry_run() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .arg("baseline")
         .arg("--dry-run")
         .arg("--path")
-        .arg(fixture_path("exact_dupes"))
+        .arg(Fixture::path("exact_dupes"))
         .assert()
         .success()
         .stdout(str::contains("would be recorded"));
@@ -157,7 +155,7 @@ fn main_dispatches_the_baseline_subcommand_in_dry_run() {
 #[test]
 fn record_orders_entries_so_an_unchanged_codebase_writes_an_unchanged_file() {
     // Arrange
-    let (_, result) = analysed("mixed");
+    let (_, result) = Fixture::analysed("mixed");
 
     // Act
     let first = BaselineFile::record(&result);
@@ -178,7 +176,7 @@ fn record_orders_entries_so_an_unchanged_codebase_writes_an_unchanged_file() {
 #[test]
 fn record_takes_every_group_the_result_holds() {
     // Arrange
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
 
     // Act
     let recorded = BaselineFile::record(&result);
@@ -193,7 +191,7 @@ fn record_takes_every_group_the_result_holds() {
 fn run_in_dry_run_names_what_it_would_record_without_writing_it() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let (config, result) = analysed("exact_dupes");
+    let (config, result) = Fixture::analysed("exact_dupes");
 
     // Act
     let text = BaselineCommand::new(tmp.path(), &config, &result, true)
@@ -211,7 +209,7 @@ fn run_in_dry_run_names_what_it_would_record_without_writing_it() {
 fn run_outside_dry_run_writes_a_baseline_that_loads_back() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let (config, result) = analysed("exact_dupes");
+    let (config, result) = Fixture::analysed("exact_dupes");
 
     // Act
     let text = BaselineCommand::new(tmp.path(), &config, &result, false)
@@ -230,7 +228,7 @@ fn run_outside_dry_run_writes_a_baseline_that_loads_back() {
 fn run_over_a_clean_codebase_records_nothing_and_says_so() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let (_, result) = analysed("no_dupes");
+    let (_, result) = Fixture::analysed("no_dupes");
     let config = Config {
         root: tmp.path().to_path_buf(),
         ..Config::default()
@@ -256,23 +254,17 @@ fn run_over_a_clean_codebase_records_nothing_and_says_so() {
 fn run_twice_records_the_same_groups_rather_than_emptying_the_file() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    duplicated_crate_in(&tmp);
+    Fixture::duplicated_crate_in(&tmp);
     let root = tmp.path().to_str().expect("utf-8 path");
-    cargo_dry4rust()
-        .args(["--path", root, "baseline"])
+    BaselineScenario::command_in(root)
+        .args(["baseline"])
         .assert()
         .success();
     let first = fs::read_to_string(tmp.path().join("dry4rust-baseline.json")).expect("read");
 
     // Act
-    cargo_dry4rust()
-        .args([
-            "--path",
-            root,
-            "--baseline",
-            "dry4rust-baseline.json",
-            "baseline",
-        ])
+    BaselineScenario::command_in(root)
+        .args(["--baseline", "dry4rust-baseline.json", "baseline"])
         .assert()
         .success();
 
@@ -288,7 +280,7 @@ fn run_twice_records_the_same_groups_rather_than_emptying_the_file() {
 #[test]
 fn save_then_load_returns_what_was_recorded() {
     // Arrange
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
     let recorded = BaselineFile::record(&result);
     let tmp = TempDir::new().expect("temp dir");
     let path = tmp.path().join("nested").join("dry4rust-baseline.json");

@@ -22,21 +22,8 @@
 # header rule that compares against one file needs one header.
 header-file = "docs/header.txt"
 
-# Every rule applies to every member: nothing is skipped, nothing is selected,
-# and no package has a section of its own.
-#
-# The baseline holds exactly one kind of offence, and it is the one shape no
-# edit can honestly cure: paired-test-file against validation's ten scenario
-# files. validation has no src/ -- its tests drive the whole tool against the
-# corpus in fixture/, and are named for behaviours (check, baseline, cleanup)
-# rather than for files of their own. Pairing them would mean inventing a
-# src/check.rs for check_tests.rs to point at, which is the "create the missing
-# source file" answer stern4rust's R016 rejects; moving them into core/ would
-# ship a test suite that cannot find its corpus, which is what the workspace
-# split was for.
-#
-# Baselined rather than skipped so the rule still runs there: a scenario file
-# added later is reported until somebody decides about it, where a skip would
-# have waved it through. Re-record with `cargo stern4rust --write-baseline`
-# only to admit a new scenario file, never to admit any other offence.
-baseline = "stern4rust-baseline.json"
+# Every rule applies to every member -- core, validation and xtask -- with
+# nothing skipped, nothing selected, nothing baselined and no package given a
+# section of its own. validation included: its scenario files pair with
+# src/<scenario>_scenario.rs, the entry point each one calls, so
+# paired-test-file holds there like everywhere else.

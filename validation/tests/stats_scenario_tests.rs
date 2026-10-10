@@ -3,27 +3,21 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::analysed;
-use crate::common::cargo_dry4rust;
-use crate::common::fixture_path;
 use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::cli::stats_command::StatsCommand;
 use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
+use validation::dry_binary::DryBinary;
+use validation::fixture::Fixture;
+use validation::stats_scenario::StatsScenario;
 
 #[test]
 fn json_format_stats() {
     // Arrange & Act
-    let output = cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--format",
-            "json",
-            "stats",
-        ])
+    let output = StatsScenario::command_on("exact_dupes")
+        .args(["--format", "json", "stats"])
         .assert()
         .success()
         .get_output()
@@ -39,14 +33,8 @@ fn json_format_stats() {
 #[test]
 fn json_stats_includes_line_counts() {
     // Arrange & Act
-    let output = cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--format",
-            "json",
-            "stats",
-        ])
+    let output = StatsScenario::command_on("exact_dupes")
+        .args(["--format", "json", "stats"])
         .assert()
         .success()
         .get_output()
@@ -63,10 +51,10 @@ fn json_stats_includes_line_counts() {
 #[test]
 fn main_dispatches_the_stats_subcommand_to_a_successful_summary() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .arg("stats")
         .arg("--path")
-        .arg(fixture_path("exact_dupes"))
+        .arg(Fixture::path("exact_dupes"))
         .assert()
         .success();
 }
@@ -74,7 +62,7 @@ fn main_dispatches_the_stats_subcommand_to_a_successful_summary() {
 #[test]
 fn run_over_a_clean_fixture_still_writes_the_summary() {
     // Arrange
-    let (_, result) = analysed("no_dupes");
+    let (_, result) = Fixture::analysed("no_dupes");
     let reporter = OutputFormat::Text.reporter(None);
 
     // Act
@@ -90,7 +78,7 @@ fn run_over_a_clean_fixture_still_writes_the_summary() {
 #[test]
 fn run_writes_the_summary_and_nothing_else() {
     // Arrange
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
     let reporter = OutputFormat::Text.reporter(None);
 
     // Act
@@ -107,12 +95,8 @@ fn run_writes_the_summary_and_nothing_else() {
 #[test]
 fn stats_shows_duplicate_lines() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "stats",
-        ])
+    StatsScenario::command_on("exact_dupes")
+        .args(["stats"])
         .assert()
         .success()
         .stdout(str::contains("Duplicated lines (exact):"))
@@ -122,12 +106,8 @@ fn stats_shows_duplicate_lines() {
 #[test]
 fn stats_shows_summary() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "stats",
-        ])
+    StatsScenario::command_on("exact_dupes")
+        .args(["stats"])
         .assert()
         .success()
         .stdout(str::contains("Total code units analyzed"))
@@ -137,15 +117,8 @@ fn stats_shows_summary() {
 #[test]
 fn sub_function_json_stats() {
     // Arrange & Act
-    let output = cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_dupes").to_str().unwrap(),
-            "--sub-function",
-            "--format",
-            "json",
-            "stats",
-        ])
+    let output = StatsScenario::command_on("sub_function_dupes")
+        .args(["--sub-function", "--format", "json", "stats"])
         .assert()
         .success()
         .get_output()
@@ -162,15 +135,8 @@ fn sub_function_json_stats() {
 #[test]
 fn sub_function_min_sub_nodes_filters() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_dupes").to_str().unwrap(),
-            "--sub-function",
-            "--min-sub-nodes",
-            "1000",
-            "stats",
-        ])
+    StatsScenario::command_on("sub_function_dupes")
+        .args(["--sub-function", "--min-sub-nodes", "1000", "stats"])
         .assert()
         .success()
         .stdout(str::contains("Sub-function").not());
@@ -179,13 +145,8 @@ fn sub_function_min_sub_nodes_filters() {
 #[test]
 fn sub_function_stats_shown() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_dupes").to_str().unwrap(),
-            "--sub-function",
-            "stats",
-        ])
+    StatsScenario::command_on("sub_function_dupes")
+        .args(["--sub-function", "stats"])
         .assert()
         .success()
         .stdout(str::contains("Sub-function exact: 3 groups"));
@@ -194,14 +155,8 @@ fn sub_function_stats_shown() {
 #[test]
 fn without_sub_function_json_no_sub_fields() {
     // Arrange & Act
-    let output = cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_dupes").to_str().unwrap(),
-            "--format",
-            "json",
-            "stats",
-        ])
+    let output = StatsScenario::command_on("sub_function_dupes")
+        .args(["--format", "json", "stats"])
         .assert()
         .success()
         .get_output()

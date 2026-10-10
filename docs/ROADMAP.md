@@ -53,12 +53,12 @@ Version 0.4.0. Forked, cleaned, corrected, and under the family's gates -- its o
   added, with the suppressed count in every summary
 - Configuration from defaults, `dry4rust.toml`, `[package.metadata.dry4rust]`
   and CLI flags, with every ranged value carrying its range in its type
-- 642 tests (477 core, 94 validation, 71 xtask); `stern4rust` clean with all 22
-  rules applied to every member and none skipped, its baseline holding only the
-  ten scenario files `validation` has no source to name after; `dry4rust`, built
-  from this checkout, finding nothing in its own source beyond a two-group
-  baseline; `crap4rust` clean at 15 with no override; every source file
-  mirrored; no file at or above 10 on `iceberg4rust`
+- 657 tests (477 core, 109 validation, 71 xtask); `stern4rust` clean with all
+  22 rules applied to every member, none skipped and nothing baselined --
+  `validation`'s scenario files pair with a scenario type each in its `src/`;
+  `dry4rust`, built from this checkout, finding nothing in its own source
+  beyond a two-group baseline; `crap4rust` clean at 15 with no override; every
+  source file mirrored; no file at or above 10 on `iceberg4rust`
 - Gates run as `just stage1` / `just stage2` on Windows, Linux and macOS, and CI
   runs those same two commands on all three
 

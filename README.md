@@ -34,11 +34,12 @@ near-duplicate detection that no longer hides what exact detection reports. Adde
 baseline mode, and configuration that cannot hold an impossible threshold.
 
 The surrounding repository is under this family's house rules and gates: `cargo stern4rust`
-reports no offences with all twenty-two rules applied to every workspace member and none
-skipped -- its one baseline holds the ten end-to-end scenario files that have no source
-file to be named after -- `cargo crap4rust` finds no function at or above 15, every source
-file has a mirrored test file, no file reaches 10 on `cargo iceberg4rust`, and `dry4rust`
-run on its own source finds nothing beyond the two near-duplicate groups its baseline records.
+reports no offences with all twenty-two rules applied to every workspace member, none
+skipped and nothing baselined -- the end-to-end scenario files pair with a thin scenario
+type each in `validation/src/` -- `cargo crap4rust` finds no function at or above 15, every
+source file has a mirrored test file, no file reaches 10 on `cargo iceberg4rust`, and
+`dry4rust` run on its own source finds nothing beyond the two near-duplicate groups its
+baseline records.
 
 Commands below are `cargo dry4rust`; the upstream `cargo dupes` spelling is gone.
 
@@ -443,8 +444,8 @@ The scanner automatically:
 workspace crate declares.
 
 The repository is a workspace: `core/` is the published crate, `validation/` holds the
-end-to-end tests, `xtask/` runs the stage 2 gates, and `fixture/` is the corpus both
-are pointed at.
+end-to-end tests and the harness they share, `xtask/` runs the stage 2 gates, and
+`fixture/` is the corpus both are pointed at.
 
 ```sh
 cargo build          # Build

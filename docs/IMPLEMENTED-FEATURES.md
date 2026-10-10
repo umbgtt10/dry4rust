@@ -3,6 +3,18 @@
 What each version added, newest first. Upstream's releases are included, under
 their own heading, because the engine they built is the engine this tool runs.
 
+## Unreleased
+
+`validation` pairs its scenario files with source instead of baselining
+`paired-test-file`. The harness its tests shared moved out of
+`tests/common.rs` into `validation/src/` -- `Fixture`, `DryBinary`,
+`TextReport`, `DuplicateGroupFixture`, each with a test file of its own -- and
+each scenario file, renamed `<scenario>_scenario_tests.rs`, pairs with a
+`src/<scenario>_scenario.rs` holding the entry point its tests call.
+`stern4rust-baseline.json` is gone: every stern4rust rule applies to every
+member with nothing skipped and nothing baselined. The published crate is
+unchanged.
+
 ## Version 0.4.0
 
 The library returns what it used to write. Commands, the dispatcher and the

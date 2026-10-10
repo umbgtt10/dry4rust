@@ -3,14 +3,17 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod baseline_tests;
-pub mod check_tests;
-pub mod cleanup_tests;
-pub mod common;
-pub mod dispatch_tests;
-pub mod format_tests;
-pub mod ignore_tests;
-pub mod options_tests;
-pub mod pipeline_tests;
-pub mod report_tests;
-pub mod stats_tests;
+pub mod baseline_scenario_tests;
+pub mod check_scenario_tests;
+pub mod cleanup_scenario_tests;
+pub mod dispatch_scenario_tests;
+pub mod dry_binary_tests;
+pub mod duplicate_group_fixture_tests;
+pub mod fixture_tests;
+pub mod format_scenario_tests;
+pub mod ignore_scenario_tests;
+pub mod options_scenario_tests;
+pub mod pipeline_scenario_tests;
+pub mod report_scenario_tests;
+pub mod stats_scenario_tests;
+pub mod text_report_tests;

@@ -105,10 +105,11 @@ ones, and at the same floor -- a baseline matches only at the floor it was
 recorded at:
 `cargo run --bin cargo-dry4rust -- dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
-All twenty-two of its rules apply to every member -- `core`, `validation` and
-`xtask` -- with nothing skipped, nothing selected and nothing unconfigured.
-`stern4rust.toml` carries no `skip`, no `rules` and no `[package.*]` section,
-and the report ends `rules_applied=22 rules_skipped=0 rules_unconfigured=0`.
+All twenty-two of stern4rust's rules apply to every member -- `core`,
+`validation` and `xtask` -- with nothing skipped, nothing selected, nothing
+baselined and nothing unconfigured. `stern4rust.toml` carries no `skip`, no
+`rules`, no `baseline` and no `[package.*]` section, and the report ends
+`baselined=0 ... rules_applied=22 rules_skipped=0 rules_unconfigured=0`.
 `docs/header.txt` holds the four-line header every `.rs` file carries and
 `stern4rust.toml` names it -- in the config rather than the gate script, so a
 hand-run of `cargo stern4rust` checks exactly what the gate checks.
@@ -120,18 +121,18 @@ The stern gate passes no `--package` at all, so one call judges every member
 and the report carries one roll-up `summary:` line. `xtask` is a member and is
 gated like the rest. The crate that runs the gates is not exempt from them.
 
-One baseline, `stern4rust-baseline.json`, holds ten offences of one kind:
-`paired-test-file` against `validation`'s scenario files. `validation` has no
-`src/` -- its tests drive the whole tool against `fixture/` and are named for
-behaviours, `check_tests.rs` and `cleanup_tests.rs`, rather than for a file of
-their own -- so no rename can pair them, and inventing a `src/check.rs` for one
-to point at is the answer the rule's own ADR rejects. Moving them into `core/`
-would ship a test suite that cannot find its corpus, which is what the
-workspace split was for. The rule used to be stood down for `validation` with a
-`skip`; the baseline keeps it running there instead, so a scenario file added
-later is reported until somebody decides about it. Re-record it with
-`cargo stern4rust --write-baseline` only to admit a new scenario file -- never
-any other offence -- and the summary's `baselined=` count says how many it holds.
+There is no stern baseline. `validation`'s tests drive the whole tool against
+`fixture/`, so their subject is a scenario -- check, baseline, cleanup -- rather
+than a file in `core/`. While `validation` had no `src/`, `paired-test-file`
+reported its ten scenario files; the rule was stood down with a `skip`, then
+held in a baseline. Both are gone. `validation/src/` holds the harness the
+scenarios share -- `Fixture`, `DryBinary`, `TextReport`, `DuplicateGroupFixture`,
+each with a test file of its own -- and one thin type per scenario:
+`tests/check_scenario_tests.rs` pairs with `src/check_scenario.rs`, whose
+`CheckScenario` holds the entry point those tests repeat and call. A scenario
+added later gets the same pair -- a `src/<scenario>_scenario.rs` holding what
+its tests repeat, and a `tests/<scenario>_scenario_tests.rs` calling it --
+never a baseline entry.
 
 Nothing is excluded. The corpus used to live under `tests/fixtures/` and had to
 be excluded from the header rule; it now lives in `fixture/`, outside every
@@ -141,12 +142,15 @@ measure -- and is never "fixed".
 
 Stage 1 covers the workspace. The stern gate covers every member, which is one
 step stricter than the rest of the family: the other workspaces here gate
-`core` and leave `validation` unmeasured.
+`core` and leave `validation` unmeasured. `twin4rust` and `iceberg4rust` take
+every member too, and in `validation` they have source to measure: each harness
+and scenario file is mirrored and scored like core's.
 
-`crap4rust` is the one gate that stays on core. It scores source functions
-against their coverage and `validation` has no source, only tests; pointed
-there it also fails outright, because it drives coverage with `-p validation`,
-which does not build core's binary for the 53 tests that spawn it.
+`crap4rust` is the one gate that stays on core. `validation` has source -- the
+harness and the scenario types its tests call -- but crap4rust drives coverage
+with `-p validation`, which does not build core's binary for the tests that
+spawn it. On a clean target they fail outright; on a used one they run whatever
+binary an earlier run left behind, which measures nothing about this checkout.
 
 `crap4rust` runs at 15 -- the family's number, with no override and no
 tolerance. Nothing is baselined, skipped or budgeted.
@@ -207,7 +211,8 @@ is worth a test; if it is not, deleting it is the honest answer.
 - do not use fully qualified paths; use `use` imports instead
 - unit tests are not allowed. Only integration tests are, under `core/tests/`
   for a single source file, or `validation/tests/` when the subject is the
-  whole tool
+  whole tool -- a scenario, paired with its `validation/src/<scenario>_scenario.rs`
+  -- or one of the harness files beside it
 - no unnecessary comments in code
 - no `&mut` input parameters; prefer return values (`&mut self` is allowed in
   traits and impl blocks)

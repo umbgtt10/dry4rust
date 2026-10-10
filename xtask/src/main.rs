@@ -44,9 +44,9 @@ fn run_stage2() -> ExitCode {
     let parser = CrapReportParser::new();
 
     // No --package at all. One call judges every member against every rule,
-    // and stern4rust.toml names the header and the baseline rather than this
-    // call, so a hand-run of `cargo stern4rust` from the repository root sees
-    // exactly what this sees.
+    // and stern4rust.toml names the header rather than this call, so a hand-run
+    // of `cargo stern4rust` from the repository root sees exactly what this
+    // sees.
     let stern = SternGate::new(&runner, manifest_path.clone(), Vec::new());
 
     // Second, for the same reason stern4rust is first: removing a duplicate
@@ -69,11 +69,11 @@ fn run_stage2() -> ExitCode {
         String::from(DRY_MIN_NODES),
     );
 
-    // core only, and this one genuinely cannot cover the others. CRAP scores
-    // source functions against their coverage, and validation has no source --
-    // only tests. Running it there also fails outright: coverage driven with
-    // `-p validation` does not build core's binary, so the tests that spawn it
-    // cannot find it.
+    // core only. validation has source -- the harness and the scenario types
+    // its tests call -- but coverage driven with `-p validation` does not build
+    // core's binary. On a clean target the tests that spawn it cannot find it
+    // and the run fails outright; on a used one they find whatever binary an
+    // earlier run left behind, which is not a measurement of this checkout.
     let crap = CrapGate::new(
         &runner,
         &parser,
@@ -82,10 +82,9 @@ fn run_stage2() -> ExitCode {
         String::from(CRAP_THRESHOLD),
     );
 
-    // All three in one call rather than one call each. Verified equivalent:
-    // scoping to validation alone scans nothing and passes vacuously, because
-    // it has no source files to mirror or to score, and adding it to the core
-    // invocation leaves the file count unchanged.
+    // All three in one call rather than one call each, so one report covers
+    // every member. validation's src/ -- the shared harness and one scenario
+    // type per scenario file -- is mirrored and scored like core's and xtask's.
     let measured = vec![
         String::from(CORE_PACKAGE),
         String::from(VALIDATION_PACKAGE),

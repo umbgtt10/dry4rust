@@ -3,21 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::analysed;
 use dry4rust::cli::output_format::OutputFormat;
-use dry4rust::cli::stats_command::StatsCommand;
 use serde_json::Value;
 use serde_json::from_str;
-
-fn summary_in(format: OutputFormat) -> String {
-    let (_, result) = analysed("exact_dupes");
-    let reporter = format.reporter(None);
-
-    StatsCommand::new(&result, reporter.as_ref())
-        .run()
-        .expect("reporting succeeds")
-        .text
-}
+use validation::format_scenario::FormatScenario;
 
 #[test]
 fn default_is_text_so_a_run_without_the_flag_is_readable() {
@@ -31,7 +20,7 @@ fn default_is_text_so_a_run_without_the_flag_is_readable() {
 #[test]
 fn reporter_in_json_mode_writes_parseable_json() {
     // Arrange & Act
-    let summary = summary_in(OutputFormat::Json);
+    let summary = FormatScenario::summary_in(OutputFormat::Json);
 
     // Assert
     let parsed: Value = from_str(&summary).expect("valid json");
@@ -41,7 +30,7 @@ fn reporter_in_json_mode_writes_parseable_json() {
 #[test]
 fn reporter_in_text_mode_writes_the_headed_summary() {
     // Arrange & Act
-    let summary = summary_in(OutputFormat::Text);
+    let summary = FormatScenario::summary_in(OutputFormat::Text);
 
     // Assert
     assert!(summary.starts_with("Duplication Statistics"), "{summary}");

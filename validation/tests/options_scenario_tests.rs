@@ -3,18 +3,17 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::cargo_dry4rust;
-use crate::common::fixture_path;
 use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
+use validation::dry_binary::DryBinary;
+use validation::options_scenario::OptionsScenario;
 
 #[test]
 fn default_command_is_report() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args(["--path", fixture_path("exact_dupes").to_str().unwrap()])
+    OptionsScenario::command_on("exact_dupes")
         .assert()
         .success()
         .stdout(str::contains("Duplication Statistics"))
@@ -24,7 +23,7 @@ fn default_command_is_report() {
 #[test]
 fn error_on_nonexistent_path() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .args(["--path", "/nonexistent/path/that/does/not/exist", "stats"])
         .assert()
         .code(2)
@@ -36,14 +35,8 @@ fn exclude_option_drops_the_named_paths_from_the_report() {
     // Arrange & Act & Assert -- `src` rather than `lib.rs`, because a fixture's
     // code lives in target.rs and lib.rs is only the registry that names it;
     // excluding one file no longer leaves the scan with nothing
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--exclude",
-            "src",
-            "stats",
-        ])
+    OptionsScenario::command_on("exact_dupes")
+        .args(["--exclude", "src", "stats"])
         .assert()
         .code(2)
         .stderr(str::contains("No source files"));
@@ -53,14 +46,8 @@ fn exclude_option_drops_the_named_paths_from_the_report() {
 fn exclude_option_leaves_the_files_it_does_not_name() {
     // Arrange & Act & Assert -- target.rs holds every unit, so dropping it
     // leaves a registry that parses to nothing rather than nothing to parse
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--exclude",
-            "target.rs",
-            "stats",
-        ])
+    OptionsScenario::command_on("exact_dupes")
+        .args(["--exclude", "target.rs", "stats"])
         .assert()
         .success()
         .stdout(str::contains("Total code units analyzed: 0"));
@@ -69,14 +56,8 @@ fn exclude_option_leaves_the_files_it_does_not_name() {
 #[test]
 fn exclude_tests_flag_reduces_duplicates() {
     // Arrange & Act
-    let output_all = cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("test_code").to_str().unwrap(),
-            "--format",
-            "json",
-            "stats",
-        ])
+    let output_all = OptionsScenario::command_on("test_code")
+        .args(["--format", "json", "stats"])
         .assert()
         .success()
         .get_output()
@@ -87,15 +68,8 @@ fn exclude_tests_flag_reduces_duplicates() {
     // Assert
     assert_eq!(all["exact_duplicate_units"].as_u64().unwrap(), 3);
 
-    let output_excl = cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("test_code").to_str().unwrap(),
-            "--exclude-tests",
-            "--format",
-            "json",
-            "stats",
-        ])
+    let output_excl = OptionsScenario::command_on("test_code")
+        .args(["--exclude-tests", "--format", "json", "stats"])
         .assert()
         .success()
         .get_output()
@@ -109,13 +83,8 @@ fn exclude_tests_flag_reduces_duplicates() {
 #[test]
 fn exclude_tests_text_report() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("test_code").to_str().unwrap(),
-            "--exclude-tests",
-            "report",
-        ])
+    OptionsScenario::command_on("test_code")
+        .args(["--exclude-tests", "report"])
         .assert()
         .success()
         .stdout(str::contains("Exact Duplicates"))
@@ -125,7 +94,7 @@ fn exclude_tests_text_report() {
 #[test]
 fn help_flag_lists_every_subcommand_the_enum_declares() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .arg("--help")
         .assert()
         .success()
@@ -140,7 +109,7 @@ fn help_flag_lists_every_subcommand_the_enum_declares() {
 #[test]
 fn help_flag_prints_usage_and_exits_success() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .arg("--help")
         .assert()
         .success()
@@ -150,9 +119,7 @@ fn help_flag_prints_usage_and_exits_success() {
 #[test]
 fn main_over_a_path_that_does_not_exist_reports_the_error_and_exits_non_zero() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .arg("--path")
-        .arg(fixture_path("no_such_fixture_anywhere"))
+    OptionsScenario::command_on("no_such_fixture_anywhere")
         .assert()
         .failure()
         .stderr(str::contains("Error"));
@@ -161,14 +128,8 @@ fn main_over_a_path_that_does_not_exist_reports_the_error_and_exits_non_zero() {
 #[test]
 fn min_lines_option() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--min-lines",
-            "1000",
-            "stats",
-        ])
+    OptionsScenario::command_on("exact_dupes")
+        .args(["--min-lines", "1000", "stats"])
         .assert()
         .success()
         .stdout(str::contains("Exact duplicates: 0 groups"));
@@ -177,14 +138,8 @@ fn min_lines_option() {
 #[test]
 fn min_nodes_option() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--min-nodes",
-            "1000",
-            "stats",
-        ])
+    OptionsScenario::command_on("exact_dupes")
+        .args(["--min-nodes", "1000", "stats"])
         .assert()
         .success()
         .stdout(str::contains("Exact duplicates: 0 groups"));
@@ -193,14 +148,8 @@ fn min_nodes_option() {
 #[test]
 fn threshold_above_one_is_rejected_rather_than_silently_finding_nothing() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("near_dupes").to_str().unwrap(),
-            "--threshold",
-            "5",
-            "report",
-        ])
+    OptionsScenario::command_on("near_dupes")
+        .args(["--threshold", "5", "report"])
         .assert()
         .code(2)
         .stderr(str::contains(

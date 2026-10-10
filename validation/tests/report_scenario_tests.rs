@@ -3,28 +3,20 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::analysed;
-use crate::common::analysed_with_sub_function;
-use crate::common::cargo_dry4rust;
-use crate::common::fixture_path;
 use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::cli::report_command::ReportCommand;
 use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;
 use serde_json::from_str;
+use validation::fixture::Fixture;
+use validation::report_scenario::ReportScenario;
 
 #[test]
 fn json_format_report() {
     // Arrange & Act
-    let output = cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "--format",
-            "json",
-            "report",
-        ])
+    let output = ReportScenario::command_on("exact_dupes")
+        .args(["--format", "json", "report"])
         .assert()
         .success()
         .get_output()
@@ -50,14 +42,8 @@ fn json_format_report() {
 #[test]
 fn near_dupes_detected() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("near_dupes").to_str().unwrap(),
-            "--threshold",
-            "0.7",
-            "report",
-        ])
+    ReportScenario::command_on("near_dupes")
+        .args(["--threshold", "0.7", "report"])
         .assert()
         .success()
         .stdout(str::contains("Near Duplicates"))
@@ -68,12 +54,8 @@ fn near_dupes_detected() {
 #[test]
 fn report_exact_dupes_fixture() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("exact_dupes").to_str().unwrap(),
-            "report",
-        ])
+    ReportScenario::command_on("exact_dupes")
+        .args(["report"])
         .assert()
         .success()
         .stdout(str::contains("Exact Duplicates"))
@@ -83,8 +65,8 @@ fn report_exact_dupes_fixture() {
 #[test]
 fn report_mixed_fixture() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args(["--path", fixture_path("mixed").to_str().unwrap(), "report"])
+    ReportScenario::command_on("mixed")
+        .args(["report"])
         .assert()
         .success()
         .stdout(str::contains("Exact Duplicates"))
@@ -94,12 +76,8 @@ fn report_mixed_fixture() {
 #[test]
 fn report_no_dupes_fixture() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("no_dupes").to_str().unwrap(),
-            "report",
-        ])
+    ReportScenario::command_on("no_dupes")
+        .args(["report"])
         .assert()
         .success()
         .stdout(str::contains("No exact duplicates"));
@@ -108,7 +86,7 @@ fn report_no_dupes_fixture() {
 #[test]
 fn run_over_a_clean_fixture_says_so_rather_than_printing_an_empty_section() {
     // Arrange
-    let (_, result) = analysed("no_dupes");
+    let (_, result) = Fixture::analysed("no_dupes");
     let reporter = OutputFormat::Text.reporter(None);
 
     // Act
@@ -128,7 +106,7 @@ fn run_over_a_clean_fixture_says_so_rather_than_printing_an_empty_section() {
 #[test]
 fn run_writes_both_the_stats_and_the_groups() {
     // Arrange
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
     let reporter = OutputFormat::Text.reporter(None);
 
     // Act
@@ -145,7 +123,7 @@ fn run_writes_both_the_stats_and_the_groups() {
 #[test]
 fn run_writes_the_sub_function_sections_when_there_are_any() {
     // Arrange
-    let (_, result) = analysed_with_sub_function("sub_function_near_dupes");
+    let (_, result) = Fixture::analysed_with_sub_function("sub_function_near_dupes");
     let reporter = OutputFormat::Text.reporter(None);
 
     // Act
@@ -174,13 +152,8 @@ fn run_writes_the_sub_function_sections_when_there_are_any() {
 #[test]
 fn sub_function_detects_duplicate_branches() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_dupes").to_str().unwrap(),
-            "--sub-function",
-            "report",
-        ])
+    ReportScenario::command_on("sub_function_dupes")
+        .args(["--sub-function", "report"])
         .assert()
         .success()
         .stdout(str::contains("Sub-function Exact Duplicates"))
@@ -192,15 +165,8 @@ fn sub_function_detects_duplicate_branches() {
 #[test]
 fn sub_function_json_report_carries_the_sub_near_section() {
     // Arrange & Act
-    let output = cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_near_dupes").to_str().unwrap(),
-            "--sub-function",
-            "--format",
-            "json",
-            "report",
-        ])
+    let output = ReportScenario::command_on("sub_function_near_dupes")
+        .args(["--sub-function", "--format", "json", "report"])
         .assert()
         .success()
         .get_output()
@@ -236,13 +202,8 @@ fn sub_function_json_report_carries_the_sub_near_section() {
 #[test]
 fn sub_function_near_duplicates_are_reported_under_their_own_heading() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_near_dupes").to_str().unwrap(),
-            "--sub-function",
-            "report",
-        ])
+    ReportScenario::command_on("sub_function_near_dupes")
+        .args(["--sub-function", "report"])
         .assert()
         .success()
         .stdout(str::contains("Sub-function near:  1 groups (2 units)"))
@@ -254,13 +215,8 @@ fn sub_function_near_duplicates_are_reported_under_their_own_heading() {
 #[test]
 fn sub_function_shows_parent_names() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_dupes").to_str().unwrap(),
-            "--sub-function",
-            "report",
-        ])
+    ReportScenario::command_on("sub_function_dupes")
+        .args(["--sub-function", "report"])
         .assert()
         .success()
         .stdout(str::contains("in handle_positive"))
@@ -272,12 +228,8 @@ fn sub_function_shows_parent_names() {
 #[test]
 fn without_sub_function_flag_no_sub_sections() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
-        .args([
-            "--path",
-            fixture_path("sub_function_dupes").to_str().unwrap(),
-            "report",
-        ])
+    ReportScenario::command_on("sub_function_dupes")
+        .args(["report"])
         .assert()
         .success()
         .stdout(str::contains("Exact Duplicates"))

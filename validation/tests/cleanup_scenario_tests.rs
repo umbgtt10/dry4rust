@@ -3,15 +3,15 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::analysed;
-use crate::common::cargo_dry4rust;
-use crate::common::fixture_path;
 use dry4rust::cli::cleanup_command::CleanupCommand;
 use dry4rust::cli::ignore_command::IgnoreCommand;
 use predicate::str;
 use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
+use validation::cleanup_scenario::CleanupScenario;
+use validation::dry_binary::DryBinary;
+use validation::fixture::Fixture;
 
 #[test]
 fn cleanup_dry_run() {
@@ -19,7 +19,7 @@ fn cleanup_dry_run() {
     let tmp = TempDir::new().unwrap();
     fs::create_dir_all(tmp.path().join("src")).unwrap();
     fs::copy(
-        fixture_path("exact_dupes").join("src/target.rs"),
+        Fixture::path("exact_dupes").join("src/target.rs"),
         tmp.path().join("src/lib.rs"),
     )
     .unwrap();
@@ -31,13 +31,8 @@ fn cleanup_dry_run() {
     )
     .unwrap();
 
-    cargo_dry4rust()
-        .args([
-            "--path",
-            tmp.path().to_str().unwrap(),
-            "cleanup",
-            "--dry-run",
-        ])
+    CleanupScenario::command_in(tmp.path())
+        .args(["cleanup", "--dry-run"])
         .assert()
         .success()
         .stdout(str::contains("Stale entries (dry run)"))
@@ -56,13 +51,13 @@ fn cleanup_removes_stale_entries() {
     let tmp = TempDir::new().unwrap();
     fs::create_dir_all(tmp.path().join("src")).unwrap();
     fs::copy(
-        fixture_path("exact_dupes").join("src/target.rs"),
+        Fixture::path("exact_dupes").join("src/target.rs"),
         tmp.path().join("src/lib.rs"),
     )
     .unwrap();
 
-    let output = cargo_dry4rust()
-        .args(["--path", tmp.path().to_str().unwrap(), "report"])
+    let output = CleanupScenario::command_in(tmp.path())
+        .args(["report"])
         .assert()
         .success()
         .get_output()
@@ -80,8 +75,8 @@ fn cleanup_removes_stale_entries() {
         })
         .expect("Should find a fingerprint");
 
-    cargo_dry4rust()
-        .args(["--path", tmp.path().to_str().unwrap(), "ignore", &real_fp])
+    CleanupScenario::command_in(tmp.path())
+        .args(["ignore", &real_fp])
         .assert()
         .success();
 
@@ -92,16 +87,16 @@ fn cleanup_removes_stale_entries() {
     );
     fs::write(&ignore_path, new_content).unwrap();
 
-    cargo_dry4rust()
-        .args(["--path", tmp.path().to_str().unwrap(), "cleanup"])
+    CleanupScenario::command_in(tmp.path())
+        .args(["cleanup"])
         .assert()
         .success()
         .stdout(str::contains("Removed stale entries"))
         .stdout(str::contains("deadbeefdeadbeef"))
         .stdout(str::contains("Removed 1 stale entries"));
 
-    cargo_dry4rust()
-        .args(["--path", tmp.path().to_str().unwrap(), "ignored"])
+    CleanupScenario::command_in(tmp.path())
+        .args(["ignored"])
         .assert()
         .success()
         .stdout(str::contains(&real_fp));
@@ -115,11 +110,11 @@ fn cleanup_removes_stale_entries() {
 #[test]
 fn main_dispatches_the_cleanup_subcommand_in_dry_run() {
     // Arrange & Act & Assert
-    cargo_dry4rust()
+    DryBinary::command()
         .arg("cleanup")
         .arg("--dry-run")
         .arg("--path")
-        .arg(fixture_path("exact_dupes"))
+        .arg(Fixture::path("exact_dupes"))
         .assert()
         .success();
 }
@@ -128,7 +123,7 @@ fn main_dispatches_the_cleanup_subcommand_in_dry_run() {
 fn run_in_dry_run_leaves_the_ignore_file_alone() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
 
     // Act
     CleanupCommand::new(tmp.path(), &result, true)
@@ -143,7 +138,7 @@ fn run_in_dry_run_leaves_the_ignore_file_alone() {
 fn run_outside_dry_run_takes_away_a_file_it_emptied() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
     IgnoreCommand::new(tmp.path(), "deadbeef12345678", None)
         .run()
         .expect("ignore accepted");
@@ -169,7 +164,7 @@ fn run_outside_dry_run_takes_away_a_file_it_emptied() {
 fn run_with_nothing_stale_says_so_and_writes_no_file() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let (_, result) = analysed("exact_dupes");
+    let (_, result) = Fixture::analysed("exact_dupes");
 
     // Act
     let text = CleanupCommand::new(tmp.path(), &result, false)
