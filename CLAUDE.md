@@ -140,10 +140,8 @@ workspace member, so there is nothing for a rule to reach and nothing to
 exclude. Its duplication is deliberate -- it is what the validation tests
 measure -- and is never "fixed".
 
-Stage 1 covers the workspace. The stern gate covers every member, which is one
-step stricter than the rest of the family: the other workspaces here gate
-`core` and leave `validation` unmeasured. `twin4rust` and `iceberg4rust` take
-every member too, and in `validation` they have source to measure: each harness
+Stage 1 covers the workspace. The stern gate covers every member, `validation`
+included. `twin4rust` and `iceberg4rust` take every member too, and in `validation` they have source to measure: each harness
 and scenario file is mirrored and scored like core's.
 
 `crap4rust` is the one gate that stays on core. `validation` has source -- the

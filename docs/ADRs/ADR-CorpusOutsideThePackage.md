@@ -55,8 +55,7 @@ measurement, which is the property that made it safe to do at all.
 
 Stage 1 covers the workspace. Stage 2 gates both members: `core` at all
 twenty-one rules, `validation` at first at twenty (see Consequences; it has
-since taken every rule). This is a step stricter than the rest of the family,
-which gates `core` and leaves `validation` unmeasured.
+since taken every rule).
 
 ## Forcing constraints / Evidence
 
