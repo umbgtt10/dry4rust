@@ -9,6 +9,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-10
+
+What the library hands back, not what the tool does. The command line, the text
+and JSON it prints, its exit codes, and the ignore and baseline file formats are
+byte-for-byte what 0.3.0 produces: the two binaries were run side by side over
+every fixture and over this crate's own source, text and JSON, across every
+subcommand and through multi-step ignore -> cleanup and baseline -> check
+sequences, and stdout, stderr, exit codes and files written were identical. No
+fingerprint moves, so no recorded suppression goes stale.
+
+Minor rather than patch because public signatures of the library changed, as
+listed under Changed: code built against `dry4rust` as a library -- a
+`Reporter` implementation, a call to a command's `run`, the normaliser
+functions -- has to follow.
+
+### Changed
+- **Output is returned rather than written through a `&mut` parameter**, which
+  is stern4rust 0.14.0's new `returned-mutations` rule; it found 31 offences
+  here and all are cleared.
+  - `Reporter`'s seven methods drop their `writer: &mut dyn io::Write` and
+    return `io::Result<String>`. `GroupSection::write` returns its `String`.
+  - Every command's `run` -- `StatsCommand`, `ReportCommand`, `CheckCommand`,
+    `CleanupCommand`, `BaselineCommand`, `IgnoreCommand`, `IgnoredCommand` --
+    and `CommandDispatcher::dispatch` drop their writer and return
+    `CliResult<CommandOutcome>`: the text to print and the verdict. A breached
+    `check`, and a baseline that cannot be written, travel in the outcome's
+    `result` beside the text rather than as the `Err` of `run`, so their output
+    still reaches stdout ahead of the error, exactly as before.
+  - The normaliser's free functions that threaded a `&mut NormalizationContext`
+    -- `normalize_expr`, `normalize_stmt`, `normalize_block`, `normalize_pat`,
+    `normalize_type`, `normalize_macro`, `normalize_signature` -- are methods of
+    the same names on `NormalizationContext`. Evaluation order is unchanged, so
+    placeholder numbering is too.
+- Stage 2 applies every one of stern4rust's twenty-two rules to every member
+  with nothing skipped. `validation`'s `skip = ["paired-test-file"]` is gone;
+  the ten scenario files it covered, which have no source file to be named
+  after, are recorded in `stern4rust-baseline.json` instead, so the rule keeps
+  running on `validation` and reports any scenario file added later.
+
+### Added
+- `cli::command_outcome::CommandOutcome` and
+  `placeholder_order_collector::PlaceholderOrderCollector`, both public, each
+  with a mirrored test file.
+- A fifth stage 2 gate, second after stern4rust: this checkout's own dry4rust,
+  built from source rather than installed, over `core/src` with zero ceilings
+  against `dry4rust-baseline.json` at a floor of 25 AST nodes. A tool that
+  enforces a check it does not pass is not worth installing. It found four
+  groups; two were shared away (`TextReporter::section`, `Threshold::share_of`)
+  and the baseline holds the two near-duplicate groups that remain. CI needs no
+  new install for it.
+
 ## [0.3.0] - 2026-08-24
 
 How the gates are run, not what the tool does. No detection behaviour changed,

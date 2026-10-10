@@ -3,6 +3,18 @@
 What each version added, newest first. Upstream's releases are included, under
 their own heading, because the engine they built is the engine this tool runs.
 
+## Version 0.4.0
+
+The library returns what it used to write. Commands, the dispatcher and the
+reporters hand back text and a verdict instead of taking a `&mut` writer, and
+the normaliser's functions are methods on `NormalizationContext` instead of
+threading it through as `&mut`. No output, exit code, file format or
+fingerprint changed.
+
+The gates tightened. Every stern4rust rule now applies to every member with
+nothing skipped, and stage 2 runs this checkout's dry4rust on its own source,
+built from source, with zero ceilings against a two-group baseline.
+
 ## Version 0.3.0
 
 Cross-platform quality gates. `just stage1` / `just stage2` replace the two

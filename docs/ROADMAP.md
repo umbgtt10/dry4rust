@@ -38,7 +38,7 @@ and does not submit to it is an argument against itself.
 
 ## Current Baseline
 
-Version 0.3.0. Forked, cleaned, corrected, and under the family's gates.
+Version 0.4.0. Forked, cleaned, corrected, and under the family's gates -- its own included.
 
 - Exact and near-duplicate detection over functions, methods and closures
 - Optional sub-function analysis: if-branches, match arms, loop bodies,
@@ -53,25 +53,30 @@ Version 0.3.0. Forked, cleaned, corrected, and under the family's gates.
   added, with the suppressed count in every summary
 - Configuration from defaults, `dry4rust.toml`, `[package.metadata.dry4rust]`
   and CLI flags, with every ranged value carrying its range in its type
-- 628 tests (471 core, 94 validation, 63 xtask); `stern4rust` clean with all 21
-  rules applied and no baseline; `crap4rust` clean at 15 with no override; every
-  source file mirrored; no file at or above 10 on `iceberg4rust`
+- 642 tests (477 core, 94 validation, 71 xtask); `stern4rust` clean with all 22
+  rules applied to every member and none skipped, its baseline holding only the
+  ten scenario files `validation` has no source to name after; `dry4rust`, built
+  from this checkout, finding nothing in its own source beyond a two-group
+  baseline; `crap4rust` clean at 15 with no override; every source file
+  mirrored; no file at or above 10 on `iceberg4rust`
 - Gates run as `just stage1` / `just stage2` on Windows, Linux and macOS, and CI
   runs those same two commands on all three
 
 `cargo-dry4rust` 0.1.0 is on crates.io as a name placeholder. 0.2.0 is the
-first release with an engine in it and was published on 2026-08-24. Neither
-version has a GitHub release page.
+first release with an engine in it and was published on 2026-08-24. 0.3.0 is
+published too. 0.4.0 is prepared here and not yet published. None of them has a
+GitHub release page.
 
 ## What is left
 
-**1. Publish 0.3.0.** 0.2.0 went out on 2026-08-24 with the reason that had
+**1. Publish 0.4.0.** 0.2.0 went out on 2026-08-24 with the reason that had
 been building for it: four correctness fixes the incumbent does not have -- an
 exact size bound, aligned sequence children, a fingerprint format that survives
 a toolchain upgrade, and near-duplicate detection that no longer hides what
 exact detection reports -- plus baseline mode, which is what makes any of it
-adoptable on a codebase that has the problem. 0.3.0 adds nothing to that; it
-changes how the gates are run. Neither release has a GitHub release page yet.
+adoptable on a codebase that has the problem. 0.3.0 and 0.4.0 add nothing to
+that; they change how the gates are run and what the library's signatures
+return. No release has a GitHub release page yet.
 
 **2. Semantic redundancy detection.** The direction above. Two functions with
 the same behaviour and different structure -- a `for` loop accumulating a sum
