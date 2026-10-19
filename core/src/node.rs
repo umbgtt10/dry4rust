@@ -253,64 +253,61 @@ impl NormalizedNode {
     pub const fn is_none(&self) -> bool {
         matches!(self.kind, NodeKind::None)
     }
+
+    /// Applies the reindex mapping to a node, returning a new node with remapped indices.
+    fn apply_reindex(node: &Self, mapping: &HashMap<(PlaceholderKind, usize), usize>) -> Self {
+        let kind = match &node.kind {
+            NodeKind::Placeholder(kind, idx) => {
+                let new_idx = mapping.get(&(*kind, *idx)).copied().unwrap_or(*idx);
+                NodeKind::Placeholder(*kind, new_idx)
+            }
+            NodeKind::PatPlaceholder(kind, idx) => {
+                let new_idx = mapping.get(&(*kind, *idx)).copied().unwrap_or(*idx);
+                NodeKind::PatPlaceholder(*kind, new_idx)
+            }
+            NodeKind::TypePlaceholder(kind, idx) => {
+                let new_idx = mapping.get(&(*kind, *idx)).copied().unwrap_or(*idx);
+                NodeKind::TypePlaceholder(*kind, new_idx)
+            }
+            other => other.clone(),
+        };
+        let children = node
+            .children
+            .iter()
+            .map(|c| Self::apply_reindex(c, mapping))
+            .collect();
+        Self { kind, children }
+    }
+
+    /// Re-index all placeholders in a sub-tree so that indices start from 0
+    /// per kind, assigned by first-occurrence depth-first order.
+    /// This allows comparing sub-trees extracted from different function contexts.
+    #[must_use]
+    pub fn reindex_placeholders(node: &Self) -> Self {
+        let mut collector = PlaceholderOrderCollector::new();
+        collector.collect(node);
+        let order = collector.into_order();
+
+        // Build mapping: (kind, old_index) -> new sequential index per kind
+        let mut counters: HashMap<PlaceholderKind, usize> = HashMap::new();
+        let mut mapping: HashMap<(PlaceholderKind, usize), usize> = HashMap::new();
+        for (kind, old_idx) in order {
+            let counter = counters.entry(kind).or_insert(0);
+            mapping.insert((kind, old_idx), *counter);
+            *counter += 1;
+        }
+
+        Self::apply_reindex(node, &mapping)
+    }
+
+    /// Count the number of nodes in a normalized tree.
+    /// None sentinel nodes are not counted.
+    pub fn count_nodes(node: &Self) -> usize {
+        if node.is_none() {
+            return 0;
+        }
+        1 + node.children.iter().map(Self::count_nodes).sum::<usize>()
+    }
 }
 
 // -- Placeholder re-indexing --------------------------------------------------
-
-/// Applies the reindex mapping to a node, returning a new node with remapped indices.
-fn apply_reindex(
-    node: &NormalizedNode,
-    mapping: &HashMap<(PlaceholderKind, usize), usize>,
-) -> NormalizedNode {
-    let kind = match &node.kind {
-        NodeKind::Placeholder(kind, idx) => {
-            let new_idx = mapping.get(&(*kind, *idx)).copied().unwrap_or(*idx);
-            NodeKind::Placeholder(*kind, new_idx)
-        }
-        NodeKind::PatPlaceholder(kind, idx) => {
-            let new_idx = mapping.get(&(*kind, *idx)).copied().unwrap_or(*idx);
-            NodeKind::PatPlaceholder(*kind, new_idx)
-        }
-        NodeKind::TypePlaceholder(kind, idx) => {
-            let new_idx = mapping.get(&(*kind, *idx)).copied().unwrap_or(*idx);
-            NodeKind::TypePlaceholder(*kind, new_idx)
-        }
-        other => other.clone(),
-    };
-    let children = node
-        .children
-        .iter()
-        .map(|c| apply_reindex(c, mapping))
-        .collect();
-    NormalizedNode { kind, children }
-}
-
-/// Re-index all placeholders in a sub-tree so that indices start from 0
-/// per kind, assigned by first-occurrence depth-first order.
-/// This allows comparing sub-trees extracted from different function contexts.
-#[must_use]
-pub fn reindex_placeholders(node: &NormalizedNode) -> NormalizedNode {
-    let mut collector = PlaceholderOrderCollector::new();
-    collector.collect(node);
-    let order = collector.into_order();
-
-    // Build mapping: (kind, old_index) -> new sequential index per kind
-    let mut counters: HashMap<PlaceholderKind, usize> = HashMap::new();
-    let mut mapping: HashMap<(PlaceholderKind, usize), usize> = HashMap::new();
-    for (kind, old_idx) in order {
-        let counter = counters.entry(kind).or_insert(0);
-        mapping.insert((kind, old_idx), *counter);
-        *counter += 1;
-    }
-
-    apply_reindex(node, &mapping)
-}
-
-/// Count the number of nodes in a normalized tree.
-/// None sentinel nodes are not counted.
-pub fn count_nodes(node: &NormalizedNode) -> usize {
-    if node.is_none() {
-        return 0;
-    }
-    1 + node.children.iter().map(count_nodes).sum::<usize>()
-}

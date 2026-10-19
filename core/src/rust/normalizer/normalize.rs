@@ -3,7 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::node::{NodeKind, NormalizedNode, PlaceholderKind};
+use crate::node::NodeKind;
+use crate::node::NormalizedNode;
+use crate::node::PlaceholderKind;
 use crate::rust::normalizer::normalization_context::NormalizationContext;
 
 use syn::Block;
@@ -45,51 +47,51 @@ impl NormalizationContext {
         }));
         NormalizedNode::with_children(NodeKind::FnSignature, children)
     }
+
+    fn normalize_fn_parts(sig: &Signature, block: &Block) -> (NormalizedNode, NormalizedNode) {
+        let mut ctx = Self::new();
+        let sig = ctx.normalize_signature(sig);
+        let body = ctx.normalize_block(block);
+        (sig, body)
+    }
+
+    /// Normalize a top-level function.
+    #[must_use]
+    pub fn normalize_item_fn(func: &ItemFn) -> (NormalizedNode, NormalizedNode) {
+        Self::normalize_fn_parts(&func.sig, &func.block)
+    }
+
+    /// Normalize a method within an impl block.
+    #[must_use]
+    pub fn normalize_impl_item_fn(method: &ImplItemFn) -> (NormalizedNode, NormalizedNode) {
+        Self::normalize_fn_parts(&method.sig, &method.block)
+    }
+
+    /// Normalize a closure expression.
+    #[must_use]
+    pub fn normalize_closure_expr(closure: &ExprClosure) -> NormalizedNode {
+        let mut ctx = Self::new();
+        let mut children = vec![ctx.normalize_expr(&closure.body)];
+        children.extend(closure.inputs.iter().map(|p| ctx.normalize_pat(p)));
+        NormalizedNode::with_children(NodeKind::Closure, children)
+    }
+
+    /// Normalize an impl block -- normalizes each method body.
+    #[must_use]
+    pub fn normalize_impl_block(imp: &ItemImpl) -> Vec<(String, NormalizedNode, NormalizedNode)> {
+        imp.items
+            .iter()
+            .filter_map(|item| {
+                if let syn::ImplItem::Fn(method) = item {
+                    let name = method.sig.ident.to_string();
+                    let (sig, body) = Self::normalize_impl_item_fn(method);
+                    Some((name, sig, body))
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
 }
 
 // -- Public entry points ------------------------------------------------------
-
-fn normalize_fn_parts(sig: &Signature, block: &Block) -> (NormalizedNode, NormalizedNode) {
-    let mut ctx = NormalizationContext::new();
-    let sig = ctx.normalize_signature(sig);
-    let body = ctx.normalize_block(block);
-    (sig, body)
-}
-
-/// Normalize a top-level function.
-#[must_use]
-pub fn normalize_item_fn(func: &ItemFn) -> (NormalizedNode, NormalizedNode) {
-    normalize_fn_parts(&func.sig, &func.block)
-}
-
-/// Normalize a method within an impl block.
-#[must_use]
-pub fn normalize_impl_item_fn(method: &ImplItemFn) -> (NormalizedNode, NormalizedNode) {
-    normalize_fn_parts(&method.sig, &method.block)
-}
-
-/// Normalize a closure expression.
-#[must_use]
-pub fn normalize_closure_expr(closure: &ExprClosure) -> NormalizedNode {
-    let mut ctx = NormalizationContext::new();
-    let mut children = vec![ctx.normalize_expr(&closure.body)];
-    children.extend(closure.inputs.iter().map(|p| ctx.normalize_pat(p)));
-    NormalizedNode::with_children(NodeKind::Closure, children)
-}
-
-/// Normalize an impl block -- normalizes each method body.
-#[must_use]
-pub fn normalize_impl_block(imp: &ItemImpl) -> Vec<(String, NormalizedNode, NormalizedNode)> {
-    imp.items
-        .iter()
-        .filter_map(|item| {
-            if let syn::ImplItem::Fn(method) = item {
-                let name = method.sig.ident.to_string();
-                let (sig, body) = normalize_impl_item_fn(method);
-                Some((name, sig, body))
-            } else {
-                None
-            }
-        })
-        .collect()
-}

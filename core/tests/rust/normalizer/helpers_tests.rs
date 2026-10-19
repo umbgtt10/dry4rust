@@ -3,10 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::rust::normalizer::helpers::member_to_string;
-use dry4rust::rust::normalizer::helpers::normalize_bin_op;
-use dry4rust::rust::normalizer::helpers::normalize_lit;
-use dry4rust::rust::normalizer::helpers::normalize_un_op;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 use syn::BinOp;
 use syn::Lit;
@@ -21,7 +17,7 @@ fn member_to_string_for_a_named_field_returns_the_name() {
     let member: Member = parse_str("field").expect("parses");
 
     // Act & Assert
-    assert_eq!(member_to_string(&member), "field");
+    assert_eq!(NormalizationContext::member_to_string(&member), "field");
 }
 
 #[test]
@@ -30,7 +26,7 @@ fn member_to_string_for_a_tuple_index_returns_the_index() {
     let member: Member = parse_str("0").expect("parses");
 
     // Act & Assert
-    assert_eq!(member_to_string(&member), "0");
+    assert_eq!(NormalizationContext::member_to_string(&member), "0");
 }
 
 #[test]
@@ -40,8 +36,14 @@ fn normalize_bin_op_maps_different_operators_to_different_kinds() {
     let sub: BinOp = parse_str("-").expect("parses");
 
     // Act & Assert
-    assert_ne!(normalize_bin_op(&add), normalize_bin_op(&sub));
-    assert_eq!(normalize_bin_op(&add), normalize_bin_op(&add));
+    assert_ne!(
+        NormalizationContext::normalize_bin_op(&add),
+        NormalizationContext::normalize_bin_op(&sub)
+    );
+    assert_eq!(
+        NormalizationContext::normalize_bin_op(&add),
+        NormalizationContext::normalize_bin_op(&add)
+    );
 }
 
 #[test]
@@ -52,8 +54,14 @@ fn normalize_lit_erases_the_value_but_keeps_the_type() {
     let text: Lit = parse_str(r#""hello""#).expect("parses");
 
     // Act & Assert
-    assert_eq!(normalize_lit(&small), normalize_lit(&large));
-    assert_ne!(normalize_lit(&small), normalize_lit(&text));
+    assert_eq!(
+        NormalizationContext::normalize_lit(&small),
+        NormalizationContext::normalize_lit(&large)
+    );
+    assert_ne!(
+        NormalizationContext::normalize_lit(&small),
+        NormalizationContext::normalize_lit(&text)
+    );
 }
 
 #[test]
@@ -77,5 +85,8 @@ fn normalize_un_op_maps_different_operators_to_different_kinds() {
     let not: UnOp = parse_str("!").expect("parses");
 
     // Act & Assert
-    assert_ne!(normalize_un_op(&neg), normalize_un_op(&not));
+    assert_ne!(
+        NormalizationContext::normalize_un_op(&neg),
+        NormalizationContext::normalize_un_op(&not)
+    );
 }

@@ -8,7 +8,7 @@ use std::path::Path;
 
 use crate::code_unit::CodeUnit;
 use crate::duplicate_group::DuplicateGroup;
-use crate::output::reporter::display_path;
+use crate::output::display_path::DisplayPath;
 
 /// One headed section of a text report, and how the groups under it read.
 ///
@@ -122,7 +122,7 @@ impl GroupSection {
             member.name,
             member.kind,
             self.parent_of(member),
-            display_path(base, &member.file),
+            DisplayPath::of(base, &member.file),
             member.line_start,
             member.line_end,
         )

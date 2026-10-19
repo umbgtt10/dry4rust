@@ -27,8 +27,8 @@ fn is_excluded_works() {
     let path = Path::new("/foo/bar/tests/test.rs");
 
     // Assert
-    assert!(is_excluded(path, &["tests".to_string()]));
-    assert!(!is_excluded(path, &["benches".to_string()]));
+    assert!(Scanner::is_excluded(path, &["tests".to_string()]));
+    assert!(!Scanner::is_excluded(path, &["benches".to_string()]));
 }
 
 #[test]

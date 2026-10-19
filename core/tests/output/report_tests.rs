@@ -5,7 +5,6 @@
 
 use crate::common::group;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::duplicate_group::compute_stats_with_sub;
 use dry4rust::output::json_reporter::JsonReporter;
 use dry4rust::output::report::Report;
 use dry4rust::output::reporter::Reporter;
@@ -20,7 +19,7 @@ fn rendered(reporter: &dyn Reporter, report: &Report<'_>) -> String {
 #[test]
 fn report_in_json_is_one_document_with_the_sections_named() {
     // Arrange
-    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let exact = vec![group(0x11, &["a", "b"])];
     let sub_near = vec![group(0x22, &["c", "d"])];
     let report = Report {
@@ -52,7 +51,7 @@ fn report_in_json_is_one_document_with_the_sections_named() {
 #[test]
 fn report_in_json_keeps_exact_and_near_even_when_empty() {
     // Arrange
-    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let report = Report {
         stats: &stats,
         exact: &[],
@@ -76,7 +75,7 @@ fn report_in_json_keeps_exact_and_near_even_when_empty() {
 #[test]
 fn report_in_text_leaves_out_the_sections_with_nothing_in_them() {
     // Arrange
-    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let exact: Vec<DuplicateGroup> = vec![group(0x11, &["a", "b"])];
     let report = Report {
         stats: &stats,
@@ -99,7 +98,7 @@ fn report_in_text_leaves_out_the_sections_with_nothing_in_them() {
 #[test]
 fn report_in_text_writes_every_section_that_has_something_in_it() {
     // Arrange
-    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let groups = vec![group(0x11, &["a", "b"])];
     let report = Report {
         stats: &stats,

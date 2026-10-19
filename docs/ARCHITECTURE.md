@@ -73,7 +73,7 @@ bodies as further units, which then travel the same path.
 | `rust::code_unit_extractor` | `CodeUnitExtractor`, the visitor that walks a parsed file and keeps each unit over the floors. |
 | `rust::normalizer` | The normalisation rules, split by syntax category: `expr`, `pat`, `helpers`, `normalize`. Each is an `impl NormalizationContext` block, so the context that numbers the placeholders is `self` rather than a `&mut` threaded through every call. |
 | `rust::normalizer::normalization_context` | The placeholder counters. Two identifiers map to the same placeholder only within one context. |
-| `node` | `NormalizedNode` and `NodeKind` -- the normalised tree, plus `count_nodes` and `reindex_placeholders`. |
+| `node` | `NormalizedNode` and `NodeKind` -- the normalised tree, with `NormalizedNode::count_nodes` and `NormalizedNode::reindex_placeholders`. |
 | `placeholder_order_collector` | The placeholders of a tree in first-occurrence order, which is what `reindex_placeholders` renumbers by. |
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
 | `node_encoder` | The byte format a fingerprint is computed over -- variants by name, children counted. |
@@ -95,7 +95,7 @@ bodies as further units, which then travel the same path.
 | `config` | `Config`: what a run is configured with, assembled and range-checked. |
 | `file_config` | What `dry4rust.toml` and `[package.metadata.dry4rust]` may state. |
 | `analysis_config` | The two floors a language analyzer needs, and nothing else. |
-| `analysis` | `analyze` and `analyze_units` -- the pipeline as one call -- and `Analysis`, what it returns. |
+| `analysis` | `Analysis`, what a run returns, and `Analysis::analyze` and `Analysis::analyze_units` -- the pipeline as one call. |
 | `cli::cli_error` | `CliError` and the exit code each variant maps to. |
 | `cli::command` | The subcommands, as `clap` sees them. |
 | `cli::command_outcome` | What a command produced: the text to print, and the verdict that sets the exit code once it is printed. |
@@ -110,6 +110,7 @@ bodies as further units, which then travel the same path.
 | `output::report` | What a full report shows, handed over in one piece. |
 | `output::check_breach` | One exceeded ceiling and the groups behind it. |
 | `output::group_section` | One headed section of a text report, and how its groups read. |
+| `output::display_path` | `DisplayPath::of`, a file as a reporter shows it: relative to the base when it lies under one. |
 | `output::duplication_stats` | `DuplicationStats`, the counts and percentages a report states. |
 | `output` | `text_reporter` and `json_reporter`, the implementations of `Reporter`. |
 

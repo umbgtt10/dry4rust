@@ -7,9 +7,9 @@ use crate::common::group;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::duplicate_group::compute_stats_with_sub;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::node::{NodeKind, NormalizedNode};
+use dry4rust::node::NodeKind;
+use dry4rust::node::NormalizedNode;
 use dry4rust::output::check_breach::CheckBreach;
 use dry4rust::output::duplication_stats::DuplicationStats;
 use dry4rust::output::json_reporter::*;
@@ -71,7 +71,7 @@ fn json_relative_paths() {
 fn json_report_check_gathers_the_groups_rather_than_repeating_them() {
     // Arrange -- two ceilings on the same set, both breached
     let reporter = JsonReporter::new(None);
-    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let groups = vec![group(0x11, &["process", "compute"])];
     let breaches = vec![
         CheckBreach::new(

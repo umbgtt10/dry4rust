@@ -7,7 +7,6 @@ use dry4rust::analysis::Analysis;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::duplicate_group::compute_stats_with_sub;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
@@ -51,7 +50,7 @@ pub fn result_with(
     sub_near: Vec<DuplicateGroup>,
 ) -> Analysis {
     Analysis {
-        stats: compute_stats_with_sub(&[], &exact, &near, &sub_exact, &sub_near),
+        stats: DuplicateGroup::compute_stats_with_sub(&[], &exact, &near, &sub_exact, &sub_near),
         exact_groups: exact,
         near_groups: near,
         sub_exact_groups: sub_exact,

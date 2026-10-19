@@ -7,13 +7,13 @@ use crate::common::group;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::duplicate_group::compute_stats_with_sub;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::node::{NodeKind, NormalizedNode};
+use dry4rust::node::NodeKind;
+use dry4rust::node::NormalizedNode;
 use dry4rust::output::check_breach::CheckBreach;
+use dry4rust::output::display_path::DisplayPath;
 use dry4rust::output::duplication_stats::DuplicationStats;
 use dry4rust::output::reporter::Reporter;
-use dry4rust::output::reporter::display_path;
 use dry4rust::output::text_reporter::*;
 use std::path::Path;
 use std::path::PathBuf;
@@ -38,7 +38,7 @@ fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> Code
 fn relative_path_stripping() {
     // Arrange & Act
     let base = PathBuf::from("/home/user/project");
-    let result = display_path(
+    let result = DisplayPath::of(
         Some(base.as_path()),
         Path::new("/home/user/project/src/main.rs"),
     );
@@ -51,7 +51,7 @@ fn relative_path_stripping() {
 fn text_report_check_puts_each_breach_before_the_groups_behind_it() {
     // Arrange
     let reporter = TextReporter::new(None);
-    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let groups = vec![group(0x11, &["process", "compute"])];
     let breaches = vec![CheckBreach::new(
         String::from("1 exact duplicate groups (max: 0)"),
@@ -80,7 +80,7 @@ fn text_report_check_puts_each_breach_before_the_groups_behind_it() {
 fn text_report_check_with_no_breaches_says_it_passed() {
     // Arrange
     let reporter = TextReporter::new(None);
-    let stats = compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
 
     // Act
     let output = reporter

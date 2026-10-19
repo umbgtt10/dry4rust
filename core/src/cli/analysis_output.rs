@@ -7,7 +7,6 @@ use std::path::Path;
 use std::string::ToString;
 
 use crate::analysis::Analysis;
-use crate::analysis::analyze;
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
@@ -100,7 +99,7 @@ impl AnalysisOutput {
             return Err(CliError::NoSourceFiles(config.root));
         }
 
-        let result = analyze(analyzer, &files, &config)?;
+        let result = Analysis::analyze(analyzer, &files, &config)?;
         let reporter = format.reporter(Some(root));
 
         Ok(Self {

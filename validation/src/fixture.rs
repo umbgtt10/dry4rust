@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::analysis::Analysis;
-use dry4rust::analysis::analyze;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::scanner::Scanner;
@@ -58,8 +57,8 @@ impl Fixture {
             ..Config::load(&root).expect("the fixture configuration is in range")
         };
         let files = Scanner::new(root).scan_files();
-        let result =
-            analyze(&RustAnalyzer::new(), &files, &config).expect("the fixture analyses cleanly");
+        let result = Analysis::analyze(&RustAnalyzer::new(), &files, &config)
+            .expect("the fixture analyses cleanly");
         (config, result)
     }
 }

@@ -7,19 +7,17 @@
 //! These tests exercise fingerprint, similarity, duplicate-group, and sub-unit functionality
 //! Every case is driven from syn-parsed Rust source.
 
-use dry4rust::analysis::analyze;
-use dry4rust::analysis::analyze_units;
+use dry4rust::analysis::Analysis;
 use dry4rust::config::Config;
-use dry4rust::duplicate_group;
+use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::near_duplicate::similarity::similarity_score;
-use dry4rust::node::reindex_placeholders;
-use dry4rust::node::{NodeKind, NormalizedNode};
+use dry4rust::node::NodeKind;
+use dry4rust::node::NormalizedNode;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
-use dry4rust::rust::normalizer::normalize::normalize_item_fn;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
-use dry4rust::sub_unit;
+use dry4rust::sub_unit::SubUnit;
 use parser::parse_file;
 use std::fs;
 use syn::Expr;
@@ -61,8 +59,8 @@ fn expr_similarity(code1: &str, code2: &str) -> f64 {
 fn fn_body_similarity(code1: &str, code2: &str) -> f64 {
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (_, b1) = normalize_item_fn(&f1);
-    let (_, b2) = normalize_item_fn(&f2);
+    let (_, b1) = NormalizationContext::normalize_item_fn(&f1);
+    let (_, b2) = NormalizationContext::normalize_item_fn(&f2);
     similarity_score(&b1, &b2)
 }
 
@@ -75,7 +73,7 @@ fn make_units(code: &str) -> Vec<CodeUnit> {
 
 fn parse_and_extract_body(code: &str) -> NormalizedNode {
     let f = parse_fn(code);
-    let (_, body) = normalize_item_fn(&f);
+    let (_, body) = NormalizationContext::normalize_item_fn(&f);
     body
 }
 
@@ -100,7 +98,8 @@ fn analyze_over_a_written_crate_reports_the_duplication_in_it() {
     };
 
     // Act
-    let result = analyze(&RustAnalyzer::new(), &[file], &config).expect("it analyses cleanly");
+    let result =
+        Analysis::analyze(&RustAnalyzer::new(), &[file], &config).expect("it analyses cleanly");
 
     // Assert
     assert_eq!(result.stats.total_code_units, 2);
@@ -114,7 +113,8 @@ fn analyze_units_over_no_units_reports_nothing_duplicated() {
     let config = Config::default();
 
     // Act
-    let result = analyze_units(&[], Vec::new(), &config).expect("empty input is not an error");
+    let result =
+        Analysis::analyze_units(&[], Vec::new(), &config).expect("empty input is not an error");
 
     // Assert
     assert_eq!(result.stats.total_code_units, 0);
@@ -143,8 +143,8 @@ fn compute_stats_counts_units_and_duplicate_lines() {
         fn c(x: i32) -> i32 { x * 2 }
         ",
     );
-    let exact = duplicate_group::group_exact_duplicates(&units);
-    let stats = duplicate_group::compute_stats(&units, &exact, &[]);
+    let exact = DuplicateGroup::group_exact_duplicates(&units);
+    let stats = DuplicateGroup::compute_stats(&units, &exact, &[]);
 
     // Assert
     assert_eq!(stats.total_code_units, 3);
@@ -160,8 +160,8 @@ fn different_functions_different_fingerprint() {
     let code2 = "fn foo(x: i32) -> i32 { x * 2 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (sig1, body1) = normalize_item_fn(&f1);
-    let (sig2, body2) = normalize_item_fn(&f2);
+    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
+    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -187,7 +187,7 @@ fn duplicate_group_has_fingerprint() {
         fn b(y: i32) -> i32 { y + 1 }
         ",
     );
-    let groups = duplicate_group::group_exact_duplicates(&units);
+    let groups = DuplicateGroup::group_exact_duplicates(&units);
 
     // Assert
     assert_eq!(groups.len(), 1);
@@ -221,7 +221,7 @@ fn exact_duplicates_grouped() {
         }
         ",
     );
-    let groups = duplicate_group::group_exact_duplicates(&units);
+    let groups = DuplicateGroup::group_exact_duplicates(&units);
 
     // Assert
     assert_eq!(groups.len(), 1);
@@ -241,7 +241,7 @@ fn exact_groups_sorted_by_size() {
         fn b2(y: i32) -> i32 { y * 2 }
         ",
     );
-    let groups = duplicate_group::group_exact_duplicates(&units);
+    let groups = DuplicateGroup::group_exact_duplicates(&units);
 
     // Assert
     assert_eq!(groups.len(), 2);
@@ -254,7 +254,7 @@ fn extracts_bare_loop_bodies() {
     let body = parse_and_extract_body(
         "fn foo(x: i32) -> i32 { let mut i = 0; loop { i += 1; if i > x { break i; } } }",
     );
-    let subs = sub_unit::extract_sub_units(&body, 1);
+    let subs = SubUnit::extract_sub_units(&body, 1);
     let loops: Vec<_> = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
@@ -277,7 +277,7 @@ fn extracts_closure_bodies() {
             }).collect()
         }",
     );
-    let subs = sub_unit::extract_sub_units(&body, 1);
+    let subs = SubUnit::extract_sub_units(&body, 1);
     let closures = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::Block && s.description == "closure body")
@@ -293,7 +293,7 @@ fn extracts_if_branches() {
     let body = parse_and_extract_body(
         "fn foo(x: i32) -> i32 { if x > 0 { let y = x + 1; y * 2 } else { let z = x - 1; z * 3 } }",
     );
-    let subs = sub_unit::extract_sub_units(&body, 1);
+    let subs = SubUnit::extract_sub_units(&body, 1);
     let if_branches = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::IfBranch)
@@ -308,7 +308,7 @@ fn extracts_loop_bodies() {
     // Arrange & Act
     let body =
         parse_and_extract_body("fn foo(x: i32) { for i in 0..10 { let y = i + x; let _ = y; } }");
-    let subs = sub_unit::extract_sub_units(&body, 1);
+    let subs = SubUnit::extract_sub_units(&body, 1);
     let loops = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
@@ -330,7 +330,7 @@ fn extracts_match_arms() {
             }
         }",
     );
-    let subs = sub_unit::extract_sub_units(&body, 1);
+    let subs = SubUnit::extract_sub_units(&body, 1);
     let match_arms = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::MatchArm)
@@ -346,7 +346,7 @@ fn extracts_while_loop_bodies() {
     let body = parse_and_extract_body(
         "fn foo(x: i32) { let mut i = 0; while i < x { let y = i + 1; i = y; } }",
     );
-    let subs = sub_unit::extract_sub_units(&body, 1);
+    let subs = SubUnit::extract_sub_units(&body, 1);
     let loops: Vec<_> = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::LoopBody)
@@ -364,8 +364,8 @@ fn fingerprint_discriminates_operators() {
     let code2 = "fn f(x: i32) -> i32 { x - 1 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (s1, b1) = normalize_item_fn(&f1);
-    let (s2, b2) = normalize_item_fn(&f2);
+    let (s1, b1) = NormalizationContext::normalize_item_fn(&f1);
+    let (s2, b2) = NormalizationContext::normalize_item_fn(&f2);
 
     // Assert
     assert_ne!(
@@ -393,8 +393,8 @@ fn fingerprint_ignores_variable_names() {
     let code2 = "fn calculate(num: i32) -> i32 { num * num + num }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (s1, b1) = normalize_item_fn(&f1);
-    let (s2, b2) = normalize_item_fn(&f2);
+    let (s1, b1) = NormalizationContext::normalize_item_fn(&f1);
+    let (s2, b2) = NormalizationContext::normalize_item_fn(&f2);
 
     // Assert
     assert_eq!(
@@ -408,8 +408,8 @@ fn fingerprint_of_the_same_function_is_stable() {
     // Arrange & Act
     let code = "fn foo(x: i32) -> i32 { x + 1 }";
     let f = parse_fn(code);
-    let (sig1, body1) = normalize_item_fn(&f);
-    let (sig2, body2) = normalize_item_fn(&f);
+    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f);
+    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -427,8 +427,8 @@ fn identical_branches_from_different_functions_match() {
         "fn bar(a: i32) -> i32 { if a > 0 { let b = a + 1; b * 2 } else { a } }",
     );
 
-    let subs1 = sub_unit::extract_sub_units(&body1, 1);
-    let subs2 = sub_unit::extract_sub_units(&body2, 1);
+    let subs1 = SubUnit::extract_sub_units(&body1, 1);
+    let subs2 = SubUnit::extract_sub_units(&body2, 1);
 
     let then1 = subs1
         .iter()
@@ -450,8 +450,8 @@ fn identical_functions_same_fingerprint() {
     let code2 = "fn bar(a: i32) -> i32 { a + 1 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (sig1, body1) = normalize_item_fn(&f1);
-    let (sig2, body2) = normalize_item_fn(&f2);
+    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
+    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -489,8 +489,8 @@ fn let_else_diverge_blocks_differ() {
     // Two functions with same init but different diverge blocks should NOT be exact duplicates
     let f1 = parse_fn("fn foo(x: Option<i32>) -> i32 { let Some(v) = x else { return 0; }; v }");
     let f2 = parse_fn("fn bar(x: Option<i32>) -> i32 { let Some(v) = x else { panic!(); }; v }");
-    let (sig1, body1) = normalize_item_fn(&f1);
-    let (sig2, body2) = normalize_item_fn(&f2);
+    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
+    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -507,8 +507,8 @@ fn let_else_same_diverge_blocks_match() {
     // Two functions with identical structure including diverge block should match
     let f1 = parse_fn("fn foo(x: Option<i32>) -> i32 { let Some(v) = x else { return 0; }; v }");
     let f2 = parse_fn("fn bar(y: Option<i32>) -> i32 { let Some(w) = y else { return 0; }; w }");
-    let (sig1, body1) = normalize_item_fn(&f1);
-    let (sig2, body2) = normalize_item_fn(&f2);
+    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
+    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -539,7 +539,7 @@ fn multiple_exact_groups() {
         fn b2(y: i32) -> i32 { y * 2 }
         ",
     );
-    let groups = duplicate_group::group_exact_duplicates(&units);
+    let groups = DuplicateGroup::group_exact_duplicates(&units);
 
     // Assert
     assert_eq!(groups.len(), 2);
@@ -586,9 +586,9 @@ fn near_duplicates_exclude_exact() {
         fn b(y: i32) -> i32 { y + 1 }
         ",
     );
-    let exact = duplicate_group::group_exact_duplicates(&units);
+    let exact = DuplicateGroup::group_exact_duplicates(&units);
     let exact_fps: Vec<_> = exact.iter().map(|g| g.fingerprint).collect();
-    let near = duplicate_group::find_near_duplicates(&units, 0.7, &exact_fps);
+    let near = DuplicateGroup::find_near_duplicates(&units, 0.7, &exact_fps);
 
     // Assert
     assert!(near.is_empty());
@@ -613,9 +613,9 @@ fn near_duplicates_found() {
         }
         ",
     );
-    let exact = duplicate_group::group_exact_duplicates(&units);
+    let exact = DuplicateGroup::group_exact_duplicates(&units);
     let exact_fps: Vec<_> = exact.iter().map(|g| g.fingerprint).collect();
-    let near = duplicate_group::find_near_duplicates(&units, 0.7, &exact_fps);
+    let near = DuplicateGroup::find_near_duplicates(&units, 0.7, &exact_fps);
 
     // Assert
     assert!(exact.len() + near.len() >= 1);
@@ -637,7 +637,7 @@ fn nested_structures_extracted_recursively() {
             }
         }",
     );
-    let subs = sub_unit::extract_sub_units(&body, 1);
+    let subs = SubUnit::extract_sub_units(&body, 1);
     let if_branches = subs
         .iter()
         .filter(|s| s.kind == CodeUnitKind::IfBranch)
@@ -662,7 +662,7 @@ fn no_duplicates_no_groups() {
         fn sub(x: i32) -> i32 { x - 3 }
         ",
     );
-    let groups = duplicate_group::group_exact_duplicates(&units);
+    let groups = DuplicateGroup::group_exact_duplicates(&units);
 
     // Assert
     assert!(groups.is_empty());
@@ -673,8 +673,8 @@ fn respects_min_node_count() {
     // Arrange & Act
     let body =
         parse_and_extract_body("fn foo(x: i32) -> i32 { if x > 0 { x + 1 } else { x - 1 } }");
-    let subs_low = sub_unit::extract_sub_units(&body, 1);
-    let subs_high = sub_unit::extract_sub_units(&body, 100);
+    let subs_low = SubUnit::extract_sub_units(&body, 1);
+    let subs_high = SubUnit::extract_sub_units(&body, 100);
 
     // Assert
     assert!(!subs_low.is_empty());
@@ -760,7 +760,7 @@ fn single_expression_difference_high_score() {
 fn single_unit_no_groups() {
     // Arrange & Act
     let units = make_units("fn solo(x: i32) -> i32 { x + 1 }");
-    let groups = duplicate_group::group_exact_duplicates(&units);
+    let groups = DuplicateGroup::group_exact_duplicates(&units);
 
     // Assert
     assert!(groups.is_empty());
@@ -781,8 +781,8 @@ fn stats_includes_line_counts() {
         }
         ",
     );
-    let exact = duplicate_group::group_exact_duplicates(&units);
-    let stats = duplicate_group::compute_stats(&units, &exact, &[]);
+    let exact = DuplicateGroup::group_exact_duplicates(&units);
+    let stats = DuplicateGroup::compute_stats(&units, &exact, &[]);
 
     // Assert
     assert!(stats.exact_duplicate_lines > 0);
@@ -804,7 +804,7 @@ fn stats_total_lines_computed() {
         }
         ",
     );
-    let stats = duplicate_group::compute_stats(&units, &[], &[]);
+    let stats = DuplicateGroup::compute_stats(&units, &[], &[]);
 
     // Assert
     assert!(stats.total_lines > 0);
@@ -827,7 +827,7 @@ fn stats_with_near_duplicates() {
         members: vec![],
         similarity: 0.85,
     };
-    let stats = duplicate_group::compute_stats(&units, &[], &[near_group]);
+    let stats = DuplicateGroup::compute_stats(&units, &[], &[near_group]);
 
     // Assert
     assert_eq!(stats.total_code_units, units.len());
@@ -852,7 +852,7 @@ fn sub_units_are_reindexed() {
     let body = parse_and_extract_body(
         "fn foo(a: i32, b: i32, c: i32) -> i32 { if c > 0 { let d = c + 1; d } else { c } }",
     );
-    let subs = sub_unit::extract_sub_units(&body, 1);
+    let subs = SubUnit::extract_sub_units(&body, 1);
     let then_branch = subs
         .iter()
         .find(|s| s.description == "if-then branch")
@@ -860,7 +860,7 @@ fn sub_units_are_reindexed() {
 
     let mut ctx = NormalizationContext::new();
     let fresh_expr = ctx.normalize_expr(&parse_str::<Expr>("{ let d = c + 1; d }").unwrap());
-    let reindexed_fresh = reindex_placeholders(&fresh_expr);
+    let reindexed_fresh = NormalizedNode::reindex_placeholders(&fresh_expr);
 
     // Assert
     assert_eq!(then_branch.node, reindexed_fresh);

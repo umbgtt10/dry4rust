@@ -105,11 +105,11 @@ ones, and at the same floor -- a baseline matches only at the floor it was
 recorded at:
 `cargo run --bin cargo-dry4rust -- dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
-All twenty-three of stern4rust's rules apply to every member -- `core`,
+All twenty-four of stern4rust's rules apply to every member -- `core`,
 `validation` and `xtask` -- with nothing skipped, nothing selected, nothing
 baselined and nothing unconfigured. `stern4rust.toml` carries no `skip`, no
 `rules`, no `baseline` and no `[package.*]` section, and the report ends
-`baselined=0 ... rules_applied=23 rules_skipped=0 rules_unconfigured=0`.
+`baselined=0 ... rules_applied=24 rules_skipped=0 rules_unconfigured=0`.
 `docs/header.txt` holds the four-line header every `.rs` file carries and
 `stern4rust.toml` names it -- in the config rather than the gate script, so a
 hand-run of `cargo stern4rust` checks exactly what the gate checks.

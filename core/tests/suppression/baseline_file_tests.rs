@@ -8,7 +8,6 @@ use crate::common::result_with;
 use dry4rust::suppression::baseline_file::BaselineFile;
 use dry4rust::suppression::baseline_file::DEFAULT_BASELINE_FILE;
 use dry4rust::suppression::baseline_file::FORMAT_VERSION;
-use dry4rust::suppression::baseline_file::baseline_path;
 use dry4rust::suppression::baseline_kind::BaselineKind;
 use std::fs;
 use std::path::Path;
@@ -21,7 +20,7 @@ fn baseline_path_joins_a_relative_name_to_the_analysed_root() {
     let root = Path::new("/projects/thing");
 
     // Act
-    let path = baseline_path(root, Some(Path::new("ci/dry4rust-baseline.json")));
+    let path = BaselineFile::baseline_path(root, Some(Path::new("ci/dry4rust-baseline.json")));
 
     // Assert
     assert_eq!(
@@ -38,7 +37,7 @@ fn baseline_path_leaves_an_absolute_name_alone() {
     let named = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("recorded.json");
 
     // Act
-    let path = baseline_path(Path::new("/projects/thing"), Some(&named));
+    let path = BaselineFile::baseline_path(Path::new("/projects/thing"), Some(&named));
 
     // Assert
     assert!(named.is_absolute(), "the arrangement has to be absolute");
@@ -48,7 +47,7 @@ fn baseline_path_leaves_an_absolute_name_alone() {
 #[test]
 fn baseline_path_without_a_name_uses_the_family_default() {
     // Arrange & Act
-    let path = baseline_path(Path::new("/projects/thing"), None);
+    let path = BaselineFile::baseline_path(Path::new("/projects/thing"), None);
 
     // Assert
     assert_eq!(

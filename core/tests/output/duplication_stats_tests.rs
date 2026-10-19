@@ -5,7 +5,6 @@
 
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::duplicate_group::compute_stats_with_sub;
 use dry4rust::output::duplication_stats::DuplicationStats;
 
 #[test]
@@ -61,7 +60,7 @@ fn with_baseline_suppressed_distinguishes_none_suppressed_from_no_baseline() {
     // Arrange
     let units: Vec<CodeUnit> = Vec::new();
     let none: Vec<DuplicateGroup> = Vec::new();
-    let stats = compute_stats_with_sub(&units, &none, &none, &none, &none);
+    let stats = DuplicateGroup::compute_stats_with_sub(&units, &none, &none, &none, &none);
 
     // Act
     let judged = stats.clone().with_baseline_suppressed(Some(0));

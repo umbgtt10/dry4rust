@@ -7,7 +7,6 @@ use crate::config::Config;
 use crate::duplicate_group::DuplicateGroup;
 use crate::error::Result;
 use crate::suppression::baseline_file::BaselineFile;
-use crate::suppression::baseline_file::baseline_path;
 use crate::suppression::baseline_kind::BaselineKind;
 
 /// Keeps the duplication a baseline did not already account for.
@@ -30,7 +29,7 @@ impl BaselineFilter {
         let Some(configured) = config.baseline.as_deref() else {
             return Ok(Self { recorded: None });
         };
-        let path = baseline_path(&config.root, Some(configured));
+        let path = BaselineFile::baseline_path(&config.root, Some(configured));
         Ok(Self {
             recorded: Some(BaselineFile::load(&path)?),
         })

@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::rust::normalizer::normalization_context::NormalizationContext;
 use std::path::PathBuf;
 
 use syn::spanned::Spanned;
@@ -11,12 +12,9 @@ use syn::visit::Visit;
 use crate::code_unit::CodeUnit;
 use crate::code_unit_kind::CodeUnitKind;
 use crate::fingerprint::Fingerprint;
-use crate::node;
 use crate::node::NormalizedNode;
-use crate::rust::normalizer;
 use crate::rust::parser::has_cfg_test_attr;
 use crate::rust::parser::has_test_attr;
-use normalizer::normalize;
 use syn::ExprClosure;
 use syn::ItemFn;
 use syn::ItemImpl;
@@ -69,7 +67,7 @@ impl CodeUnitExtractor {
         body: NormalizedNode,
         is_test: bool,
     ) {
-        let node_count = node::count_nodes(&sig) + node::count_nodes(&body);
+        let node_count = NormalizedNode::count_nodes(&sig) + NormalizedNode::count_nodes(&body);
         if node_count < self.min_node_count {
             return;
         }
@@ -92,6 +90,20 @@ impl CodeUnitExtractor {
             is_test,
         });
     }
+
+    /// Get a simple string representation of a type for naming.
+    fn quote_type(ty: &Type) -> String {
+        match ty {
+            Type::Path(tp) => tp
+                .path
+                .segments
+                .iter()
+                .map(|s| s.ident.to_string())
+                .collect::<Vec<_>>()
+                .join("::"),
+            _ => "Unknown".to_string(),
+        }
+    }
 }
 
 impl<'ast> Visit<'ast> for CodeUnitExtractor {
@@ -102,7 +114,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         let name = node.sig.ident.to_string();
         let line_start = node.sig.ident.span().start().line;
         let line_end = node.block.brace_token.span.close().end().line;
-        let (sig, body) = normalize::normalize_item_fn(node);
+        let (sig, body) = NormalizationContext::normalize_item_fn(node);
         self.add_unit(
             CodeUnitKind::Function,
             name,
@@ -135,7 +147,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
             self.in_test_context = true;
         }
 
-        let type_name = quote_type(&node.self_ty);
+        let type_name = Self::quote_type(&node.self_ty);
         let is_trait_impl = node.trait_.is_some();
         let trait_name = node
             .trait_
@@ -168,7 +180,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
                 let line_start = method.sig.ident.span().start().line;
                 let line_end = method.block.brace_token.span.close().end().line;
 
-                let (sig, body) = normalize::normalize_impl_item_fn(method);
+                let (sig, body) = NormalizationContext::normalize_impl_item_fn(method);
                 let kind = if is_trait_impl {
                     CodeUnitKind::TraitImplBlock
                 } else {
@@ -202,8 +214,8 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
             }
         };
 
-        let normalized = normalize::normalize_closure_expr(node);
-        let node_count = node::count_nodes(&normalized);
+        let normalized = NormalizationContext::normalize_closure_expr(node);
+        let node_count = NormalizedNode::count_nodes(&normalized);
         let line_count = line_end.saturating_sub(line_start) + 1;
         if node_count >= self.min_node_count
             && (self.min_line_count == 0 || line_count >= self.min_line_count)
@@ -227,19 +239,5 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
 
         // Continue visiting nested closures
         visit::visit_expr_closure(self, node);
-    }
-}
-
-/// Get a simple string representation of a type for naming.
-fn quote_type(ty: &Type) -> String {
-    match ty {
-        Type::Path(tp) => tp
-            .path
-            .segments
-            .iter()
-            .map(|s| s.ident.to_string())
-            .collect::<Vec<_>>()
-            .join("::"),
-        _ => "Unknown".to_string(),
     }
 }

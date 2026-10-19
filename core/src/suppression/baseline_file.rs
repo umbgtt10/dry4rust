@@ -31,20 +31,6 @@ pub const DEFAULT_BASELINE_FILE: &str = "dry4rust-baseline.json";
 /// The format this build writes, and the only one it reads.
 pub const FORMAT_VERSION: u32 = 1;
 
-/// Where the baseline lives for a given root.
-///
-/// A relative path is taken as relative to the analysed root, so a
-/// `dry4rust.toml` naming one means the same thing wherever it is run from.
-#[must_use]
-pub fn baseline_path(root: &Path, configured: Option<&Path>) -> PathBuf {
-    let named = configured.unwrap_or_else(|| Path::new(DEFAULT_BASELINE_FILE));
-    if named.is_absolute() {
-        named.to_path_buf()
-    } else {
-        root.join(named)
-    }
-}
-
 /// The duplication a codebase already had when the baseline was recorded.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BaselineFile {
@@ -155,5 +141,19 @@ impl BaselineFile {
     #[must_use]
     pub fn admits(&self, kind: BaselineKind, group: &DuplicateGroup) -> bool {
         self.entries.iter().any(|entry| entry.admits(kind, group))
+    }
+
+    /// Where the baseline lives for a given root.
+    ///
+    /// A relative path is taken as relative to the analysed root, so a
+    /// `dry4rust.toml` naming one means the same thing wherever it is run from.
+    #[must_use]
+    pub fn baseline_path(root: &Path, configured: Option<&Path>) -> PathBuf {
+        let named = configured.unwrap_or_else(|| Path::new(DEFAULT_BASELINE_FILE));
+        if named.is_absolute() {
+            named.to_path_buf()
+        } else {
+            root.join(named)
+        }
     }
 }

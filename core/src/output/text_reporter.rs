@@ -14,18 +14,6 @@ use crate::output::report::Report;
 use crate::output::reporter::Reporter;
 use std::path::PathBuf;
 
-fn format_with_commas(n: usize) -> String {
-    let s = n.to_string();
-    let mut result = String::with_capacity(s.len() + s.len() / 3);
-    for (i, c) in s.chars().enumerate() {
-        if i > 0 && (s.len() - i).is_multiple_of(3) {
-            result.push(',');
-        }
-        result.push(c);
-    }
-    result
-}
-
 pub struct TextReporter {
     /// Base path for displaying relative paths.
     pub base_path: Option<PathBuf>,
@@ -39,6 +27,18 @@ impl TextReporter {
 
     fn section(&self, section: &GroupSection, groups: &[DuplicateGroup]) -> String {
         section.write(groups, self.base_path.as_deref())
+    }
+
+    fn format_with_commas(n: usize) -> String {
+        let s = n.to_string();
+        let mut result = String::with_capacity(s.len() + s.len() / 3);
+        for (i, c) in s.chars().enumerate() {
+            if i > 0 && (s.len() - i).is_multiple_of(3) {
+                result.push(',');
+            }
+            result.push(c);
+        }
+        result
     }
 }
 
@@ -111,7 +111,7 @@ impl Reporter for TextReporter {
             "Duplication: {:.1}% exact, {:.1}% near (of {} total lines)",
             stats.exact_duplicate_percent(),
             stats.near_duplicate_percent(),
-            format_with_commas(stats.total_lines),
+            Self::format_with_commas(stats.total_lines),
         );
         if let Some(suppressed) = stats.baseline_suppressed {
             let _ = writeln!(out, "Baseline: {suppressed} groups suppressed");

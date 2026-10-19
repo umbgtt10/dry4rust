@@ -5,7 +5,9 @@
 
 use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::node::{LiteralKind, NodeKind, NormalizedNode};
+use dry4rust::node::LiteralKind;
+use dry4rust::node::NodeKind;
+use dry4rust::node::NormalizedNode;
 use dry4rust::suppression::ignore_file::IgnoreFile;
 use std::collections::HashSet;
 use std::iter::once;

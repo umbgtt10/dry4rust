@@ -71,7 +71,7 @@ fn count_nodes_basic() {
     );
 
     // Assert
-    assert_eq!(count_nodes(&node), 3);
+    assert_eq!(NormalizedNode::count_nodes(&node), 3);
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn count_nodes_skips_none_sentinels() {
     // If(1) + Placeholder(1) + Block(1) = 3 (None is not counted)
 
     // Assert
-    assert_eq!(count_nodes(&node), 3);
+    assert_eq!(NormalizedNode::count_nodes(&node), 3);
 }
 
 #[test]
@@ -129,7 +129,7 @@ fn reindex_handles_multiple_placeholder_kinds() {
             ),
         ],
     );
-    let reindexed = reindex_placeholders(&node);
+    let reindexed = NormalizedNode::reindex_placeholders(&node);
     let expected = NormalizedNode::with_children(
         NodeKind::Call,
         vec![
@@ -204,8 +204,8 @@ fn reindex_makes_equivalent_subtrees_equal() {
     // Assert
     assert_ne!(subtree1, subtree2);
     assert_eq!(
-        reindex_placeholders(&subtree1),
-        reindex_placeholders(&subtree2)
+        NormalizedNode::reindex_placeholders(&subtree1),
+        NormalizedNode::reindex_placeholders(&subtree2)
     );
 }
 
@@ -219,7 +219,7 @@ fn reindex_preserves_same_placeholder_identity() {
             NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, 3)),
         ],
     );
-    let reindexed = reindex_placeholders(&node);
+    let reindexed = NormalizedNode::reindex_placeholders(&node);
     let expected = NormalizedNode::with_children(
         NodeKind::BinaryOp(BinOpKind::Add),
         vec![
@@ -242,7 +242,7 @@ fn reindex_remaps_from_zero() {
             NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, 8)),
         ],
     );
-    let reindexed = reindex_placeholders(&node);
+    let reindexed = NormalizedNode::reindex_placeholders(&node);
     let expected = NormalizedNode::with_children(
         NodeKind::BinaryOp(BinOpKind::Add),
         vec![

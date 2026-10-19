@@ -12,7 +12,6 @@ use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::config::Config;
 use crate::suppression::baseline_file::BaselineFile;
-use crate::suppression::baseline_file::baseline_path;
 
 /// `baseline`: record the duplication that is already there.
 ///
@@ -51,7 +50,7 @@ impl<'a> BaselineCommand<'a> {
     /// carried in the outcome's result as [`CliError::Analysis`], beside the
     /// entries already listed, so they still reach stdout ahead of the error.
     pub fn run(&self) -> CliResult<CommandOutcome> {
-        let path = baseline_path(self.root, self.config.baseline.as_deref());
+        let path = BaselineFile::baseline_path(self.root, self.config.baseline.as_deref());
         let recorded = BaselineFile::record(self.result);
 
         let mut out = String::new();

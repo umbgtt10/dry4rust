@@ -70,7 +70,7 @@ impl Scanner {
                     .extension()
                     .and_then(|ext| ext.to_str())
                     .is_some_and(|ext| self.extensions.iter().any(|e| e.eq_ignore_ascii_case(ext)))
-                && !is_excluded(path, &self.exclude_patterns)
+                && !Self::is_excluded(path, &self.exclude_patterns)
             {
                 files.push(path.to_path_buf());
             }
@@ -78,13 +78,13 @@ impl Scanner {
 
         files
     }
-}
 
-/// Check if a path should be excluded based on exclusion patterns.
-#[must_use]
-pub fn is_excluded(path: &Path, patterns: &[String]) -> bool {
-    let path_str = path.to_string_lossy();
-    patterns
-        .iter()
-        .any(|pattern| path_str.contains(pattern.as_str()))
+    /// Check if a path should be excluded based on exclusion patterns.
+    #[must_use]
+    pub fn is_excluded(path: &Path, patterns: &[String]) -> bool {
+        let path_str = path.to_string_lossy();
+        patterns
+            .iter()
+            .any(|pattern| path_str.contains(pattern.as_str()))
+    }
 }

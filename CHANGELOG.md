@@ -28,6 +28,16 @@ subject.
   `rust::normalizer`, the only code that uses it, which keeps the top of `src/`
   at the twenty files `directory-file-count` allows. Tests moved with the code
   they test; none was removed and no assertion changed.
+- No source file with a subject holds a free function, which stern4rust
+  0.17.0's new `owned-functions` rule asks for: twenty-six became associated
+  functions of the type beside them. `analyze` and `analyze_units` are
+  `Analysis`'s; the grouping and statistics functions are `DuplicateGroup`'s;
+  `count_nodes` and `reindex_placeholders` are `NormalizedNode`'s; the
+  normaliser's public entry points and helpers are `NormalizationContext`'s;
+  `extract_sub_units`, `is_excluded` and `baseline_path` belong to `SubUnit`,
+  `Scanner` and `BaselineFile`. `output::reporter::display_path`, beside a trait
+  that cannot hold it, is `output::display_path::DisplayPath::of`, with its
+  three tests. All twenty-four stern4rust rules apply to every member.
 - `validation` pairs its scenario files with source instead of baselining
   `paired-test-file`. Its shared harness moved out of `tests/common.rs` into
   `validation/src/`, one type per file -- `Fixture` (`path`, `analysed`,
@@ -42,7 +52,7 @@ subject.
   changed; `validation` runs 109 tests, up from 94.
 - `stern4rust-baseline.json` is deleted and `stern4rust.toml` names no
   baseline. All twenty-three rules apply to every member with nothing skipped and
-  nothing baselined: `offences=0 baselined=0 rules_applied=23`.
+  nothing baselined: `offences=0 baselined=0 rules_applied=24`.
 
 ## [0.4.0] - 2026-10-10
 

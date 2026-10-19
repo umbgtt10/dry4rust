@@ -3,30 +3,30 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::output::reporter::display_path;
+use dry4rust::output::display_path::DisplayPath;
 use std::path::Path;
 
 #[test]
-fn display_path_outside_its_base_falls_back_to_the_whole_path() {
+fn of_outside_its_base_falls_back_to_the_whole_path() {
     // Arrange
     let base = Path::new("/project");
     let path = Path::new("/elsewhere/lib.rs");
 
     // Act
-    let shown = display_path(Some(base), path);
+    let shown = DisplayPath::of(Some(base), path);
 
     // Assert
     assert!(shown.contains("elsewhere"), "{shown}");
 }
 
 #[test]
-fn display_path_under_its_base_returns_the_relative_part() {
+fn of_under_its_base_returns_the_relative_part() {
     // Arrange
     let base = Path::new("/project");
     let path = Path::new("/project/src/lib.rs");
 
     // Act
-    let shown = display_path(Some(base), path);
+    let shown = DisplayPath::of(Some(base), path);
 
     // Assert
     assert!(!shown.contains("project"), "{shown}");
@@ -34,12 +34,12 @@ fn display_path_under_its_base_returns_the_relative_part() {
 }
 
 #[test]
-fn display_path_without_a_base_returns_the_path_unchanged() {
+fn of_without_a_base_returns_the_path_unchanged() {
     // Arrange
     let path = Path::new("src/lib.rs");
 
     // Act
-    let shown = display_path(None, path);
+    let shown = DisplayPath::of(None, path);
 
     // Assert
     assert_eq!(shown, "src/lib.rs");

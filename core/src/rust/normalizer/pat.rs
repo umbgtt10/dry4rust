@@ -3,12 +3,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::node::{NodeKind, NormalizedNode, PlaceholderKind};
+use crate::node::NodeKind;
+use crate::node::NormalizedNode;
+use crate::node::PlaceholderKind;
 use crate::rust::normalizer::normalization_context::NormalizationContext;
 use syn::Pat;
 use syn::Type;
-
-use super::helpers::{member_to_string, normalize_lit};
 
 impl NormalizationContext {
     pub fn normalize_type(&mut self, ty: &Type) -> NormalizedNode {
@@ -119,8 +119,10 @@ impl NormalizationContext {
                     .iter()
                     .map(|f| {
                         let value = self.normalize_pat(&f.pat);
-                        let name_idx = self
-                            .placeholder(&member_to_string(&f.member), PlaceholderKind::Variable);
+                        let name_idx = self.placeholder(
+                            &Self::member_to_string(&f.member),
+                            PlaceholderKind::Variable,
+                        );
                         NormalizedNode::with_children(
                             NodeKind::FieldValue,
                             vec![
@@ -138,9 +140,10 @@ impl NormalizationContext {
                 NodeKind::PatOr,
                 po.cases.iter().map(|p| self.normalize_pat(p)).collect(),
             ),
-            Pat::Lit(pl) => {
-                NormalizedNode::with_children(NodeKind::PatLiteral, vec![normalize_lit(&pl.lit)])
-            }
+            Pat::Lit(pl) => NormalizedNode::with_children(
+                NodeKind::PatLiteral,
+                vec![Self::normalize_lit(&pl.lit)],
+            ),
             Pat::Reference(pr) => NormalizedNode::with_children(
                 NodeKind::PatReference {
                     mutable: pr.mutability.is_some(),

@@ -7,10 +7,10 @@ use std::io;
 
 use crate::duplicate_group::DuplicateGroup;
 use crate::output::check_breach::CheckBreach;
+use crate::output::display_path::DisplayPath;
 use crate::output::duplication_stats::DuplicationStats;
 use crate::output::report::Report;
 use crate::output::reporter::Reporter;
-use crate::output::reporter::display_path;
 use serde_json::to_string_pretty;
 use std::path::PathBuf;
 
@@ -22,6 +22,11 @@ impl JsonReporter {
     #[must_use]
     pub const fn new(base_path: Option<PathBuf>) -> Self {
         Self { base_path }
+    }
+
+    #[allow(clippy::trivially_copy_pass_by_ref)] // serde skip_serializing_if requires &T
+    const fn is_zero(v: &usize) -> bool {
+        *v == 0
     }
 }
 
@@ -37,21 +42,16 @@ struct JsonStats {
     near_duplicate_lines: usize,
     exact_duplicate_percent: f64,
     near_duplicate_percent: f64,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "JsonReporter::is_zero")]
     sub_exact_groups: usize,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "JsonReporter::is_zero")]
     sub_exact_units: usize,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "JsonReporter::is_zero")]
     sub_near_groups: usize,
-    #[serde(skip_serializing_if = "is_zero")]
+    #[serde(skip_serializing_if = "JsonReporter::is_zero")]
     sub_near_units: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     baseline_suppressed: Option<usize>,
-}
-
-#[allow(clippy::trivially_copy_pass_by_ref)] // serde skip_serializing_if requires &T
-const fn is_zero(v: &usize) -> bool {
-    *v == 0
 }
 
 /// A full report as one document, so a reader can parse it in one call and
@@ -198,7 +198,7 @@ impl JsonReporter {
                 .map(|m| JsonMember {
                     name: m.name.clone(),
                     kind: m.kind.to_string(),
-                    file: display_path(self.base_path.as_deref(), &m.file).into_owned(),
+                    file: DisplayPath::of(self.base_path.as_deref(), &m.file).into_owned(),
                     line_start: m.line_start,
                     line_end: m.line_end,
                 })

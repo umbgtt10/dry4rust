@@ -3,10 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::node::{NodeKind, NormalizedNode, PlaceholderKind};
+use crate::node::NodeKind;
+use crate::node::NormalizedNode;
+use crate::node::PlaceholderKind;
 use crate::rust::normalizer::normalization_context::NormalizationContext;
 
-use super::helpers::{member_to_string, normalize_bin_op, normalize_lit, normalize_un_op};
 use syn::Block;
 use syn::Expr;
 use syn::Stmt;
@@ -15,7 +16,7 @@ impl NormalizationContext {
     #[allow(clippy::too_many_lines)]
     pub fn normalize_expr(&mut self, expr: &Expr) -> NormalizedNode {
         match expr {
-            Expr::Lit(el) => normalize_lit(&el.lit),
+            Expr::Lit(el) => Self::normalize_lit(&el.lit),
             Expr::Path(ep) => {
                 if ep.path.segments.len() == 1 {
                     let seg = &ep.path.segments[0];
@@ -48,7 +49,7 @@ impl NormalizationContext {
             }
             // BinaryOp -> [left, right]
             Expr::Binary(eb) => NormalizedNode::with_children(
-                NodeKind::BinaryOp(normalize_bin_op(&eb.op)),
+                NodeKind::BinaryOp(Self::normalize_bin_op(&eb.op)),
                 vec![
                     self.normalize_expr(&eb.left),
                     self.normalize_expr(&eb.right),
@@ -56,7 +57,7 @@ impl NormalizationContext {
             ),
             // UnaryOp -> [operand]
             Expr::Unary(eu) => NormalizedNode::with_children(
-                NodeKind::UnaryOp(normalize_un_op(&eu.op)),
+                NodeKind::UnaryOp(Self::normalize_un_op(&eu.op)),
                 vec![self.normalize_expr(&eu.expr)],
             ),
             // Call -> [func, arg0, arg1, ...]
@@ -81,8 +82,10 @@ impl NormalizationContext {
             }
             // FieldAccess -> [base, field]
             Expr::Field(ef) => {
-                let field_idx =
-                    self.placeholder(&member_to_string(&ef.member), PlaceholderKind::Variable);
+                let field_idx = self.placeholder(
+                    &Self::member_to_string(&ef.member),
+                    PlaceholderKind::Variable,
+                );
                 NormalizedNode::with_children(
                     NodeKind::FieldAccess,
                     vec![
@@ -166,8 +169,10 @@ impl NormalizationContext {
                     es.rest.as_ref().map(|e| self.normalize_expr(e)),
                 )];
                 children.extend(es.fields.iter().map(|f| {
-                    let field_idx =
-                        self.placeholder(&member_to_string(&f.member), PlaceholderKind::Variable);
+                    let field_idx = self.placeholder(
+                        &Self::member_to_string(&f.member),
+                        PlaceholderKind::Variable,
+                    );
                     NormalizedNode::with_children(
                         NodeKind::FieldValue,
                         vec![

@@ -5,9 +5,6 @@
 
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::duplicate_group::compute_stats_with_sub;
-use dry4rust::duplicate_group::find_near_duplicates;
-use dry4rust::duplicate_group::group_exact_duplicates;
 use dry4rust::rust::parser::parse_file;
 use std::fs;
 use tempfile::TempDir;
@@ -26,7 +23,7 @@ fn compute_stats_with_sub_records_the_sub_function_group_counts() {
     let none: Vec<DuplicateGroup> = Vec::new();
 
     // Act
-    let stats = compute_stats_with_sub(&units, &none, &none, &none, &none);
+    let stats = DuplicateGroup::compute_stats_with_sub(&units, &none, &none, &none, &none);
 
     // Assert
     assert_eq!(stats.sub_exact_groups, 0);
@@ -37,7 +34,7 @@ fn compute_stats_with_sub_records_the_sub_function_group_counts() {
 #[test]
 fn empty_input_no_groups() {
     // Arrange & Act
-    let groups = group_exact_duplicates(&[]);
+    let groups = DuplicateGroup::group_exact_duplicates(&[]);
 
     // Assert
     assert!(groups.is_empty());
@@ -52,7 +49,7 @@ fn find_near_duplicates_below_the_threshold_reports_no_group() {
     );
 
     // Act
-    let groups = find_near_duplicates(&units, 0.99, &[]);
+    let groups = DuplicateGroup::find_near_duplicates(&units, 0.99, &[]);
 
     // Assert
     assert!(groups.is_empty(), "a 0.99 threshold should reject these");
@@ -67,7 +64,7 @@ fn find_near_duplicates_groups_two_similar_but_not_identical_functions() {
     );
 
     // Act
-    let groups = find_near_duplicates(&units, 0.5, &[]);
+    let groups = DuplicateGroup::find_near_duplicates(&units, 0.5, &[]);
 
     // Assert
     assert!(!units.is_empty());
@@ -81,7 +78,7 @@ fn find_near_duplicates_skips_units_already_matched_exactly() {
     let exact: Vec<_> = units.iter().map(|u| u.fingerprint).collect();
 
     // Act
-    let groups = find_near_duplicates(&units, 0.5, &exact);
+    let groups = DuplicateGroup::find_near_duplicates(&units, 0.5, &exact);
 
     // Assert
     assert!(
@@ -96,7 +93,7 @@ fn find_near_duplicates_with_a_single_candidate_returns_early() {
     let units = units_from("fn only(x: i32) -> i32 { x + 1 }\n");
 
     // Act
-    let groups = find_near_duplicates(&units, 0.5, &[]);
+    let groups = DuplicateGroup::find_near_duplicates(&units, 0.5, &[]);
 
     // Assert
     assert!(groups.is_empty());
@@ -108,7 +105,7 @@ fn find_near_duplicates_with_a_threshold_of_one_demands_exactness() {
     let units: Vec<CodeUnit> = Vec::new();
 
     // Act
-    let groups = find_near_duplicates(&units, 1.0, &[]);
+    let groups = DuplicateGroup::find_near_duplicates(&units, 1.0, &[]);
 
     // Assert
     assert!(groups.is_empty());
@@ -120,7 +117,7 @@ fn find_near_duplicates_with_no_units_finds_nothing() {
     let units: Vec<CodeUnit> = Vec::new();
 
     // Act
-    let groups = find_near_duplicates(&units, 0.9, &[]);
+    let groups = DuplicateGroup::find_near_duplicates(&units, 0.9, &[]);
 
     // Assert
     assert!(groups.is_empty());

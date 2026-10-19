@@ -5,7 +5,7 @@
 
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
-use dry4rust::sub_unit::extract_sub_units;
+use dry4rust::sub_unit::SubUnit;
 
 #[test]
 fn extract_sub_units_from_a_leaf_returns_nothing() {
@@ -13,7 +13,7 @@ fn extract_sub_units_from_a_leaf_returns_nothing() {
     let leaf = NormalizedNode::leaf(NodeKind::None);
 
     // Act
-    let units = extract_sub_units(&leaf, 1);
+    let units = SubUnit::extract_sub_units(&leaf, 1);
 
     // Assert
     assert!(units.is_empty());
@@ -28,7 +28,7 @@ fn extract_sub_units_with_a_high_minimum_returns_nothing() {
     );
 
     // Act
-    let units = extract_sub_units(&block, 1000);
+    let units = SubUnit::extract_sub_units(&block, 1000);
 
     // Assert
     assert!(units.is_empty());

@@ -6,8 +6,6 @@
 use crate::code_unit_kind::CodeUnitKind;
 use crate::node::NodeKind;
 use crate::node::NormalizedNode;
-use crate::node::count_nodes;
-use crate::node::reindex_placeholders;
 use crate::sub_unit::SubUnit;
 
 /// Walks a normalized tree and collects the compound structures inside it.
@@ -115,8 +113,8 @@ impl SubUnitExtractor {
         kind: CodeUnitKind,
         description: &str,
     ) -> Option<SubUnit> {
-        let reindexed = reindex_placeholders(node);
-        let node_count = count_nodes(&reindexed);
+        let reindexed = NormalizedNode::reindex_placeholders(node);
+        let node_count = NormalizedNode::count_nodes(&reindexed);
         if node_count < self.min_node_count {
             return None;
         }
