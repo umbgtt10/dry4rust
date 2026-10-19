@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::code_unit::CodeUnit;
-use dry4rust::code_unit::CodeUnitKind;
+use dry4rust::code_unit_kind::CodeUnitKind;
+use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::grouper::DuplicateGroup;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use std::path::PathBuf;

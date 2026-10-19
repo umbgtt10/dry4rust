@@ -35,8 +35,8 @@ fn is_excluded_works() {
 fn scan_empty_directory() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
-    let config = ScanConfig::new(tmp.path().to_path_buf());
-    let files = scan_files(&config);
+    let scanner = Scanner::new(tmp.path().to_path_buf());
+    let files = scanner.scan_files();
 
     // Assert
     assert!(files.is_empty());
@@ -47,8 +47,8 @@ fn scan_finds_rust_files() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     create_test_tree(tmp.path());
-    let config = ScanConfig::new(tmp.path().to_path_buf());
-    let files = scan_files(&config);
+    let scanner = Scanner::new(tmp.path().to_path_buf());
+    let files = scanner.scan_files();
 
     // Assert
     assert_eq!(files.len(), 3);
@@ -60,8 +60,8 @@ fn scan_respects_exclude_patterns() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     create_test_tree(tmp.path());
-    let config = ScanConfig::new(tmp.path().to_path_buf()).with_excludes(vec!["utils".to_string()]);
-    let files = scan_files(&config);
+    let scanner = Scanner::new(tmp.path().to_path_buf()).with_excludes(vec!["utils".to_string()]);
+    let files = scanner.scan_files();
 
     // Assert
     assert!(!files.iter().any(|f| f.to_string_lossy().contains("utils")));
@@ -73,8 +73,8 @@ fn scan_skips_hidden_directories() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     create_test_tree(tmp.path());
-    let config = ScanConfig::new(tmp.path().to_path_buf());
-    let files = scan_files(&config);
+    let scanner = Scanner::new(tmp.path().to_path_buf());
+    let files = scanner.scan_files();
 
     // Assert
     assert!(
@@ -89,8 +89,8 @@ fn scan_skips_target_directory() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
     create_test_tree(tmp.path());
-    let config = ScanConfig::new(tmp.path().to_path_buf());
-    let files = scan_files(&config);
+    let scanner = Scanner::new(tmp.path().to_path_buf());
+    let files = scanner.scan_files();
 
     // Assert
     assert!(!files.iter().any(|f| f.to_string_lossy().contains("target")));
@@ -100,12 +100,12 @@ fn scan_skips_target_directory() {
 fn with_extensions_replaces_the_default_and_keeps_the_root() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let config = ScanConfig::new(tmp.path().to_path_buf());
+    let scanner = Scanner::new(tmp.path().to_path_buf());
 
     // Act
-    let config = config.with_extensions(vec![String::from("toml"), String::from("md")]);
+    let scanner = scanner.with_extensions(vec![String::from("toml"), String::from("md")]);
 
     // Assert
-    assert_eq!(config.extensions, vec!["toml", "md"]);
-    assert_eq!(config.root, tmp.path());
+    assert_eq!(scanner.extensions, vec!["toml", "md"]);
+    assert_eq!(scanner.root, tmp.path());
 }

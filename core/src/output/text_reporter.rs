@@ -6,8 +6,9 @@
 use std::fmt::Write as _;
 use std::io;
 
-use crate::grouper::{DuplicateGroup, DuplicationStats};
+use crate::duplicate_group::DuplicateGroup;
 use crate::output::check_breach::CheckBreach;
+use crate::output::duplication_stats::DuplicationStats;
 use crate::output::group_section::GroupSection;
 use crate::output::report::Report;
 use crate::output::reporter::Reporter;

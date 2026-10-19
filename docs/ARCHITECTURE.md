@@ -9,9 +9,9 @@ matches and compared tree-to-tree for near ones. Nothing is inferred from
 names, comments or formatting, because all three are exactly what a copied
 block changes first.
 
-67 source files, roughly 5,900 lines, one type each. Five directories group
+72 source files, roughly 6,000 lines, one type each. Five directories group
 the modules that answer one question between them: `src/near_duplicate/`,
-which only `grouper` reaches; `src/suppression/`, the two ways duplication is
+which only `duplicate_group` reaches; `src/suppression/`, the two ways duplication is
 kept out of a report; `src/cli/`, one file per command, with `checking/` under
 it; `src/output/`, the reporters; and `src/rust/`, the only `LanguageAnalyzer`
 there is.
@@ -27,7 +27,8 @@ limits are for.
   scanner        walk the tree, honour excludes and extensions
      |
      v
-  rust::parser   syn -> one CodeUnit per fn / method / closure
+  rust::parser   syn -> one CodeUnit per fn / method / closure,
+                 visited by rust::code_unit_extractor
      |
      v
   rust::normalizer
@@ -40,7 +41,7 @@ limits are for.
      +--> node_encoder --> stable_hasher      the fingerprint
      |
      v
-  grouper
+  duplicate_group
      |  group_exact_duplicates    equal fingerprints
      |  NearDuplicateFinder       PairScanner picks the pairs worth scoring,
      |                            UnionFind closes them into groups
@@ -66,18 +67,19 @@ bodies as further units, which then travel the same path.
 
 | module | responsibility |
 |---|---|
-| `scanner` | Walk a root, apply exclude globs and extension filters. |
+| `scanner` | `Scanner`: walk a root, apply exclude globs and extension filters. |
 | `analyzer` | `LanguageAnalyzer`, the trait every backend implements. One implementation today. |
 | `rust::parser` | `syn` -> `CodeUnit`, one per function, method and closure. |
+| `rust::code_unit_extractor` | `CodeUnitExtractor`, the visitor that walks a parsed file and keeps each unit over the floors. |
 | `rust::normalizer` | The normalisation rules, split by syntax category: `expr`, `pat`, `helpers`, `normalize`. Each is an `impl NormalizationContext` block, so the context that numbers the placeholders is `self` rather than a `&mut` threaded through every call. |
-| `normalization_context` | The placeholder counters. Two identifiers map to the same placeholder only within one context. |
+| `rust::normalizer::normalization_context` | The placeholder counters. Two identifiers map to the same placeholder only within one context. |
 | `node` | `NormalizedNode` and `NodeKind` -- the normalised tree, plus `count_nodes` and `reindex_placeholders`. |
 | `placeholder_order_collector` | The placeholders of a tree in first-occurrence order, which is what `reindex_placeholders` renumbers by. |
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
 | `node_encoder` | The byte format a fingerprint is computed over -- variants by name, children counted. |
 | `stable_hasher` | FNV-1a 64, defined here so a fingerprint survives a toolchain upgrade. |
-| `extractor` / `sub_unit_extractor` | Compound structures inside a body, as further comparable units. |
-| `grouper` | `DuplicateGroup`, `DuplicationStats`, exact grouping. |
+| `sub_unit` / `sub_unit_extractor` | Compound structures inside a body, as further comparable units. |
+| `duplicate_group` | `DuplicateGroup`, exact grouping, and the statistics computed over the groups. |
 | `near_duplicate::near_duplicate_finder` | Candidate filtering and transitive closure into groups. |
 | `near_duplicate::pair_scanner` | Which pairs are worth scoring, and their scores. |
 | `near_duplicate::similarity` | The Dice score between two normalised trees. |
@@ -93,7 +95,7 @@ bodies as further units, which then travel the same path.
 | `config` | `Config`: what a run is configured with, assembled and range-checked. |
 | `file_config` | What `dry4rust.toml` and `[package.metadata.dry4rust]` may state. |
 | `analysis_config` | The two floors a language analyzer needs, and nothing else. |
-| `analysis` | `analyze` and `analyze_units` -- the pipeline as one call. |
+| `analysis` | `analyze` and `analyze_units` -- the pipeline as one call -- and `Analysis`, what it returns. |
 | `cli::cli_error` | `CliError` and the exit code each variant maps to. |
 | `cli::command` | The subcommands, as `clap` sees them. |
 | `cli::command_outcome` | What a command produced: the text to print, and the verdict that sets the exit code once it is printed. |
@@ -108,7 +110,8 @@ bodies as further units, which then travel the same path.
 | `output::report` | What a full report shows, handed over in one piece. |
 | `output::check_breach` | One exceeded ceiling and the groups behind it. |
 | `output::group_section` | One headed section of a text report, and how its groups read. |
-| `output` | `text` and `json` implementations of `Reporter`. |
+| `output::duplication_stats` | `DuplicationStats`, the counts and percentages a report states. |
+| `output` | `text_reporter` and `json_reporter`, the implementations of `Reporter`. |
 
 ## Data model
 

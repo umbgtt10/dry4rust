@@ -3,11 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::helpers::member_to_string;
 use dry4rust::rust::normalizer::helpers::normalize_bin_op;
 use dry4rust::rust::normalizer::helpers::normalize_lit;
 use dry4rust::rust::normalizer::helpers::normalize_un_op;
+use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 use syn::BinOp;
 use syn::Lit;
 use syn::Macro;

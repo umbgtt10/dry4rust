@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 use crate::code_unit::CodeUnit;
+use crate::duplicate_group::DuplicateGroup;
 use crate::fingerprint::Fingerprint;
-use crate::grouper::DuplicateGroup;
 use crate::near_duplicate::pair_scanner::PairScanner;
 use crate::near_duplicate::similarity_pair::SimilarityPair;
 use crate::near_duplicate::union_find::UnionFind;

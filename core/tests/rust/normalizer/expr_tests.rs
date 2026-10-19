@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::normalization_context::NormalizationContext;
+use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 use syn::Block;
 use syn::Stmt;
 use syn::parse_str;

@@ -4,13 +4,15 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
-use dry4rust::code_unit::{CodeUnit, CodeUnitKind};
+use dry4rust::code_unit::CodeUnit;
+use dry4rust::code_unit_kind::CodeUnitKind;
+use dry4rust::duplicate_group::DuplicateGroup;
+use dry4rust::duplicate_group::compute_stats_with_sub;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::grouper::compute_stats_with_sub;
-use dry4rust::grouper::{DuplicateGroup, DuplicationStats};
 use dry4rust::node::{NodeKind, NormalizedNode};
 use dry4rust::output::check_breach::CheckBreach;
-use dry4rust::output::json::*;
+use dry4rust::output::duplication_stats::DuplicationStats;
+use dry4rust::output::json_reporter::*;
 use dry4rust::output::reporter::Reporter;
 use serde_json::Value;
 use serde_json::from_str;

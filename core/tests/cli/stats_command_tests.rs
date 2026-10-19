@@ -7,7 +7,7 @@ use crate::common::group;
 use crate::common::result_with;
 use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::cli::stats_command::StatsCommand;
-use dry4rust::grouper::DuplicateGroup;
+use dry4rust::duplicate_group::DuplicateGroup;
 
 fn summary_of(exact: Vec<DuplicateGroup>) -> String {
     let result = result_with(exact, vec![], vec![], vec![]);

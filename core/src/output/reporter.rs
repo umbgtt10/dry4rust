@@ -7,8 +7,9 @@ use std::borrow::Cow;
 use std::io;
 use std::path::Path;
 
-use crate::grouper::{DuplicateGroup, DuplicationStats};
+use crate::duplicate_group::DuplicateGroup;
 use crate::output::check_breach::CheckBreach;
+use crate::output::duplication_stats::DuplicationStats;
 use crate::output::report::Report;
 
 /// Compute a display path relative to an optional base, falling back to the absolute path.

@@ -9,21 +9,22 @@ use std::path::PathBuf;
 use crate::analyzer::LanguageAnalyzer;
 use crate::code_unit::CodeUnit;
 use crate::config::Config;
+use crate::duplicate_group::DuplicateGroup;
+use crate::duplicate_group::compute_stats_with_sub;
+use crate::duplicate_group::find_near_duplicates;
+use crate::duplicate_group::group_exact_duplicates;
 use crate::error::Result;
-use crate::extractor::extract_sub_units;
 use crate::fingerprint::Fingerprint;
-use crate::grouper::compute_stats_with_sub;
-use crate::grouper::find_near_duplicates;
-use crate::grouper::group_exact_duplicates;
-use crate::grouper::{DuplicateGroup, DuplicationStats};
 use crate::node::NormalizedNode;
+use crate::output::duplication_stats::DuplicationStats;
+use crate::sub_unit::extract_sub_units;
 use crate::suppression::baseline_filter::BaselineFilter;
 use crate::suppression::baseline_kind::BaselineKind;
 use crate::suppression::ignore_file::IgnoreFile;
 use std::fs;
 
 /// The result of a full analysis run.
-pub struct AnalysisResult {
+pub struct Analysis {
     pub stats: DuplicationStats,
     pub exact_groups: Vec<DuplicateGroup>,
     pub near_groups: Vec<DuplicateGroup>,
@@ -43,7 +44,7 @@ pub fn analyze(
     analyzer: &dyn LanguageAnalyzer,
     files: &[PathBuf],
     config: &Config,
-) -> Result<AnalysisResult> {
+) -> Result<Analysis> {
     let analysis_config = config.analysis_config();
     let mut units = Vec::new();
     let mut warnings = Vec::new();
@@ -78,7 +79,7 @@ pub fn analyze_units(
     units: &[CodeUnit],
     warnings: Vec<String>,
     config: &Config,
-) -> Result<AnalysisResult> {
+) -> Result<Analysis> {
     // 1. Group exact duplicates
     let exact_groups = group_exact_duplicates(units);
 
@@ -159,7 +160,7 @@ pub fn analyze_units(
     )
     .with_baseline_suppressed(baseline.is_in_effect().then_some(found - reported));
 
-    Ok(AnalysisResult {
+    Ok(Analysis {
         stats,
         exact_groups,
         near_groups,

@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::node::{NodeKind, NormalizedNode, PlaceholderKind};
-use crate::normalization_context::NormalizationContext;
+use crate::rust::normalizer::normalization_context::NormalizationContext;
 
 use syn::Block;
 use syn::ExprClosure;

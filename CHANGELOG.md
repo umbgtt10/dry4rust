@@ -9,11 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Repository structure only. The published `cargo-dry4rust` crate is unchanged:
-no file under `core/` moved or changed, so its library, binary, output, exit
-codes and file formats are exactly 0.4.0's.
+The binary is unchanged: its command line, output, exit codes and file formats
+are exactly 0.4.0's. The library is not: seven `core/` modules are renamed,
+split or moved, and two types renamed, so each file is named after its
+subject.
 
 ### Changed
+- Every source file is named after its subject, which stern4rust 0.16.0's new
+  `named-subject` rule asks for. `output::json` and `output::text` are
+  `output::json_reporter` and `output::text_reporter`. `extractor` is
+  `sub_unit`, after the `SubUnit` it declares. `grouper` is `duplicate_group`,
+  and `DuplicationStats` moves out of it to `output::duplication_stats`.
+  `CodeUnitKind` moves out of `code_unit` to `code_unit_kind`.
+  `rust::parser`'s visitor moves to `rust::code_unit_extractor` as
+  `CodeUnitExtractor`, with `new` and `into_units` public and three tests of
+  its own. `AnalysisResult` is `Analysis`. `ScanConfig` is `Scanner`, and
+  `scan_files` is its method. `normalization_context` moves under
+  `rust::normalizer`, the only code that uses it, which keeps the top of `src/`
+  at the twenty files `directory-file-count` allows. Tests moved with the code
+  they test; none was removed and no assertion changed.
 - `validation` pairs its scenario files with source instead of baselining
   `paired-test-file`. Its shared harness moved out of `tests/common.rs` into
   `validation/src/`, one type per file -- `Fixture` (`path`, `analysed`,
@@ -27,8 +41,8 @@ codes and file formats are exactly 0.4.0's.
   binary with `--path` already set. No test was removed and no assertion
   changed; `validation` runs 109 tests, up from 94.
 - `stern4rust-baseline.json` is deleted and `stern4rust.toml` names no
-  baseline. All twenty-two rules apply to every member with nothing skipped and
-  nothing baselined: `offences=0 baselined=0 rules_applied=22`.
+  baseline. All twenty-three rules apply to every member with nothing skipped and
+  nothing baselined: `offences=0 baselined=0 rules_applied=23`.
 
 ## [0.4.0] - 2026-10-10
 

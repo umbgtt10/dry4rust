@@ -4,8 +4,9 @@
 // SPDX-License-Identifier: MIT
 
 pub mod check_breach;
+pub mod duplication_stats;
 pub mod group_section;
-pub mod json;
+pub mod json_reporter;
 pub mod report;
 pub mod reporter;
-pub mod text;
+pub mod text_reporter;

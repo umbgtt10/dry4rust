@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::analysis::AnalysisResult;
+use crate::analysis::Analysis;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::output::report::Report;
@@ -16,13 +16,13 @@ use crate::output::reporter::Reporter;
 /// inside it. A command that made that choice itself could only ever make the
 /// text one.
 pub struct ReportCommand<'a> {
-    result: &'a AnalysisResult,
+    result: &'a Analysis,
     reporter: &'a dyn Reporter,
 }
 
 impl<'a> ReportCommand<'a> {
     #[must_use]
-    pub const fn new(result: &'a AnalysisResult, reporter: &'a dyn Reporter) -> Self {
+    pub const fn new(result: &'a Analysis, reporter: &'a dyn Reporter) -> Self {
         Self { result, reporter }
     }
 

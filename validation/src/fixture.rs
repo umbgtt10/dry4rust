@@ -3,12 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::analysis::AnalysisResult;
+use dry4rust::analysis::Analysis;
 use dry4rust::analysis::analyze;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
-use dry4rust::scanner::ScanConfig;
-use dry4rust::scanner::scan_files;
+use dry4rust::scanner::Scanner;
 use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -30,14 +29,14 @@ impl Fixture {
 
     /// Run the analysis pipeline over a fixture crate, as the CLI would.
     #[must_use]
-    pub fn analysed(name: &str) -> (Config, AnalysisResult) {
+    pub fn analysed(name: &str) -> (Config, Analysis) {
         Self::analysed_under(name, false)
     }
 
     /// The same, with sub-function analysis on, which no fixture configures for
     /// itself.
     #[must_use]
-    pub fn analysed_with_sub_function(name: &str) -> (Config, AnalysisResult) {
+    pub fn analysed_with_sub_function(name: &str) -> (Config, Analysis) {
         Self::analysed_under(name, true)
     }
 
@@ -52,13 +51,13 @@ impl Fixture {
         .expect("copy the fixture");
     }
 
-    fn analysed_under(name: &str, sub_function: bool) -> (Config, AnalysisResult) {
+    fn analysed_under(name: &str, sub_function: bool) -> (Config, Analysis) {
         let root = Self::path(name);
         let config = Config {
             sub_function,
             ..Config::load(&root).expect("the fixture configuration is in range")
         };
-        let files = scan_files(&ScanConfig::new(root));
+        let files = Scanner::new(root).scan_files();
         let result =
             analyze(&RustAnalyzer::new(), &files, &config).expect("the fixture analyses cleanly");
         (config, result)

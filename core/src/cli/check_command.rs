@@ -3,14 +3,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::analysis::AnalysisResult;
+use crate::analysis::Analysis;
 use crate::cli::checking::ceiling::Ceiling;
 use crate::cli::checking::check_thresholds::CheckThresholds;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::config::Config;
-use crate::grouper::DuplicateGroup;
+use crate::duplicate_group::DuplicateGroup;
 use crate::output::check_breach::CheckBreach;
 use crate::output::reporter::Reporter;
 
@@ -20,7 +20,7 @@ use crate::output::reporter::Reporter;
 /// config file, and one set in neither place cannot be breached.
 pub struct CheckCommand<'a> {
     config: &'a Config,
-    result: &'a AnalysisResult,
+    result: &'a Analysis,
     reporter: &'a dyn Reporter,
     thresholds: &'a CheckThresholds,
 }
@@ -29,7 +29,7 @@ impl<'a> CheckCommand<'a> {
     #[must_use]
     pub const fn new(
         config: &'a Config,
-        result: &'a AnalysisResult,
+        result: &'a Analysis,
         reporter: &'a dyn Reporter,
         thresholds: &'a CheckThresholds,
     ) -> Self {

@@ -6,7 +6,7 @@
 use std::fmt::Write as _;
 use std::path::Path;
 
-use crate::analysis::AnalysisResult;
+use crate::analysis::Analysis;
 use crate::cli::checking::stale_report::StaleReport;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
@@ -19,13 +19,13 @@ use crate::suppression::ignore_file::IgnoreFile;
 /// command can be pointed at a repository whose ignore file is under review.
 pub struct CleanupCommand<'a> {
     root: &'a Path,
-    result: &'a AnalysisResult,
+    result: &'a Analysis,
     dry_run: bool,
 }
 
 impl<'a> CleanupCommand<'a> {
     #[must_use]
-    pub const fn new(root: &'a Path, result: &'a AnalysisResult, dry_run: bool) -> Self {
+    pub const fn new(root: &'a Path, result: &'a Analysis, dry_run: bool) -> Self {
         Self {
             root,
             result,

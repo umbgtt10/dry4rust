@@ -14,8 +14,8 @@ use serde::{Deserialize, Serialize};
 use toml::from_str;
 use toml::to_string_pretty;
 
+use crate::duplicate_group::DuplicateGroup;
 use crate::fingerprint::Fingerprint;
-use crate::grouper::DuplicateGroup;
 use crate::suppression::ignore_entry::IgnoreEntry;
 
 const IGNORE_FILE_NAME: &str = ".dry4rust-ignore.toml";

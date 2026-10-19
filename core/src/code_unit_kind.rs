@@ -1,0 +1,39 @@
+// Copyright (c) 2026 Matjaz Domen Pecan
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
+use std::fmt;
+
+/// The kind of code unit extracted from source.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
+pub enum CodeUnitKind {
+    Function,
+    Method,
+    Closure,
+    Class,
+    ImplBlock,
+    TraitImplBlock,
+    // Sub-function kinds
+    IfBranch,
+    MatchArm,
+    LoopBody,
+    Block,
+}
+
+impl fmt::Display for CodeUnitKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Function => write!(f, "function"),
+            Self::Method => write!(f, "method"),
+            Self::Closure => write!(f, "closure"),
+            Self::Class => write!(f, "class"),
+            Self::ImplBlock => write!(f, "impl block"),
+            Self::TraitImplBlock => write!(f, "trait impl block"),
+            Self::IfBranch => write!(f, "if branch"),
+            Self::MatchArm => write!(f, "match arm"),
+            Self::LoopBody => write!(f, "loop body"),
+            Self::Block => write!(f, "block"),
+        }
+    }
+}

@@ -34,7 +34,7 @@ near-duplicate detection that no longer hides what exact detection reports. Adde
 baseline mode, and configuration that cannot hold an impossible threshold.
 
 The surrounding repository is under this family's house rules and gates: `cargo stern4rust`
-reports no offences with all twenty-two rules applied to every workspace member, none
+reports no offences with all twenty-three rules applied to every workspace member, none
 skipped and nothing baselined -- the end-to-end scenario files pair with a thin scenario
 type each in `validation/src/` -- `cargo crap4rust` finds no function at or above 15, every
 source file has a mirrored test file, no file reaches 10 on `cargo iceberg4rust`, and

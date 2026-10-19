@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod code_unit_extractor;
 pub mod normalizer;
 pub mod parser;
 pub mod rust_analyzer;

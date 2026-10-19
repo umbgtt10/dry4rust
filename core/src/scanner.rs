@@ -6,8 +6,8 @@
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
-/// Configuration for scanning the filesystem for source files.
-pub struct ScanConfig {
+/// Scans the filesystem for source files.
+pub struct Scanner {
     /// Root directory to scan.
     pub root: PathBuf,
     /// Glob patterns to exclude (simple substring matching for now).
@@ -16,7 +16,7 @@ pub struct ScanConfig {
     pub extensions: Vec<String>,
 }
 
-impl ScanConfig {
+impl Scanner {
     #[must_use]
     pub fn new(root: PathBuf) -> Self {
         Self {
@@ -37,52 +37,47 @@ impl ScanConfig {
         self.extensions = extensions;
         self
     }
-}
 
-/// Scan for source files under the given config.
-/// Always skips `target/` directories.
-#[must_use]
-pub fn scan_files(config: &ScanConfig) -> Vec<PathBuf> {
-    let mut files = Vec::new();
+    /// Scan for source files under the given self.
+    /// Always skips `target/` directories.
+    #[must_use]
+    pub fn scan_files(&self) -> Vec<PathBuf> {
+        let mut files = Vec::new();
 
-    for entry in WalkDir::new(&config.root)
-        .into_iter()
-        .filter_entry(|e| {
-            let path = e.path();
-            // Only filter directories (not the root itself for hidden check)
-            if path.is_dir()
-                && let Some(name) = path.file_name().and_then(|n| n.to_str())
-            {
-                if name == "target" {
-                    return false;
+        for entry in WalkDir::new(&self.root)
+            .into_iter()
+            .filter_entry(|e| {
+                let path = e.path();
+                // Only filter directories (not the root itself for hidden check)
+                if path.is_dir()
+                    && let Some(name) = path.file_name().and_then(|n| n.to_str())
+                {
+                    if name == "target" {
+                        return false;
+                    }
+                    // Skip hidden directories, but not the root
+                    if name.starts_with('.') && path != self.root.as_path() {
+                        return false;
+                    }
                 }
-                // Skip hidden directories, but not the root
-                if name.starts_with('.') && path != config.root.as_path() {
-                    return false;
-                }
-            }
-            true
-        })
-        .flatten()
-    {
-        let path = entry.path();
-        if path.is_file()
-            && path
-                .extension()
-                .and_then(|ext| ext.to_str())
-                .is_some_and(|ext| {
-                    config
-                        .extensions
-                        .iter()
-                        .any(|e| e.eq_ignore_ascii_case(ext))
-                })
-            && !is_excluded(path, &config.exclude_patterns)
+                true
+            })
+            .flatten()
         {
-            files.push(path.to_path_buf());
+            let path = entry.path();
+            if path.is_file()
+                && path
+                    .extension()
+                    .and_then(|ext| ext.to_str())
+                    .is_some_and(|ext| self.extensions.iter().any(|e| e.eq_ignore_ascii_case(ext)))
+                && !is_excluded(path, &self.exclude_patterns)
+            {
+                files.push(path.to_path_buf());
+            }
         }
-    }
 
-    files
+        files
+    }
 }
 
 /// Check if a path should be excluded based on exclusion patterns.

@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::node::PlaceholderKind;
-use dry4rust::normalization_context::NormalizationContext;
+use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 
 #[test]
 fn placeholder_counts_each_kind_from_zero_independently() {

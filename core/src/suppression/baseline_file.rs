@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 use serde_json::to_string_pretty;
 
-use crate::analysis::AnalysisResult;
+use crate::analysis::Analysis;
+use crate::duplicate_group::DuplicateGroup;
 use crate::error::Error;
 use crate::error::Result;
-use crate::grouper::DuplicateGroup;
 use crate::suppression::baseline_entry::BaselineEntry;
 use crate::suppression::baseline_kind::BaselineKind;
 
@@ -61,7 +61,7 @@ impl BaselineFile {
     /// unchanged codebase produces a byte-identical file and a diff shows only
     /// what actually moved.
     #[must_use]
-    pub fn record(result: &AnalysisResult) -> Self {
+    pub fn record(result: &Analysis) -> Self {
         let mut entries: Vec<BaselineEntry> = [
             (BaselineKind::Exact, &result.exact_groups),
             (BaselineKind::Near, &result.near_groups),

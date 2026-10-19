@@ -3,20 +3,20 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::analysis::AnalysisResult;
+use crate::analysis::Analysis;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::output::reporter::Reporter;
 
 /// `stats`: the summary and nothing else.
 pub struct StatsCommand<'a> {
-    result: &'a AnalysisResult,
+    result: &'a Analysis,
     reporter: &'a dyn Reporter,
 }
 
 impl<'a> StatsCommand<'a> {
     #[must_use]
-    pub const fn new(result: &'a AnalysisResult, reporter: &'a dyn Reporter) -> Self {
+    pub const fn new(result: &'a Analysis, reporter: &'a dyn Reporter) -> Self {
         Self { result, reporter }
     }
 

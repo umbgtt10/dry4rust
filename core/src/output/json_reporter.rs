@@ -5,8 +5,9 @@
 
 use std::io;
 
-use crate::grouper::{DuplicateGroup, DuplicationStats};
+use crate::duplicate_group::DuplicateGroup;
 use crate::output::check_breach::CheckBreach;
+use crate::output::duplication_stats::DuplicationStats;
 use crate::output::report::Report;
 use crate::output::reporter::Reporter;
 use crate::output::reporter::display_path;

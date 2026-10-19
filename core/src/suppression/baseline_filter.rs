@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: MIT
 
 use crate::config::Config;
+use crate::duplicate_group::DuplicateGroup;
 use crate::error::Result;
-use crate::grouper::DuplicateGroup;
 use crate::suppression::baseline_file::BaselineFile;
 use crate::suppression::baseline_file::baseline_path;
 use crate::suppression::baseline_kind::BaselineKind;

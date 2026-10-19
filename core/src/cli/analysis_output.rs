@@ -6,7 +6,7 @@
 use std::path::Path;
 use std::string::ToString;
 
-use crate::analysis::AnalysisResult;
+use crate::analysis::Analysis;
 use crate::analysis::analyze;
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::cli_error::CliError;
@@ -15,14 +15,13 @@ use crate::cli::cli_overrides::CliOverrides;
 use crate::cli::output_format::OutputFormat;
 use crate::config::Config;
 use crate::output::reporter::Reporter;
-use crate::scanner::ScanConfig;
-use crate::scanner::scan_files;
+use crate::scanner::Scanner;
 
 /// Everything one analysis run produces: the configuration it ran under, what
 /// it found, and the reporter that can write it out.
 pub struct AnalysisOutput {
     pub config: Config,
-    pub result: AnalysisResult,
+    pub result: Analysis,
     pub reporter: Box<dyn Reporter>,
 }
 
@@ -86,7 +85,7 @@ impl AnalysisOutput {
         format: OutputFormat,
         config: Config,
     ) -> CliResult<Self> {
-        let scan_config = ScanConfig::new(config.root.clone())
+        let scanner = Scanner::new(config.root.clone())
             .with_excludes(config.exclude.clone())
             .with_extensions(
                 analyzer
@@ -95,7 +94,7 @@ impl AnalysisOutput {
                     .map(ToString::to_string)
                     .collect(),
             );
-        let files = scan_files(&scan_config);
+        let files = scanner.scan_files();
 
         if files.is_empty() {
             return Err(CliError::NoSourceFiles(config.root));

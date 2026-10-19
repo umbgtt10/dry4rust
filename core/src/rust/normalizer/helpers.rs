@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::node::{BinOpKind, LiteralKind, NodeKind, NormalizedNode, UnOpKind};
-use crate::normalization_context::NormalizationContext;
+use crate::rust::normalizer::normalization_context::NormalizationContext;
 use syn::punctuated::Punctuated;
 
 use syn::BinOp;

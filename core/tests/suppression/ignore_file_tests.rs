@@ -3,8 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::grouper::DuplicateGroup;
 use dry4rust::node::{LiteralKind, NodeKind, NormalizedNode};
 use dry4rust::suppression::ignore_file::IgnoreFile;
 use std::collections::HashSet;

@@ -8,7 +8,7 @@ use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use dry4rust::node::count_nodes;
 use dry4rust::node::reindex_placeholders;
-use dry4rust::normalization_context::NormalizationContext;
+use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 use dry4rust::rust::normalizer::normalize::normalize_closure_expr;
 use dry4rust::rust::normalizer::normalize::normalize_impl_block;
 use dry4rust::rust::normalizer::normalize::normalize_impl_item_fn;

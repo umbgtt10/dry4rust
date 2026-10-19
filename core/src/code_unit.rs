@@ -5,42 +5,9 @@
 
 use std::path::PathBuf;
 
+use crate::code_unit_kind::CodeUnitKind;
 use crate::fingerprint::Fingerprint;
 use crate::node::NormalizedNode;
-use std::fmt;
-
-/// The kind of code unit extracted from source.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
-pub enum CodeUnitKind {
-    Function,
-    Method,
-    Closure,
-    Class,
-    ImplBlock,
-    TraitImplBlock,
-    // Sub-function kinds
-    IfBranch,
-    MatchArm,
-    LoopBody,
-    Block,
-}
-
-impl fmt::Display for CodeUnitKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Function => write!(f, "function"),
-            Self::Method => write!(f, "method"),
-            Self::Closure => write!(f, "closure"),
-            Self::Class => write!(f, "class"),
-            Self::ImplBlock => write!(f, "impl block"),
-            Self::TraitImplBlock => write!(f, "trait impl block"),
-            Self::IfBranch => write!(f, "if branch"),
-            Self::MatchArm => write!(f, "match arm"),
-            Self::LoopBody => write!(f, "loop body"),
-            Self::Block => write!(f, "block"),
-        }
-    }
-}
 
 /// A unit of code extracted and normalized for duplication analysis.
 #[derive(Debug, Clone)]

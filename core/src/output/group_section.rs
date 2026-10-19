@@ -7,7 +7,7 @@ use std::fmt::Write as _;
 use std::path::Path;
 
 use crate::code_unit::CodeUnit;
-use crate::grouper::DuplicateGroup;
+use crate::duplicate_group::DuplicateGroup;
 use crate::output::reporter::display_path;
 
 /// One headed section of a text report, and how the groups under it read.

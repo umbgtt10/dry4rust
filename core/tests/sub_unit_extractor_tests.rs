@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::code_unit::CodeUnitKind;
+use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use dry4rust::sub_unit_extractor::SubUnitExtractor;

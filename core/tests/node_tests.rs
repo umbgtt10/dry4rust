@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::node::*;
-use dry4rust::normalization_context::NormalizationContext;
+use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 
 #[test]
 fn context_assigns_sequential_indices() {

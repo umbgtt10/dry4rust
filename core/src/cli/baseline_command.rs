@@ -6,7 +6,7 @@
 use std::fmt::Write as _;
 use std::path::Path;
 
-use crate::analysis::AnalysisResult;
+use crate::analysis::Analysis;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
@@ -23,7 +23,7 @@ use crate::suppression::baseline_file::baseline_path;
 pub struct BaselineCommand<'a> {
     root: &'a Path,
     config: &'a Config,
-    result: &'a AnalysisResult,
+    result: &'a Analysis,
     dry_run: bool,
 }
 
@@ -32,7 +32,7 @@ impl<'a> BaselineCommand<'a> {
     pub const fn new(
         root: &'a Path,
         config: &'a Config,
-        result: &'a AnalysisResult,
+        result: &'a Analysis,
         dry_run: bool,
     ) -> Self {
         Self {

@@ -3,9 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::extractor::extract_sub_units;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
+use dry4rust::sub_unit::extract_sub_units;
 
 #[test]
 fn extract_sub_units_from_a_leaf_returns_nothing() {

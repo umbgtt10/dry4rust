@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::code_unit::CodeUnitKind;
+use dry4rust::code_unit_kind::CodeUnitKind;
 use std::collections::BTreeSet;
 
 #[test]
