@@ -15,6 +15,7 @@ use dry4rust::near_duplicate::similarity::similarity_score;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
+use dry4rust::rust::normalizer::normalized_fn::NormalizedFn;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::sub_unit::SubUnit;
@@ -59,8 +60,14 @@ fn expr_similarity(code1: &str, code2: &str) -> f64 {
 fn fn_body_similarity(code1: &str, code2: &str) -> f64 {
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (_, b1) = NormalizationContext::normalize_item_fn(&f1);
-    let (_, b2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: _,
+        body: b1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: _,
+        body: b2,
+    } = NormalizationContext::normalize_item_fn(&f2);
     similarity_score(&b1, &b2)
 }
 
@@ -73,7 +80,7 @@ fn make_units(code: &str) -> Vec<CodeUnit> {
 
 fn parse_and_extract_body(code: &str) -> NormalizedNode {
     let f = parse_fn(code);
-    let (_, body) = NormalizationContext::normalize_item_fn(&f);
+    let NormalizedFn { signature: _, body } = NormalizationContext::normalize_item_fn(&f);
     body
 }
 
@@ -160,8 +167,14 @@ fn different_functions_different_fingerprint() {
     let code2 = "fn foo(x: i32) -> i32 { x * 2 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: sig1,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: sig2,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -364,8 +377,14 @@ fn fingerprint_discriminates_operators() {
     let code2 = "fn f(x: i32) -> i32 { x - 1 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (s1, b1) = NormalizationContext::normalize_item_fn(&f1);
-    let (s2, b2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: s1,
+        body: b1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: s2,
+        body: b2,
+    } = NormalizationContext::normalize_item_fn(&f2);
 
     // Assert
     assert_ne!(
@@ -393,8 +412,14 @@ fn fingerprint_ignores_variable_names() {
     let code2 = "fn calculate(num: i32) -> i32 { num * num + num }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (s1, b1) = NormalizationContext::normalize_item_fn(&f1);
-    let (s2, b2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: s1,
+        body: b1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: s2,
+        body: b2,
+    } = NormalizationContext::normalize_item_fn(&f2);
 
     // Assert
     assert_eq!(
@@ -408,8 +433,14 @@ fn fingerprint_of_the_same_function_is_stable() {
     // Arrange & Act
     let code = "fn foo(x: i32) -> i32 { x + 1 }";
     let f = parse_fn(code);
-    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f);
-    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f);
+    let NormalizedFn {
+        signature: sig1,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f);
+    let NormalizedFn {
+        signature: sig2,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -450,8 +481,14 @@ fn identical_functions_same_fingerprint() {
     let code2 = "fn bar(a: i32) -> i32 { a + 1 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: sig1,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: sig2,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -489,8 +526,14 @@ fn let_else_diverge_blocks_differ() {
     // Two functions with same init but different diverge blocks should NOT be exact duplicates
     let f1 = parse_fn("fn foo(x: Option<i32>) -> i32 { let Some(v) = x else { return 0; }; v }");
     let f2 = parse_fn("fn bar(x: Option<i32>) -> i32 { let Some(v) = x else { panic!(); }; v }");
-    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: sig1,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: sig2,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 
@@ -507,8 +550,14 @@ fn let_else_same_diverge_blocks_match() {
     // Two functions with identical structure including diverge block should match
     let f1 = parse_fn("fn foo(x: Option<i32>) -> i32 { let Some(v) = x else { return 0; }; v }");
     let f2 = parse_fn("fn bar(y: Option<i32>) -> i32 { let Some(w) = y else { return 0; }; w }");
-    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: sig1,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: sig2,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
     let fp1 = Fingerprint::from_sig_and_body(&sig1, &body1);
     let fp2 = Fingerprint::from_sig_and_body(&sig2, &body2);
 

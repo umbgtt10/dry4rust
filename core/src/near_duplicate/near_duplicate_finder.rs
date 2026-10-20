@@ -9,6 +9,7 @@ use std::collections::HashSet;
 use crate::code_unit::CodeUnit;
 use crate::duplicate_group::DuplicateGroup;
 use crate::fingerprint::Fingerprint;
+use crate::near_duplicate::pair_key::PairKey;
 use crate::near_duplicate::pair_scanner::PairScanner;
 use crate::near_duplicate::similarity_pair::SimilarityPair;
 use crate::near_duplicate::union_find::UnionFind;
@@ -24,7 +25,7 @@ pub struct NearDuplicateFinder {
     threshold: f64,
 }
 
-type Scores = HashMap<(usize, usize), f64>;
+type Scores = HashMap<PairKey, f64>;
 
 impl NearDuplicateFinder {
     #[must_use]
@@ -111,7 +112,7 @@ impl NearDuplicateFinder {
             .iter()
             .flat_map(|&i| member_indices.iter().map(move |&j| (i, j)))
             .filter(|(i, j)| i < j)
-            .filter_map(|key| scores.get(&key))
+            .filter_map(|(i, j)| scores.get(&PairKey::new(i, j)))
             .copied()
             .fold(f64::INFINITY, f64::min);
         if lowest.is_infinite() {

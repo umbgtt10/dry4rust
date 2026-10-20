@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod near_duplicate_finder;
+pub mod pair_key;
 pub mod pair_scanner;
 pub mod similarity;
 pub mod similarity_pair;

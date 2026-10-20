@@ -7,4 +7,5 @@ pub mod expr;
 pub mod helpers;
 pub mod normalization_context;
 pub mod normalize;
+pub mod normalized_fn;
 pub mod pat;

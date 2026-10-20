@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::near_duplicate::pair_key::PairKey;
+
 /// Two candidate units found similar enough to be worth grouping, and how
 /// similar they were.
 ///
@@ -21,16 +23,9 @@ impl SimilarityPair {
         Self { left, right, score }
     }
 
-    /// The pair's indices in ascending order.
-    ///
-    /// Similarity is symmetric, so a lookup keyed on the raw pair would miss
-    /// half the time. Ordering the key removes the question.
+    /// The pair's indices in ascending order, as a [`PairKey`].
     #[must_use]
-    pub const fn key(&self) -> (usize, usize) {
-        if self.left < self.right {
-            (self.left, self.right)
-        } else {
-            (self.right, self.left)
-        }
+    pub const fn key(&self) -> PairKey {
+        PairKey::new(self.left, self.right)
     }
 }

@@ -7,6 +7,7 @@ use crate::node::NodeKind;
 use crate::node::NormalizedNode;
 use crate::node::PlaceholderKind;
 use crate::rust::normalizer::normalization_context::NormalizationContext;
+use crate::rust::normalizer::normalized_fn::NormalizedFn;
 
 use syn::Block;
 use syn::ExprClosure;
@@ -48,22 +49,22 @@ impl NormalizationContext {
         NormalizedNode::with_children(NodeKind::FnSignature, children)
     }
 
-    fn normalize_fn_parts(sig: &Signature, block: &Block) -> (NormalizedNode, NormalizedNode) {
+    fn normalize_fn_parts(sig: &Signature, block: &Block) -> NormalizedFn {
         let mut ctx = Self::new();
-        let sig = ctx.normalize_signature(sig);
+        let signature = ctx.normalize_signature(sig);
         let body = ctx.normalize_block(block);
-        (sig, body)
+        NormalizedFn::new(signature, body)
     }
 
     /// Normalize a top-level function.
     #[must_use]
-    pub fn normalize_item_fn(func: &ItemFn) -> (NormalizedNode, NormalizedNode) {
+    pub fn normalize_item_fn(func: &ItemFn) -> NormalizedFn {
         Self::normalize_fn_parts(&func.sig, &func.block)
     }
 
     /// Normalize a method within an impl block.
     #[must_use]
-    pub fn normalize_impl_item_fn(method: &ImplItemFn) -> (NormalizedNode, NormalizedNode) {
+    pub fn normalize_impl_item_fn(method: &ImplItemFn) -> NormalizedFn {
         Self::normalize_fn_parts(&method.sig, &method.block)
     }
 
@@ -78,14 +79,13 @@ impl NormalizationContext {
 
     /// Normalize an impl block -- normalizes each method body.
     #[must_use]
-    pub fn normalize_impl_block(imp: &ItemImpl) -> Vec<(String, NormalizedNode, NormalizedNode)> {
+    pub fn normalize_impl_block(imp: &ItemImpl) -> Vec<(String, NormalizedFn)> {
         imp.items
             .iter()
             .filter_map(|item| {
                 if let syn::ImplItem::Fn(method) = item {
                     let name = method.sig.ident.to_string();
-                    let (sig, body) = Self::normalize_impl_item_fn(method);
-                    Some((name, sig, body))
+                    Some((name, Self::normalize_impl_item_fn(method)))
                 } else {
                     None
                 }

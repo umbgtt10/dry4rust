@@ -6,6 +6,7 @@
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::fingerprint::Fingerprint;
+use dry4rust::near_duplicate::pair_key::PairKey;
 use dry4rust::near_duplicate::pair_scanner::PairScanner;
 use dry4rust::near_duplicate::similarity_pair::SimilarityPair;
 use dry4rust::node::NodeKind;
@@ -214,10 +215,10 @@ fn scan_stops_at_the_first_partner_too_large_rather_than_the_last() {
     let pairs = PairScanner::new(0.8).scan(&candidates);
 
     // Assert
-    let partners: Vec<(usize, usize)> = pairs.iter().map(SimilarityPair::key).collect();
+    let partners: Vec<PairKey> = pairs.iter().map(SimilarityPair::key).collect();
     assert_eq!(
         partners,
-        vec![(0, 1)],
+        vec![PairKey::new(0, 1)],
         "4 pairs with 6 and stops; 6 and 10 have a ceiling of 0.75"
     );
 }

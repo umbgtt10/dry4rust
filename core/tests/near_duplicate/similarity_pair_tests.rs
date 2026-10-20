@@ -30,7 +30,8 @@ fn key_of_a_pair_with_equal_indices_returns_that_index_twice() {
     let key = pair.key();
 
     // Assert
-    assert_eq!(key, (4, 4));
+    assert_eq!(key.low, 4);
+    assert_eq!(key.high, 4);
 }
 
 #[test]
@@ -42,7 +43,8 @@ fn key_puts_the_lower_index_first() {
     let key = pair.key();
 
     // Assert
-    assert_eq!(key, (3, 9));
+    assert_eq!(key.low, 3);
+    assert_eq!(key.high, 9);
 }
 
 #[test]

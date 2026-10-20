@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::rust::normalizer::normalization_context::NormalizationContext;
+use crate::rust::normalizer::normalized_fn::NormalizedFn;
 use std::path::PathBuf;
 
 use syn::spanned::Spanned;
@@ -114,7 +115,10 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         let name = node.sig.ident.to_string();
         let line_start = node.sig.ident.span().start().line;
         let line_end = node.block.brace_token.span.close().end().line;
-        let (sig, body) = NormalizationContext::normalize_item_fn(node);
+        let NormalizedFn {
+            signature: sig,
+            body,
+        } = NormalizationContext::normalize_item_fn(node);
         self.add_unit(
             CodeUnitKind::Function,
             name,
@@ -180,7 +184,10 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
                 let line_start = method.sig.ident.span().start().line;
                 let line_end = method.block.brace_token.span.close().end().line;
 
-                let (sig, body) = NormalizationContext::normalize_impl_item_fn(method);
+                let NormalizedFn {
+                    signature: sig,
+                    body,
+                } = NormalizationContext::normalize_impl_item_fn(method);
                 let kind = if is_trait_impl {
                     CodeUnitKind::TraitImplBlock
                 } else {

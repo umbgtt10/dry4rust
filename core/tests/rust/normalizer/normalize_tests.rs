@@ -7,6 +7,7 @@ use dry4rust::node::LiteralKind;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
+use dry4rust::rust::normalizer::normalized_fn::NormalizedFn;
 use syn::Expr;
 use syn::ExprClosure;
 use syn::ItemFn;
@@ -111,8 +112,14 @@ fn complex_function_normalization() {
     ";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: sig1,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: sig2,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
 
     // Assert
     assert_eq!(sig1, sig2);
@@ -134,7 +141,7 @@ fn empty_block_normalized() {
     // Arrange & Act
     let code = "fn foo() {}";
     let f = parse_fn(code);
-    let (_, body) = NormalizationContext::normalize_item_fn(&f);
+    let NormalizedFn { signature: _, body } = NormalizationContext::normalize_item_fn(&f);
 
     // Assert
     assert_eq!(body.kind, NodeKind::Block);
@@ -298,7 +305,10 @@ fn node_counting_works() {
     // Arrange & Act
     let code = "fn foo(x: i32) -> i32 { x + 1 }";
     let f = parse_fn(code);
-    let (sig, body) = NormalizationContext::normalize_item_fn(&f);
+    let NormalizedFn {
+        signature: sig,
+        body,
+    } = NormalizationContext::normalize_item_fn(&f);
     let sig_count = NormalizedNode::count_nodes(&sig);
     let body_count = NormalizedNode::count_nodes(&body);
 
@@ -343,7 +353,10 @@ fn normalize_impl_item_fn_splits_a_method_into_signature_and_body() {
     };
 
     // Act
-    let (sig, body) = NormalizationContext::normalize_impl_item_fn(&method);
+    let NormalizedFn {
+        signature: sig,
+        body,
+    } = NormalizationContext::normalize_impl_item_fn(&method);
 
     // Assert
     assert_ne!(sig, body);
@@ -381,7 +394,7 @@ fn pat_macro_normalized() {
 
     // Assert
     if let Ok(f) = parse_str::<ItemFn>(code) {
-        let (_, body) = NormalizationContext::normalize_item_fn(&f);
+        let NormalizedFn { signature: _, body } = NormalizationContext::normalize_item_fn(&f);
 
         assert!(NormalizedNode::count_nodes(&body) > 0);
     }
@@ -417,8 +430,14 @@ fn reindex_from_real_function_subtrees() {
     let f2 = parse_fn(
         "fn bar(unused: i32, a: i32, b: i32) -> i32 { if a > 0 { let c = b + 1; c } else { a } }",
     );
-    let (_, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (_, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: _,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: _,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
 
     // Extract the then_branch from each: Block -> stmts[0] -> If -> children[1]
     let then1 = match &body1.kind {
@@ -451,8 +470,14 @@ fn renamed_variables_produce_identical_trees() {
     let code2 = "fn bar(a: i32) -> i32 { let b = a + 1; b }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (sig1, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (sig2, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: sig1,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: sig2,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
 
     // Assert
     assert_eq!(sig1, sig2);
@@ -522,8 +547,14 @@ fn structural_changes_produce_different_trees() {
     let code2 = "fn foo(x: i32) -> i32 { x * 1 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (_, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (_, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: _,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: _,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
 
     // Assert
     assert_ne!(body1, body2);
@@ -555,8 +586,14 @@ fn tuple_pattern_normalized() {
     let code2 = "fn bar() { let (x, y) = (1, 2); }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let (_, body1) = NormalizationContext::normalize_item_fn(&f1);
-    let (_, body2) = NormalizationContext::normalize_item_fn(&f2);
+    let NormalizedFn {
+        signature: _,
+        body: body1,
+    } = NormalizationContext::normalize_item_fn(&f1);
+    let NormalizedFn {
+        signature: _,
+        body: body2,
+    } = NormalizationContext::normalize_item_fn(&f2);
 
     // Assert
     assert_eq!(body1, body2);
@@ -569,7 +606,10 @@ fn type_position_macro_normalized() {
 
     // Assert
     if let Ok(f) = parse_str::<ItemFn>(code) {
-        let (sig, _) = NormalizationContext::normalize_item_fn(&f);
+        let NormalizedFn {
+            signature: sig,
+            body: _,
+        } = NormalizationContext::normalize_item_fn(&f);
 
         assert!(NormalizedNode::count_nodes(&sig) > 0);
     }
