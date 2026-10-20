@@ -53,6 +53,14 @@ subject.
 - `stern4rust-baseline.json` is deleted and `stern4rust.toml` names no
   baseline. All twenty-three rules apply to every member with nothing skipped and
   nothing baselined: `offences=0 baselined=0 rules_applied=24`.
+- No return type holds a tuple whose elements only their position tells apart,
+  which stern4rust's coming `distinct-tuple-elements` rule asks for.
+  `SimilarityPair::key` returns a `near_duplicate::pair_key::PairKey`, whose
+  `low` and `high` say which index is which, and the near-duplicate finder keys
+  its scores by it. `NormalizationContext::normalize_item_fn` and
+  `normalize_impl_item_fn` return a `rust::normalizer::normalized_fn::NormalizedFn`
+  naming the `signature` and the `body`, and `normalize_impl_block` pairs one
+  with each method's name.
 
 ## [0.4.0] - 2026-10-10
 
