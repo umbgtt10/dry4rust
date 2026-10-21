@@ -67,6 +67,13 @@ subject.
   `helpers.rs` -- and are all in `rust::normalizer::normalization_context` now,
   with their 79 tests in its test file; the four modules that held only impl
   blocks are gone. Nothing they declared changes its name or its path.
+- Parsing fails with the crate's own `error::Error` rather than a `String` or a
+  boxed `dyn Error`, which stern4rust's coming `typed-errors` rule asks of a
+  library's public functions. `LanguageAnalyzer::parse_file` returns
+  `Result<Vec<CodeUnit>, Error>` -- an implementor of the trait changes its
+  signature -- and `rust::parser::parse_source` and `parse_file` do too. Two
+  variants are new, `Read` and `Parse`, each naming the file and why, worded
+  as the warnings were.
 
 ## [0.4.0] - 2026-10-10
 

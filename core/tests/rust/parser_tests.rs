@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::error::Error;
 use dry4rust::rust::parser::*;
 use std::fs;
 use std::path::Path;
@@ -263,7 +264,7 @@ fn handles_parse_errors_gracefully() {
 
     // Assert
 
-    assert!(result.is_err());
+    assert!(matches!(result, Err(Error::Parse { .. })), "{result:?}");
 }
 
 #[test]
@@ -325,6 +326,18 @@ fn non_test_code_not_tagged() {
 
     assert!(!non_test.is_empty());
     assert!(non_test.iter().all(|u| u.name != "my_test"));
+}
+
+#[test]
+fn parse_file_of_a_missing_file_is_a_read_failure() {
+    // Arrange
+    let tmp = TempDir::new().unwrap();
+
+    // Act
+    let result = parse_file(&tmp.path().join("missing.rs"), 1, 0);
+
+    // Assert
+    assert!(matches!(result, Err(Error::Read { .. })), "{result:?}");
 }
 
 #[test]

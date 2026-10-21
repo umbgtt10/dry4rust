@@ -17,6 +17,7 @@ pub mod command_dispatcher_tests;
 pub mod common;
 pub mod config_tests;
 pub mod duplicate_group_tests;
+pub mod error_tests;
 pub mod file_config_tests;
 pub mod fingerprint_tests;
 pub mod near_duplicate;

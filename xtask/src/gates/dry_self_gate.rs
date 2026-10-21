@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::gates::gate::Gate;
+use crate::gates::gate_failure::GateFailure;
 use crate::process::command_runner::CommandRunner;
 
 const CEILING_EXCEEDED: i32 = 1;
@@ -39,7 +40,7 @@ impl Gate for DrySelfGate<'_> {
         String::from("Duplication")
     }
 
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> Result<(), GateFailure> {
         // Built from source rather than run from whatever is installed: the gate
         // judges this tree with the dry4rust this tree is about to ship, so a
         // check it fails is a check it would publish failing. `--bin` before the
@@ -74,10 +75,11 @@ impl Gate for DrySelfGate<'_> {
         // measured anything, so neither may read as a verdict.
         match self.runner.run_streaming("cargo", &args)? {
             Some(0) => Ok(()),
-            Some(CEILING_EXCEEDED) => {
-                Err(format!("duplication was added beyond {}", self.baseline))
-            }
-            code => Err(format!("exit code {code:?}")),
+            Some(CEILING_EXCEEDED) => Err(GateFailure::Found(format!(
+                "duplication was added beyond {}",
+                self.baseline
+            ))),
+            code => Err(GateFailure::Exited(code)),
         }
     }
 }

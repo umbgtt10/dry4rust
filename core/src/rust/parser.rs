@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 
 use syn::visit::Visit;
 
+use crate::error::Error;
 use crate::rust::code_unit_extractor::CodeUnitExtractor;
 use std::fs;
 use syn::Attribute;
@@ -44,9 +45,11 @@ pub fn parse_source(
     source: &str,
     min_node_count: usize,
     min_line_count: usize,
-) -> Result<Vec<CodeUnit>, String> {
-    let file =
-        parse_syn_file(source).map_err(|e| format!("Failed to parse {}: {}", path.display(), e))?;
+) -> Result<Vec<CodeUnit>, Error> {
+    let file = parse_syn_file(source).map_err(|e| Error::Parse {
+        path: path.to_path_buf(),
+        reason: e.to_string(),
+    })?;
 
     let mut extractor = CodeUnitExtractor::new(path.to_path_buf(), min_node_count, min_line_count);
     extractor.visit_file(&file);
@@ -62,9 +65,11 @@ pub fn parse_file(
     path: &Path,
     min_node_count: usize,
     min_line_count: usize,
-) -> Result<Vec<CodeUnit>, String> {
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
+) -> Result<Vec<CodeUnit>, Error> {
+    let content = fs::read_to_string(path).map_err(|e| Error::Read {
+        path: path.to_path_buf(),
+        reason: e.to_string(),
+    })?;
 
     parse_source(path, &content, min_node_count, min_line_count)
 }
@@ -85,7 +90,7 @@ pub fn parse_files(
     for path in paths {
         match parse_file(path, min_node_count, min_line_count) {
             Ok(file_units) => units.extend(file_units),
-            Err(warning) => warnings.push(warning),
+            Err(warning) => warnings.push(warning.to_string()),
         }
     }
 

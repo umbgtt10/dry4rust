@@ -27,6 +27,10 @@ pub enum Error {
 
     #[error("{0}")]
     Other(String),
+    #[error("Failed to parse {}: {reason}", .path.display())]
+    Parse { path: PathBuf, reason: String },
+    #[error("Failed to read {}: {reason}", .path.display())]
+    Read { path: PathBuf, reason: String },
 }
 
 /// Imported under another name because this alias is itself called `Result`:
