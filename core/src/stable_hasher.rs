@@ -3,6 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+/// The FNV-1a 64-bit offset basis.
+const OFFSET_BASIS: u64 = 0xcbf2_9ce4_8422_2325;
+/// The FNV-1a 64-bit prime.
+const PRIME: u64 = 0x0000_0100_0000_01b3;
+
 /// FNV-1a, 64-bit, specified here rather than borrowed.
 ///
 /// Fingerprints are written into `.dry4rust-ignore.toml` and are expected to
@@ -18,12 +23,6 @@
 pub struct StableHasher {
     state: u64,
 }
-
-/// The FNV-1a 64-bit offset basis.
-const OFFSET_BASIS: u64 = 0xcbf2_9ce4_8422_2325;
-
-/// The FNV-1a 64-bit prime.
-const PRIME: u64 = 0x0000_0100_0000_01b3;
 
 impl StableHasher {
     #[must_use]
