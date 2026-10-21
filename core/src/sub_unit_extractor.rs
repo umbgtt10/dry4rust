@@ -38,49 +38,6 @@ impl SubUnitExtractor {
         found
     }
 
-    fn own_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
-        match &node.kind {
-            NodeKind::If => self.if_units(node),
-            NodeKind::Match => self.match_units(node),
-            _ => self.bodied_unit(node),
-        }
-    }
-
-    /// `If` is `[condition, then_branch, else_or_None]`. The else child is
-    /// always present in the normalized form, so an absent else has to be
-    /// told apart from a real one by asking the node rather than the slot.
-    fn if_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
-        let then_branch = node
-            .children
-            .get(1)
-            .and_then(|n| self.made(n, CodeUnitKind::IfBranch, "if-then branch"));
-        let else_branch = node
-            .children
-            .get(2)
-            .filter(|n| !n.is_none())
-            .and_then(|n| self.made(n, CodeUnitKind::IfBranch, "if-else branch"));
-        then_branch.into_iter().chain(else_branch).collect()
-    }
-
-    /// `Match` is `[expr, arm0, arm1, ...]` and each arm is
-    /// `[pattern, guard_or_None, body]`. Arms are numbered from one in the
-    /// description because that is what a reader counting them would say.
-    fn match_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
-        node.children
-            .iter()
-            .skip(1)
-            .enumerate()
-            .filter_map(|(i, arm)| {
-                let body = arm.children.get(2)?;
-                self.made(
-                    body,
-                    CodeUnitKind::MatchArm,
-                    &format!("match arm {}", i + 1),
-                )
-            })
-            .collect()
-    }
-
     fn bodied_unit(&self, node: &NormalizedNode) -> Vec<SubUnit> {
         let Some(target) = Self::body_target(&node.kind) else {
             return Vec::new();
@@ -105,6 +62,22 @@ impl SubUnitExtractor {
         }
     }
 
+    /// `If` is `[condition, then_branch, else_or_None]`. The else child is
+    /// always present in the normalized form, so an absent else has to be
+    /// told apart from a real one by asking the node rather than the slot.
+    fn if_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
+        let then_branch = node
+            .children
+            .get(1)
+            .and_then(|n| self.made(n, CodeUnitKind::IfBranch, "if-then branch"));
+        let else_branch = node
+            .children
+            .get(2)
+            .filter(|n| !n.is_none())
+            .and_then(|n| self.made(n, CodeUnitKind::IfBranch, "if-else branch"));
+        then_branch.into_iter().chain(else_branch).collect()
+    }
+
     /// Re-index to canonical placeholder form and keep the result only if it
     /// is big enough to be worth comparing against anything else.
     fn made(
@@ -124,5 +97,32 @@ impl SubUnitExtractor {
             node_count,
             description: description.to_string(),
         })
+    }
+
+    /// `Match` is `[expr, arm0, arm1, ...]` and each arm is
+    /// `[pattern, guard_or_None, body]`. Arms are numbered from one in the
+    /// description because that is what a reader counting them would say.
+    fn match_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
+        node.children
+            .iter()
+            .skip(1)
+            .enumerate()
+            .filter_map(|(i, arm)| {
+                let body = arm.children.get(2)?;
+                self.made(
+                    body,
+                    CodeUnitKind::MatchArm,
+                    &format!("match arm {}", i + 1),
+                )
+            })
+            .collect()
+    }
+
+    fn own_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
+        match &node.kind {
+            NodeKind::If => self.if_units(node),
+            NodeKind::Match => self.match_units(node),
+            _ => self.bodied_unit(node),
+        }
     }
 }

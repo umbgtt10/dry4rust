@@ -221,6 +221,12 @@ pub struct NormalizedNode {
 }
 
 impl NormalizedNode {
+    /// Create a None sentinel node.
+    #[must_use]
+    pub const fn none() -> Self {
+        Self::leaf(NodeKind::None)
+    }
+
     /// Create a leaf node (no children).
     #[must_use]
     pub const fn leaf(kind: NodeKind) -> Self {
@@ -230,28 +236,31 @@ impl NormalizedNode {
         }
     }
 
-    /// Create a node with children.
-    #[must_use]
-    pub const fn with_children(kind: NodeKind, children: Vec<Self>) -> Self {
-        Self { kind, children }
-    }
-
-    /// Create a None sentinel node.
-    #[must_use]
-    pub const fn none() -> Self {
-        Self::leaf(NodeKind::None)
-    }
-
     /// Convert an `Option<NormalizedNode>` to a node, using the [`Self::none`] sentinel for
     /// absent values.
     pub fn opt(node: Option<Self>) -> Self {
         node.unwrap_or_else(Self::none)
     }
 
-    /// Check if this is a None sentinel node.
+    /// Re-index all placeholders in a sub-tree so that indices start from 0
+    /// per kind, assigned by first-occurrence depth-first order.
+    /// This allows comparing sub-trees extracted from different function contexts.
     #[must_use]
-    pub const fn is_none(&self) -> bool {
-        matches!(self.kind, NodeKind::None)
+    pub fn reindex_placeholders(node: &Self) -> Self {
+        let mut collector = PlaceholderOrderCollector::new();
+        collector.collect(node);
+        let order = collector.into_order();
+
+        // Build mapping: (kind, old_index) -> new sequential index per kind
+        let mut counters: HashMap<PlaceholderKind, usize> = HashMap::new();
+        let mut mapping: HashMap<(PlaceholderKind, usize), usize> = HashMap::new();
+        for (kind, old_idx) in order {
+            let counter = counters.entry(kind).or_insert(0);
+            mapping.insert((kind, old_idx), *counter);
+            *counter += 1;
+        }
+
+        Self::apply_reindex(node, &mapping)
     }
 
     /// Applies the reindex mapping to a node, returning a new node with remapped indices.
@@ -279,25 +288,10 @@ impl NormalizedNode {
         Self { kind, children }
     }
 
-    /// Re-index all placeholders in a sub-tree so that indices start from 0
-    /// per kind, assigned by first-occurrence depth-first order.
-    /// This allows comparing sub-trees extracted from different function contexts.
+    /// Create a node with children.
     #[must_use]
-    pub fn reindex_placeholders(node: &Self) -> Self {
-        let mut collector = PlaceholderOrderCollector::new();
-        collector.collect(node);
-        let order = collector.into_order();
-
-        // Build mapping: (kind, old_index) -> new sequential index per kind
-        let mut counters: HashMap<PlaceholderKind, usize> = HashMap::new();
-        let mut mapping: HashMap<(PlaceholderKind, usize), usize> = HashMap::new();
-        for (kind, old_idx) in order {
-            let counter = counters.entry(kind).or_insert(0);
-            mapping.insert((kind, old_idx), *counter);
-            *counter += 1;
-        }
-
-        Self::apply_reindex(node, &mapping)
+    pub const fn with_children(kind: NodeKind, children: Vec<Self>) -> Self {
+        Self { kind, children }
     }
 
     /// Count the number of nodes in a normalized tree.
@@ -307,6 +301,12 @@ impl NormalizedNode {
             return 0;
         }
         1 + node.children.iter().map(Self::count_nodes).sum::<usize>()
+    }
+
+    /// Check if this is a None sentinel node.
+    #[must_use]
+    pub const fn is_none(&self) -> bool {
+        matches!(self.kind, NodeKind::None)
     }
 }
 

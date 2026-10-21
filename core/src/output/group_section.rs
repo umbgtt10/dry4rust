@@ -86,23 +86,6 @@ impl GroupSection {
         out
     }
 
-    fn write_empty(&self) -> String {
-        match self.empty_message {
-            Some(message) => format!("{message}\n"),
-            None => String::new(),
-        }
-    }
-
-    fn write_group(&self, number: usize, group: &DuplicateGroup, base: Option<&Path>) -> String {
-        let mut out = String::new();
-        let _ = writeln!(out, "{}", self.heading(number, group));
-        for member in &group.members {
-            let _ = writeln!(out, "{}", self.member_line(member, base));
-        }
-        let _ = writeln!(out);
-        out
-    }
-
     fn heading(&self, number: usize, group: &DuplicateGroup) -> String {
         let fingerprint = group.fingerprint.to_hex();
         let members = group.members.len();
@@ -137,5 +120,22 @@ impl GroupSection {
         } else {
             String::new()
         }
+    }
+
+    fn write_empty(&self) -> String {
+        match self.empty_message {
+            Some(message) => format!("{message}\n"),
+            None => String::new(),
+        }
+    }
+
+    fn write_group(&self, number: usize, group: &DuplicateGroup, base: Option<&Path>) -> String {
+        let mut out = String::new();
+        let _ = writeln!(out, "{}", self.heading(number, group));
+        for member in &group.members {
+            let _ = writeln!(out, "{}", self.member_line(member, base));
+        }
+        let _ = writeln!(out);
+        out
     }
 }

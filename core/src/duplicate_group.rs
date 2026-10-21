@@ -67,15 +67,6 @@ impl DuplicateGroup {
         NearDuplicateFinder::new(threshold).find(units, exact_fingerprints)
     }
 
-    /// Compute the total number of source lines in a duplicate group.
-    fn group_line_count(group: &Self) -> usize {
-        group
-            .members
-            .iter()
-            .map(|m| m.line_end.saturating_sub(m.line_start) + 1)
-            .sum()
-    }
-
     /// Compute duplication statistics.
     pub fn compute_stats(
         units: &[CodeUnit],
@@ -119,5 +110,14 @@ impl DuplicateGroup {
         stats.sub_near_groups = sub_near_groups.len();
         stats.sub_near_units = sub_near_groups.iter().map(|g| g.members.len()).sum();
         stats
+    }
+
+    /// Compute the total number of source lines in a duplicate group.
+    fn group_line_count(group: &Self) -> usize {
+        group
+            .members
+            .iter()
+            .map(|m| m.line_end.saturating_sub(m.line_start) + 1)
+            .sum()
     }
 }

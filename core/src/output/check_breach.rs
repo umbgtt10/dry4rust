@@ -27,12 +27,6 @@ impl<'a> CheckBreach<'a> {
         }
     }
 
-    /// What to say about it: the count, the subject and the limit.
-    #[must_use]
-    pub fn message(&self) -> &str {
-        &self.message
-    }
-
     /// The groups behind it.
     #[must_use]
     pub const fn groups(&self) -> &'a [DuplicateGroup] {
@@ -43,5 +37,11 @@ impl<'a> CheckBreach<'a> {
     #[must_use]
     pub const fn is_of_exact(&self) -> bool {
         self.of_exact
+    }
+
+    /// What to say about it: the count, the subject and the limit.
+    #[must_use]
+    pub fn message(&self) -> &str {
+        &self.message
     }
 }

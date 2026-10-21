@@ -14,30 +14,6 @@ use crate::node::NormalizedNode;
 pub struct Fingerprint(u64);
 
 impl Fingerprint {
-    /// Wrap a known hash value. Exists so a caller -- in practice a test --
-    /// can name a specific fingerprint without reaching into the field.
-    #[must_use]
-    pub const fn new(value: u64) -> Self {
-        Self(value)
-    }
-
-    /// Compute a fingerprint from a normalized node.
-    #[must_use]
-    pub fn from_node(node: &NormalizedNode) -> Self {
-        let mut encoder = NodeEncoder::new();
-        encoder.encode(node);
-        Self(encoder.finish())
-    }
-
-    /// Compute a fingerprint from a signature + body pair.
-    #[must_use]
-    pub fn from_sig_and_body(sig: &NormalizedNode, body: &NormalizedNode) -> Self {
-        let mut encoder = NodeEncoder::new();
-        encoder.encode(sig);
-        encoder.encode(body);
-        Self(encoder.finish())
-    }
-
     /// Compute a composite fingerprint from a set of fingerprints.
     /// Sorts by u64 value for order-independence, then hashes the sorted sequence.
     #[must_use]
@@ -51,10 +27,33 @@ impl Fingerprint {
         Self(hasher.finish())
     }
 
-    /// Get the raw u64 value.
+    /// Parse from hex string.
+    pub fn from_hex(s: &str) -> Option<Self> {
+        u64::from_str_radix(s, 16).ok().map(Fingerprint)
+    }
+
+    /// Compute a fingerprint from a normalized node.
     #[must_use]
-    pub const fn value(self) -> u64 {
-        self.0
+    pub fn from_node(node: &NormalizedNode) -> Self {
+        let mut encoder = NodeEncoder::new();
+        encoder.encode(node);
+        Self(encoder.finish())
+    }
+
+    /// Wrap a known hash value. Exists so a caller -- in practice a test --
+    /// can name a specific fingerprint without reaching into the field.
+    #[must_use]
+    pub const fn new(value: u64) -> Self {
+        Self(value)
+    }
+
+    /// Compute a fingerprint from a signature + body pair.
+    #[must_use]
+    pub fn from_sig_and_body(sig: &NormalizedNode, body: &NormalizedNode) -> Self {
+        let mut encoder = NodeEncoder::new();
+        encoder.encode(sig);
+        encoder.encode(body);
+        Self(encoder.finish())
     }
 
     /// Convert to hex string.
@@ -63,9 +62,10 @@ impl Fingerprint {
         format!("{:016x}", self.0)
     }
 
-    /// Parse from hex string.
-    pub fn from_hex(s: &str) -> Option<Self> {
-        u64::from_str_radix(s, 16).ok().map(Fingerprint)
+    /// Get the raw u64 value.
+    #[must_use]
+    pub const fn value(self) -> u64 {
+        self.0
     }
 }
 

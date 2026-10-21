@@ -50,18 +50,6 @@ impl NearDuplicateFinder {
         Self::ranked(groups)
     }
 
-    /// Units not already reported as exact duplicates.
-    fn candidates<'a>(
-        units: &'a [CodeUnit],
-        exact_fingerprints: &[Fingerprint],
-    ) -> Vec<&'a CodeUnit> {
-        let exact: HashSet<Fingerprint> = exact_fingerprints.iter().copied().collect();
-        units
-            .iter()
-            .filter(|unit| !exact.contains(&unit.fingerprint))
-            .collect()
-    }
-
     fn build_groups(
         &self,
         candidates: &[&CodeUnit],
@@ -78,6 +66,18 @@ impl NearDuplicateFinder {
             .into_iter()
             .filter(|members| members.len() > 1)
             .map(|members| self.group_from(candidates, &members, &scores))
+            .collect()
+    }
+
+    /// Units not already reported as exact duplicates.
+    fn candidates<'a>(
+        units: &'a [CodeUnit],
+        exact_fingerprints: &[Fingerprint],
+    ) -> Vec<&'a CodeUnit> {
+        let exact: HashSet<Fingerprint> = exact_fingerprints.iter().copied().collect();
+        units
+            .iter()
+            .filter(|unit| !exact.contains(&unit.fingerprint))
             .collect()
     }
 
@@ -101,6 +101,23 @@ impl NearDuplicateFinder {
         }
     }
 
+    /// Biggest groups first, then most similar, then by fingerprint so that
+    /// ties resolve the same way on every run.
+    fn ranked(mut groups: Vec<DuplicateGroup>) -> Vec<DuplicateGroup> {
+        groups.sort_by(|a, b| {
+            b.members
+                .len()
+                .cmp(&a.members.len())
+                .then_with(|| {
+                    b.similarity
+                        .partial_cmp(&a.similarity)
+                        .unwrap_or(Ordering::Equal)
+                })
+                .then_with(|| a.fingerprint.cmp(&b.fingerprint))
+        });
+        groups
+    }
+
     /// The lowest recorded score between any two members.
     ///
     /// Transitive closure means a group can hold members that were never
@@ -120,22 +137,5 @@ impl NearDuplicateFinder {
         } else {
             lowest
         }
-    }
-
-    /// Biggest groups first, then most similar, then by fingerprint so that
-    /// ties resolve the same way on every run.
-    fn ranked(mut groups: Vec<DuplicateGroup>) -> Vec<DuplicateGroup> {
-        groups.sort_by(|a, b| {
-            b.members
-                .len()
-                .cmp(&a.members.len())
-                .then_with(|| {
-                    b.similarity
-                        .partial_cmp(&a.similarity)
-                        .unwrap_or(Ordering::Equal)
-                })
-                .then_with(|| a.fingerprint.cmp(&b.fingerprint))
-        });
-        groups
     }
 }

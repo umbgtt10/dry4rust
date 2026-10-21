@@ -85,6 +85,46 @@ pub struct EntryPoint {
 }
 
 impl EntryPoint {
+    /// The command to run. Naming none means `report`.
+    #[must_use]
+    pub fn command(&self) -> Command {
+        self.command.clone().unwrap_or(Command::Report)
+    }
+
+    /// The output format asked for.
+    #[must_use]
+    pub const fn format(&self) -> OutputFormat {
+        self.format
+    }
+
+    /// What the flags override in the loaded configuration.
+    ///
+    /// The three booleans become `Some(true)` or `None` rather than
+    /// `Some(false)`: a flag that was not passed has no opinion, and a config
+    /// file that turned the behaviour on must not be switched off by its
+    /// absence.
+    #[must_use]
+    pub fn overrides(&self) -> CliOverrides {
+        CliOverrides {
+            min_nodes: self.min_nodes,
+            min_lines: self.min_lines,
+            threshold: self.threshold,
+            exclude: self.exclude.clone(),
+            exclude_tests: self.exclude_tests.then_some(true),
+            sub_function: self.sub_function.then_some(true),
+            min_sub_nodes: self.min_sub_nodes,
+            baseline: self.baseline.clone(),
+        }
+    }
+
+    /// The root to analyse: what `--path` said, or where the shell is.
+    #[must_use]
+    pub fn root(&self) -> PathBuf {
+        self.path
+            .clone()
+            .unwrap_or_else(|| current_dir().unwrap_or_else(|_| PathBuf::from(".")))
+    }
+
     /// Parse `args`, run what they ask for, and report the outcome.
     ///
     /// Taking the arguments rather than reading `argv` is what lets a test
@@ -129,46 +169,6 @@ impl EntryPoint {
         } else {
             ExitCode::SUCCESS
         }
-    }
-
-    /// The root to analyse: what `--path` said, or where the shell is.
-    #[must_use]
-    pub fn root(&self) -> PathBuf {
-        self.path
-            .clone()
-            .unwrap_or_else(|| current_dir().unwrap_or_else(|_| PathBuf::from(".")))
-    }
-
-    /// The command to run. Naming none means `report`.
-    #[must_use]
-    pub fn command(&self) -> Command {
-        self.command.clone().unwrap_or(Command::Report)
-    }
-
-    /// What the flags override in the loaded configuration.
-    ///
-    /// The three booleans become `Some(true)` or `None` rather than
-    /// `Some(false)`: a flag that was not passed has no opinion, and a config
-    /// file that turned the behaviour on must not be switched off by its
-    /// absence.
-    #[must_use]
-    pub fn overrides(&self) -> CliOverrides {
-        CliOverrides {
-            min_nodes: self.min_nodes,
-            min_lines: self.min_lines,
-            threshold: self.threshold,
-            exclude: self.exclude.clone(),
-            exclude_tests: self.exclude_tests.then_some(true),
-            sub_function: self.sub_function.then_some(true),
-            min_sub_nodes: self.min_sub_nodes,
-            baseline: self.baseline.clone(),
-        }
-    }
-
-    /// The output format asked for.
-    #[must_use]
-    pub const fn format(&self) -> OutputFormat {
-        self.format
     }
 
     fn reported(error: &CliError) -> ExitCode {

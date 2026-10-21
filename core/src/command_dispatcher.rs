@@ -85,12 +85,6 @@ impl<'a> CommandDispatcher<'a> {
         self.render(command, &output)
     }
 
-    fn report_warnings(output: &AnalysisOutput) {
-        for warning in &output.result.warnings {
-            eprintln!("Warning: {warning}");
-        }
-    }
-
     fn render(&self, command: &Command, output: &AnalysisOutput) -> CliResult<CommandOutcome> {
         let reporter: &dyn Reporter = &*output.reporter;
         match command {
@@ -118,6 +112,12 @@ impl<'a> CommandDispatcher<'a> {
                 BaselineCommand::new(self.root, &output.config, &output.result, *dry_run).run()
             }
             Command::Ignore { .. } | Command::Ignored => unreachable!(),
+        }
+    }
+
+    fn report_warnings(output: &AnalysisOutput) {
+        for warning in &output.result.warnings {
+            eprintln!("Warning: {warning}");
         }
     }
 }

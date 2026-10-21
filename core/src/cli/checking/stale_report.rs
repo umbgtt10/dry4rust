@@ -34,12 +34,6 @@ impl<'a> StaleReport<'a> {
         }
     }
 
-    /// Whether the ignore file held nothing stale.
-    #[must_use]
-    pub const fn is_empty(&self) -> bool {
-        self.entries.is_empty()
-    }
-
     /// The entries themselves, in the order they were found.
     #[must_use]
     pub fn entries(&self) -> &[&'a IgnoreEntry] {
@@ -54,6 +48,12 @@ impl<'a> StaleReport<'a> {
         } else {
             "Stale entries (dry run):"
         }
+    }
+
+    /// Whether the ignore file held nothing stale.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.entries.is_empty()
     }
 
     /// The line closing it, which is where the tense shows.

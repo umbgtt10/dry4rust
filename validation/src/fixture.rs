@@ -14,18 +14,6 @@ use tempfile::TempDir;
 pub struct Fixture;
 
 impl Fixture {
-    /// One of the corpus crates in `fixture/`, which sits beside this crate rather
-    /// than under it: cargo drops any subdirectory holding a Cargo.toml from a
-    /// package, so a corpus kept inside the published crate is a corpus the
-    /// packaged tests cannot read.
-    #[must_use]
-    pub fn path(name: &str) -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("..")
-            .join("fixture")
-            .join(name)
-    }
-
     /// Run the analysis pipeline over a fixture crate, as the CLI would.
     #[must_use]
     pub fn analysed(name: &str) -> (Config, Analysis) {
@@ -48,6 +36,18 @@ impl Fixture {
             tmp.path().join("src/lib.rs"),
         )
         .expect("copy the fixture");
+    }
+
+    /// One of the corpus crates in `fixture/`, which sits beside this crate rather
+    /// than under it: cargo drops any subdirectory holding a Cargo.toml from a
+    /// package, so a corpus kept inside the published crate is a corpus the
+    /// packaged tests cannot read.
+    #[must_use]
+    pub fn path(name: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("fixture")
+            .join(name)
     }
 
     fn analysed_under(name: &str, sub_function: bool) -> (Config, Analysis) {

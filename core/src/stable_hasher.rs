@@ -32,6 +32,12 @@ impl StableHasher {
         }
     }
 
+    /// The hash of everything absorbed so far.
+    #[must_use]
+    pub const fn finish(&self) -> u64 {
+        self.state
+    }
+
     /// Absorb raw bytes.
     pub const fn write_bytes(&mut self, bytes: &[u8]) {
         let mut index = 0;
@@ -40,17 +46,6 @@ impl StableHasher {
             self.state = self.state.wrapping_mul(PRIME);
             index += 1;
         }
-    }
-
-    /// Absorb a single byte.
-    pub const fn write_u8(&mut self, value: u8) {
-        self.write_bytes(&[value]);
-    }
-
-    /// Absorb an integer, big-endian and eight bytes wide regardless of the
-    /// platform's word size.
-    pub const fn write_u64(&mut self, value: u64) {
-        self.write_bytes(&value.to_be_bytes());
     }
 
     /// Absorb a string, length first.
@@ -63,10 +58,15 @@ impl StableHasher {
         self.write_bytes(value.as_bytes());
     }
 
-    /// The hash of everything absorbed so far.
-    #[must_use]
-    pub const fn finish(&self) -> u64 {
-        self.state
+    /// Absorb an integer, big-endian and eight bytes wide regardless of the
+    /// platform's word size.
+    pub const fn write_u64(&mut self, value: u64) {
+        self.write_bytes(&value.to_be_bytes());
+    }
+
+    /// Absorb a single byte.
+    pub const fn write_u8(&mut self, value: u8) {
+        self.write_bytes(&[value]);
     }
 }
 

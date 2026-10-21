@@ -48,6 +48,48 @@ impl NodeEncoder {
         self.hasher.finish()
     }
 
+    const fn bin_op_name(op: &BinOpKind) -> &'static str {
+        match op {
+            BinOpKind::Add => "Add",
+            BinOpKind::Sub => "Sub",
+            BinOpKind::Mul => "Mul",
+            BinOpKind::Div => "Div",
+            BinOpKind::Rem => "Rem",
+            BinOpKind::And => "And",
+            BinOpKind::Or => "Or",
+            BinOpKind::BitXor => "BitXor",
+            BinOpKind::BitAnd => "BitAnd",
+            BinOpKind::BitOr => "BitOr",
+            BinOpKind::Shl => "Shl",
+            BinOpKind::Shr => "Shr",
+            BinOpKind::Eq => "Eq",
+            BinOpKind::Lt => "Lt",
+            BinOpKind::Le => "Le",
+            BinOpKind::Ne => "Ne",
+            BinOpKind::Ge => "Ge",
+            BinOpKind::Gt => "Gt",
+            BinOpKind::AddAssign => "AddAssign",
+            BinOpKind::SubAssign => "SubAssign",
+            BinOpKind::MulAssign => "MulAssign",
+            BinOpKind::DivAssign => "DivAssign",
+            BinOpKind::RemAssign => "RemAssign",
+            BinOpKind::BitXorAssign => "BitXorAssign",
+            BinOpKind::BitAndAssign => "BitAndAssign",
+            BinOpKind::BitOrAssign => "BitOrAssign",
+            BinOpKind::ShlAssign => "ShlAssign",
+            BinOpKind::ShrAssign => "ShrAssign",
+            BinOpKind::FloorDiv => "FloorDiv",
+            BinOpKind::Pow => "Pow",
+            BinOpKind::In => "In",
+            BinOpKind::NotIn => "NotIn",
+            BinOpKind::Is => "Is",
+            BinOpKind::IsNot => "IsNot",
+            BinOpKind::FloorDivAssign => "FloorDivAssign",
+            BinOpKind::PowAssign => "PowAssign",
+            BinOpKind::Other => "Other",
+        }
+    }
+
     fn encode_kind(&mut self, kind: &NodeKind) {
         self.hasher.write_str(Self::kind_name(kind));
         self.encode_payload(kind);
@@ -160,48 +202,6 @@ impl NodeEncoder {
             PlaceholderKind::Type => "Type",
             PlaceholderKind::Lifetime => "Lifetime",
             PlaceholderKind::Label => "Label",
-        }
-    }
-
-    const fn bin_op_name(op: &BinOpKind) -> &'static str {
-        match op {
-            BinOpKind::Add => "Add",
-            BinOpKind::Sub => "Sub",
-            BinOpKind::Mul => "Mul",
-            BinOpKind::Div => "Div",
-            BinOpKind::Rem => "Rem",
-            BinOpKind::And => "And",
-            BinOpKind::Or => "Or",
-            BinOpKind::BitXor => "BitXor",
-            BinOpKind::BitAnd => "BitAnd",
-            BinOpKind::BitOr => "BitOr",
-            BinOpKind::Shl => "Shl",
-            BinOpKind::Shr => "Shr",
-            BinOpKind::Eq => "Eq",
-            BinOpKind::Lt => "Lt",
-            BinOpKind::Le => "Le",
-            BinOpKind::Ne => "Ne",
-            BinOpKind::Ge => "Ge",
-            BinOpKind::Gt => "Gt",
-            BinOpKind::AddAssign => "AddAssign",
-            BinOpKind::SubAssign => "SubAssign",
-            BinOpKind::MulAssign => "MulAssign",
-            BinOpKind::DivAssign => "DivAssign",
-            BinOpKind::RemAssign => "RemAssign",
-            BinOpKind::BitXorAssign => "BitXorAssign",
-            BinOpKind::BitAndAssign => "BitAndAssign",
-            BinOpKind::BitOrAssign => "BitOrAssign",
-            BinOpKind::ShlAssign => "ShlAssign",
-            BinOpKind::ShrAssign => "ShrAssign",
-            BinOpKind::FloorDiv => "FloorDiv",
-            BinOpKind::Pow => "Pow",
-            BinOpKind::In => "In",
-            BinOpKind::NotIn => "NotIn",
-            BinOpKind::Is => "Is",
-            BinOpKind::IsNot => "IsNot",
-            BinOpKind::FloorDivAssign => "FloorDivAssign",
-            BinOpKind::PowAssign => "PowAssign",
-            BinOpKind::Other => "Other",
         }
     }
 

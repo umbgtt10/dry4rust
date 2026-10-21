@@ -155,13 +155,22 @@ impl Reporter for JsonReporter {
 }
 
 impl JsonReporter {
-    fn write_document<T: serde::Serialize>(document: &T) -> io::Result<String> {
-        let json = to_string_pretty(document).map_err(io::Error::other)?;
-        Ok(format!("{json}\n"))
-    }
-
-    fn write_groups(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
-        Self::write_document(&self.to_json_groups(groups))
+    fn to_json_group(&self, group: &DuplicateGroup) -> JsonGroup {
+        JsonGroup {
+            fingerprint: group.fingerprint.to_hex(),
+            similarity: group.similarity,
+            members: group
+                .members
+                .iter()
+                .map(|m| JsonMember {
+                    name: m.name.clone(),
+                    kind: m.kind.to_string(),
+                    file: DisplayPath::of(self.base_path.as_deref(), &m.file).into_owned(),
+                    line_start: m.line_start,
+                    line_end: m.line_end,
+                })
+                .collect(),
+        }
     }
 
     fn to_json_groups(&self, groups: &[DuplicateGroup]) -> Vec<JsonGroup> {
@@ -188,21 +197,12 @@ impl JsonReporter {
         }
     }
 
-    fn to_json_group(&self, group: &DuplicateGroup) -> JsonGroup {
-        JsonGroup {
-            fingerprint: group.fingerprint.to_hex(),
-            similarity: group.similarity,
-            members: group
-                .members
-                .iter()
-                .map(|m| JsonMember {
-                    name: m.name.clone(),
-                    kind: m.kind.to_string(),
-                    file: DisplayPath::of(self.base_path.as_deref(), &m.file).into_owned(),
-                    line_start: m.line_start,
-                    line_end: m.line_end,
-                })
-                .collect(),
-        }
+    fn write_document<T: serde::Serialize>(document: &T) -> io::Result<String> {
+        let json = to_string_pretty(document).map_err(io::Error::other)?;
+        Ok(format!("{json}\n"))
+    }
+
+    fn write_groups(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+        Self::write_document(&self.to_json_groups(groups))
     }
 }

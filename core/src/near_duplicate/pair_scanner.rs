@@ -24,6 +24,29 @@ impl PairScanner {
         Self { threshold }
     }
 
+    /// The highest score a pair could reach given nothing but their sizes.
+    ///
+    /// `matching` can never exceed the smaller tree's node count, so the Dice
+    /// score is bounded by `2 * smaller / (smaller + larger)`. A pair whose
+    /// ceiling falls below the threshold cannot clear it however similar its
+    /// contents are, and scoring it is wasted work.
+    ///
+    /// The comparison leans towards keeping. A pair whose ceiling lands
+    /// exactly on the threshold can still score exactly the threshold, and
+    /// `similarity_score` admits it -- so an epsilon of slack keeps rounding
+    /// from discarding a pair the scorer would have accepted. Comparing one
+    /// pair too many costs a score; comparing one too few loses a finding,
+    /// and says nothing about having done so.
+    #[must_use]
+    pub fn could_reach_threshold(&self, smaller: usize, larger: usize) -> bool {
+        let total = smaller + larger;
+        if total == 0 {
+            return true;
+        }
+        let ceiling = 2.0 * smaller as f64 / total as f64;
+        ceiling >= self.threshold - f64::EPSILON
+    }
+
     /// Every pair among `candidates` that scores at or above the threshold.
     ///
     /// Kind does not restrict what is compared. `group_exact_duplicates` has
@@ -50,29 +73,6 @@ impl PairScanner {
             }
         }
         pairs
-    }
-
-    /// The highest score a pair could reach given nothing but their sizes.
-    ///
-    /// `matching` can never exceed the smaller tree's node count, so the Dice
-    /// score is bounded by `2 * smaller / (smaller + larger)`. A pair whose
-    /// ceiling falls below the threshold cannot clear it however similar its
-    /// contents are, and scoring it is wasted work.
-    ///
-    /// The comparison leans towards keeping. A pair whose ceiling lands
-    /// exactly on the threshold can still score exactly the threshold, and
-    /// `similarity_score` admits it -- so an epsilon of slack keeps rounding
-    /// from discarding a pair the scorer would have accepted. Comparing one
-    /// pair too many costs a score; comparing one too few loses a finding,
-    /// and says nothing about having done so.
-    #[must_use]
-    pub fn could_reach_threshold(&self, smaller: usize, larger: usize) -> bool {
-        let total = smaller + larger;
-        if total == 0 {
-            return true;
-        }
-        let ceiling = 2.0 * smaller as f64 / total as f64;
-        ceiling >= self.threshold - f64::EPSILON
     }
 
     /// Candidate indices ordered by node count ascending.

@@ -25,6 +25,37 @@ pub struct AnalysisOutput {
 }
 
 impl AnalysisOutput {
+    fn from_config(
+        analyzer: &dyn LanguageAnalyzer,
+        root: &Path,
+        format: OutputFormat,
+        config: Config,
+    ) -> CliResult<Self> {
+        let scanner = Scanner::new(config.root.clone())
+            .with_excludes(config.exclude.clone())
+            .with_extensions(
+                analyzer
+                    .file_extensions()
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect(),
+            );
+        let files = scanner.scan_files();
+
+        if files.is_empty() {
+            return Err(CliError::NoSourceFiles(config.root));
+        }
+
+        let result = Analysis::analyze(analyzer, &files, &config)?;
+        let reporter = format.reporter(Some(root));
+
+        Ok(Self {
+            config,
+            result,
+            reporter,
+        })
+    }
+
     /// Scan files, run the analysis pipeline, and return the output.
     ///
     /// Warnings are stored in [`AnalysisOutput::result`] but **not** printed;
@@ -76,36 +107,5 @@ impl AnalysisOutput {
         Config::load(root)
             .and_then(|config| overrides.apply_to(config))
             .map_err(|e| CliError::InvalidConfig(e.to_string()))
-    }
-
-    fn from_config(
-        analyzer: &dyn LanguageAnalyzer,
-        root: &Path,
-        format: OutputFormat,
-        config: Config,
-    ) -> CliResult<Self> {
-        let scanner = Scanner::new(config.root.clone())
-            .with_excludes(config.exclude.clone())
-            .with_extensions(
-                analyzer
-                    .file_extensions()
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect(),
-            );
-        let files = scanner.scan_files();
-
-        if files.is_empty() {
-            return Err(CliError::NoSourceFiles(config.root));
-        }
-
-        let result = Analysis::analyze(analyzer, &files, &config)?;
-        let reporter = format.reporter(Some(root));
-
-        Ok(Self {
-            config,
-            result,
-            reporter,
-        })
     }
 }

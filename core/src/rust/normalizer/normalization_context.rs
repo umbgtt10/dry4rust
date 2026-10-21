@@ -45,68 +45,54 @@ impl NormalizationContext {
         }
     }
 
-    /// Get or assign a placeholder index for the given identifier and kind.
-    pub fn placeholder(&mut self, name: &str, kind: PlaceholderKind) -> usize {
-        let key = (name.to_string(), kind);
-        if let Some(&idx) = self.mappings.get(&key) {
-            return idx;
+    #[must_use]
+    pub fn member_to_string(member: &Member) -> String {
+        match member {
+            Member::Named(ident) => ident.to_string(),
+            Member::Unnamed(idx) => idx.index.to_string(),
         }
-        let counter = self.counters.entry(kind).or_insert(0);
-        let idx = *counter;
-        *counter += 1;
-        self.mappings.insert(key, idx);
-        idx
     }
 
-    pub fn normalize_signature(&mut self, sig: &Signature) -> NormalizedNode {
-        // FnSignature -> [return_type_or_None, param0, param1, ...]
-        let return_type = match &sig.output {
-            syn::ReturnType::Default => NormalizedNode::none(),
-            syn::ReturnType::Type(_, ty) => self.normalize_type(ty),
-        };
-        let mut children = vec![return_type];
-        children.extend(sig.inputs.iter().map(|arg| match arg {
-            syn::FnArg::Receiver(r) => {
-                let idx = self.placeholder("self", PlaceholderKind::Variable);
-                let self_node =
-                    NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, idx));
-                if r.reference.is_some() {
-                    NormalizedNode::with_children(
-                        NodeKind::Reference {
-                            mutable: r.mutability.is_some(),
-                        },
-                        vec![self_node],
-                    )
-                } else {
-                    self_node
-                }
-            }
-            syn::FnArg::Typed(pt) => {
-                let pat = self.normalize_pat(&pt.pat);
-                let ty = self.normalize_type(&pt.ty);
-                NormalizedNode::with_children(NodeKind::FieldValue, vec![pat, ty])
-            }
-        }));
-        NormalizedNode::with_children(NodeKind::FnSignature, children)
-    }
-
-    fn normalize_fn_parts(sig: &Signature, block: &Block) -> NormalizedFn {
-        let mut ctx = Self::new();
-        let signature = ctx.normalize_signature(sig);
-        let body = ctx.normalize_block(block);
-        NormalizedFn::new(signature, body)
-    }
-
-    /// Normalize a top-level function.
     #[must_use]
-    pub fn normalize_item_fn(func: &ItemFn) -> NormalizedFn {
-        Self::normalize_fn_parts(&func.sig, &func.block)
+    pub const fn normalize_bin_op(op: &BinOp) -> BinOpKind {
+        match op {
+            BinOp::Add(_) => BinOpKind::Add,
+            BinOp::Sub(_) => BinOpKind::Sub,
+            BinOp::Mul(_) => BinOpKind::Mul,
+            BinOp::Div(_) => BinOpKind::Div,
+            BinOp::Rem(_) => BinOpKind::Rem,
+            BinOp::And(_) => BinOpKind::And,
+            BinOp::Or(_) => BinOpKind::Or,
+            BinOp::BitXor(_) => BinOpKind::BitXor,
+            BinOp::BitAnd(_) => BinOpKind::BitAnd,
+            BinOp::BitOr(_) => BinOpKind::BitOr,
+            BinOp::Shl(_) => BinOpKind::Shl,
+            BinOp::Shr(_) => BinOpKind::Shr,
+            BinOp::Eq(_) => BinOpKind::Eq,
+            BinOp::Lt(_) => BinOpKind::Lt,
+            BinOp::Le(_) => BinOpKind::Le,
+            BinOp::Ne(_) => BinOpKind::Ne,
+            BinOp::Ge(_) => BinOpKind::Ge,
+            BinOp::Gt(_) => BinOpKind::Gt,
+            BinOp::AddAssign(_) => BinOpKind::AddAssign,
+            BinOp::SubAssign(_) => BinOpKind::SubAssign,
+            BinOp::MulAssign(_) => BinOpKind::MulAssign,
+            BinOp::DivAssign(_) => BinOpKind::DivAssign,
+            BinOp::RemAssign(_) => BinOpKind::RemAssign,
+            BinOp::BitXorAssign(_) => BinOpKind::BitXorAssign,
+            BinOp::BitAndAssign(_) => BinOpKind::BitAndAssign,
+            BinOp::BitOrAssign(_) => BinOpKind::BitOrAssign,
+            BinOp::ShlAssign(_) => BinOpKind::ShlAssign,
+            BinOp::ShrAssign(_) => BinOpKind::ShrAssign,
+            _ => BinOpKind::Other,
+        }
     }
 
-    /// Normalize a method within an impl block.
-    #[must_use]
-    pub fn normalize_impl_item_fn(method: &ImplItemFn) -> NormalizedFn {
-        Self::normalize_fn_parts(&method.sig, &method.block)
+    pub fn normalize_block(&mut self, block: &Block) -> NormalizedNode {
+        NormalizedNode::with_children(
+            NodeKind::Block,
+            block.stmts.iter().map(|s| self.normalize_stmt(s)).collect(),
+        )
     }
 
     /// Normalize a closure expression.
@@ -116,22 +102,6 @@ impl NormalizationContext {
         let mut children = vec![ctx.normalize_expr(&closure.body)];
         children.extend(closure.inputs.iter().map(|p| ctx.normalize_pat(p)));
         NormalizedNode::with_children(NodeKind::Closure, children)
-    }
-
-    /// Normalize an impl block -- normalizes each method body.
-    #[must_use]
-    pub fn normalize_impl_block(imp: &ItemImpl) -> Vec<(String, NormalizedFn)> {
-        imp.items
-            .iter()
-            .filter_map(|item| {
-                if let syn::ImplItem::Fn(method) = item {
-                    let name = method.sig.ident.to_string();
-                    Some((name, Self::normalize_impl_item_fn(method)))
-                } else {
-                    None
-                }
-            })
-            .collect()
     }
 
     #[allow(clippy::too_many_lines)]
@@ -391,141 +361,65 @@ impl NormalizationContext {
         }
     }
 
-    pub fn normalize_stmt(&mut self, stmt: &Stmt) -> NormalizedNode {
-        match stmt {
-            // LetBinding -> [pattern, type_or_None, init_or_None, diverge_or_None]
-            Stmt::Local(local) => NormalizedNode::with_children(
-                NodeKind::LetBinding,
-                vec![
-                    self.normalize_pat(&local.pat),
-                    NormalizedNode::none(), // type annotations on let bindings are part of the pattern in syn
-                    NormalizedNode::opt(
-                        local
-                            .init
-                            .as_ref()
-                            .map(|init| self.normalize_expr(&init.expr)),
-                    ),
-                    NormalizedNode::opt(
-                        local
-                            .init
-                            .as_ref()
-                            .and_then(|init| init.diverge.as_ref())
-                            .map(|(_, expr)| self.normalize_expr(expr)),
-                    ),
-                ],
-            ),
-            Stmt::Expr(expr, semi) => {
-                let normalized = self.normalize_expr(expr);
-                if semi.is_some() {
-                    NormalizedNode::with_children(NodeKind::Semi, vec![normalized])
+    /// Normalize an impl block -- normalizes each method body.
+    #[must_use]
+    pub fn normalize_impl_block(imp: &ItemImpl) -> Vec<(String, NormalizedFn)> {
+        imp.items
+            .iter()
+            .filter_map(|item| {
+                if let syn::ImplItem::Fn(method) = item {
+                    let name = method.sig.ident.to_string();
+                    Some((name, Self::normalize_impl_item_fn(method)))
                 } else {
-                    normalized
+                    None
                 }
-            }
-            Stmt::Item(_) => NormalizedNode::leaf(NodeKind::Opaque),
-            Stmt::Macro(sm) => {
-                let normalized = self.normalize_macro(&sm.mac);
-                if sm.semi_token.is_some() {
-                    NormalizedNode::with_children(NodeKind::Semi, vec![normalized])
-                } else {
-                    normalized
-                }
-            }
-        }
+            })
+            .collect()
     }
 
-    pub fn normalize_block(&mut self, block: &Block) -> NormalizedNode {
-        NormalizedNode::with_children(
-            NodeKind::Block,
-            block.stmts.iter().map(|s| self.normalize_stmt(s)).collect(),
-        )
+    /// Normalize a method within an impl block.
+    #[must_use]
+    pub fn normalize_impl_item_fn(method: &ImplItemFn) -> NormalizedFn {
+        Self::normalize_fn_parts(&method.sig, &method.block)
     }
 
-    pub fn normalize_type(&mut self, ty: &Type) -> NormalizedNode {
-        match ty {
-            Type::Path(tp) => {
-                // Single-segment paths become type placeholders
-                if tp.qself.is_none() && tp.path.segments.len() == 1 {
-                    let seg = &tp.path.segments[0];
-                    let idx = self.placeholder(&seg.ident.to_string(), PlaceholderKind::Type);
-                    NormalizedNode::leaf(NodeKind::TypePlaceholder(PlaceholderKind::Type, idx))
-                } else {
-                    let segments: Vec<NormalizedNode> = tp
-                        .path
-                        .segments
-                        .iter()
-                        .map(|seg| {
-                            let idx =
-                                self.placeholder(&seg.ident.to_string(), PlaceholderKind::Type);
-                            NormalizedNode::leaf(NodeKind::TypePlaceholder(
-                                PlaceholderKind::Type,
-                                idx,
-                            ))
-                        })
-                        .collect();
-                    NormalizedNode::with_children(NodeKind::TypePath, segments)
-                }
-            }
-            Type::Reference(r) => NormalizedNode::with_children(
-                NodeKind::TypeReference {
-                    mutable: r.mutability.is_some(),
-                },
-                vec![self.normalize_type(&r.elem)],
-            ),
-            Type::Tuple(t) => {
-                if t.elems.is_empty() {
-                    NormalizedNode::leaf(NodeKind::TypeUnit)
-                } else {
-                    NormalizedNode::with_children(
-                        NodeKind::TypeTuple,
-                        t.elems.iter().map(|e| self.normalize_type(e)).collect(),
-                    )
-                }
-            }
-            Type::Slice(s) => NormalizedNode::with_children(
-                NodeKind::TypeSlice,
-                vec![self.normalize_type(&s.elem)],
-            ),
-            Type::Array(a) => NormalizedNode::with_children(
-                NodeKind::TypeArray,
-                vec![self.normalize_type(&a.elem), self.normalize_expr(&a.len)],
-            ),
-            Type::ImplTrait(i) => NormalizedNode::with_children(
-                NodeKind::TypeImplTrait,
-                i.bounds
-                    .iter()
-                    .filter_map(|b| {
-                        if let syn::TypeParamBound::Trait(t) = b {
-                            let segments: Vec<NormalizedNode> = t
-                                .path
-                                .segments
-                                .iter()
-                                .map(|seg| {
-                                    let idx = self
-                                        .placeholder(&seg.ident.to_string(), PlaceholderKind::Type);
-                                    NormalizedNode::leaf(NodeKind::TypePlaceholder(
-                                        PlaceholderKind::Type,
-                                        idx,
-                                    ))
-                                })
-                                .collect();
-                            Some(if segments.len() == 1 {
-                                segments.into_iter().next().unwrap()
-                            } else {
-                                NormalizedNode::with_children(NodeKind::TypePath, segments)
-                            })
-                        } else {
-                            None
-                        }
-                    })
-                    .collect(),
-            ),
-            Type::Infer(_) => NormalizedNode::leaf(NodeKind::TypeInfer),
-            Type::Never(_) => NormalizedNode::leaf(NodeKind::TypeNever),
-            Type::Paren(p) => self.normalize_type(&p.elem),
-            Type::Macro(tm) => self.normalize_macro(&tm.mac),
+    /// Normalize a top-level function.
+    #[must_use]
+    pub fn normalize_item_fn(func: &ItemFn) -> NormalizedFn {
+        Self::normalize_fn_parts(&func.sig, &func.block)
+    }
+
+    #[must_use]
+    pub const fn normalize_lit(lit: &Lit) -> NormalizedNode {
+        match lit {
+            Lit::Str(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Str)),
+            Lit::ByteStr(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::ByteStr)),
+            Lit::CStr(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::CStr)),
+            Lit::Byte(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Byte)),
+            Lit::Char(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Char)),
+            Lit::Int(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Int)),
+            Lit::Float(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Float)),
+            Lit::Bool(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Bool)),
             _ => NormalizedNode::leaf(NodeKind::Opaque),
         }
+    }
+
+    pub fn normalize_macro(&mut self, mac: &Macro) -> NormalizedNode {
+        let name = mac
+            .path
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default();
+        let args = if mac.tokens.is_empty() {
+            Vec::new()
+        } else {
+            match mac.parse_body_with(Punctuated::<Expr, syn::Token![,]>::parse_terminated) {
+                Ok(punct) => punct.into_iter().map(|e| self.normalize_expr(&e)).collect(),
+                Err(_) => vec![NormalizedNode::leaf(NodeKind::Opaque)],
+            }
+        };
+        NormalizedNode::with_children(NodeKind::MacroCall { name }, args)
     }
 
     pub fn normalize_pat(&mut self, pat: &Pat) -> NormalizedNode {
@@ -622,79 +516,165 @@ impl NormalizationContext {
         }
     }
 
-    pub fn normalize_macro(&mut self, mac: &Macro) -> NormalizedNode {
-        let name = mac
-            .path
-            .segments
-            .last()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default();
-        let args = if mac.tokens.is_empty() {
-            Vec::new()
-        } else {
-            match mac.parse_body_with(Punctuated::<Expr, syn::Token![,]>::parse_terminated) {
-                Ok(punct) => punct.into_iter().map(|e| self.normalize_expr(&e)).collect(),
-                Err(_) => vec![NormalizedNode::leaf(NodeKind::Opaque)],
-            }
+    pub fn normalize_signature(&mut self, sig: &Signature) -> NormalizedNode {
+        // FnSignature -> [return_type_or_None, param0, param1, ...]
+        let return_type = match &sig.output {
+            syn::ReturnType::Default => NormalizedNode::none(),
+            syn::ReturnType::Type(_, ty) => self.normalize_type(ty),
         };
-        NormalizedNode::with_children(NodeKind::MacroCall { name }, args)
+        let mut children = vec![return_type];
+        children.extend(sig.inputs.iter().map(|arg| match arg {
+            syn::FnArg::Receiver(r) => {
+                let idx = self.placeholder("self", PlaceholderKind::Variable);
+                let self_node =
+                    NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, idx));
+                if r.reference.is_some() {
+                    NormalizedNode::with_children(
+                        NodeKind::Reference {
+                            mutable: r.mutability.is_some(),
+                        },
+                        vec![self_node],
+                    )
+                } else {
+                    self_node
+                }
+            }
+            syn::FnArg::Typed(pt) => {
+                let pat = self.normalize_pat(&pt.pat);
+                let ty = self.normalize_type(&pt.ty);
+                NormalizedNode::with_children(NodeKind::FieldValue, vec![pat, ty])
+            }
+        }));
+        NormalizedNode::with_children(NodeKind::FnSignature, children)
     }
 
-    #[must_use]
-    pub fn member_to_string(member: &Member) -> String {
-        match member {
-            Member::Named(ident) => ident.to_string(),
-            Member::Unnamed(idx) => idx.index.to_string(),
+    pub fn normalize_stmt(&mut self, stmt: &Stmt) -> NormalizedNode {
+        match stmt {
+            // LetBinding -> [pattern, type_or_None, init_or_None, diverge_or_None]
+            Stmt::Local(local) => NormalizedNode::with_children(
+                NodeKind::LetBinding,
+                vec![
+                    self.normalize_pat(&local.pat),
+                    NormalizedNode::none(), // type annotations on let bindings are part of the pattern in syn
+                    NormalizedNode::opt(
+                        local
+                            .init
+                            .as_ref()
+                            .map(|init| self.normalize_expr(&init.expr)),
+                    ),
+                    NormalizedNode::opt(
+                        local
+                            .init
+                            .as_ref()
+                            .and_then(|init| init.diverge.as_ref())
+                            .map(|(_, expr)| self.normalize_expr(expr)),
+                    ),
+                ],
+            ),
+            Stmt::Expr(expr, semi) => {
+                let normalized = self.normalize_expr(expr);
+                if semi.is_some() {
+                    NormalizedNode::with_children(NodeKind::Semi, vec![normalized])
+                } else {
+                    normalized
+                }
+            }
+            Stmt::Item(_) => NormalizedNode::leaf(NodeKind::Opaque),
+            Stmt::Macro(sm) => {
+                let normalized = self.normalize_macro(&sm.mac);
+                if sm.semi_token.is_some() {
+                    NormalizedNode::with_children(NodeKind::Semi, vec![normalized])
+                } else {
+                    normalized
+                }
+            }
         }
     }
 
-    #[must_use]
-    pub const fn normalize_lit(lit: &Lit) -> NormalizedNode {
-        match lit {
-            Lit::Str(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Str)),
-            Lit::ByteStr(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::ByteStr)),
-            Lit::CStr(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::CStr)),
-            Lit::Byte(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Byte)),
-            Lit::Char(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Char)),
-            Lit::Int(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Int)),
-            Lit::Float(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Float)),
-            Lit::Bool(_) => NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Bool)),
+    pub fn normalize_type(&mut self, ty: &Type) -> NormalizedNode {
+        match ty {
+            Type::Path(tp) => {
+                // Single-segment paths become type placeholders
+                if tp.qself.is_none() && tp.path.segments.len() == 1 {
+                    let seg = &tp.path.segments[0];
+                    let idx = self.placeholder(&seg.ident.to_string(), PlaceholderKind::Type);
+                    NormalizedNode::leaf(NodeKind::TypePlaceholder(PlaceholderKind::Type, idx))
+                } else {
+                    let segments: Vec<NormalizedNode> = tp
+                        .path
+                        .segments
+                        .iter()
+                        .map(|seg| {
+                            let idx =
+                                self.placeholder(&seg.ident.to_string(), PlaceholderKind::Type);
+                            NormalizedNode::leaf(NodeKind::TypePlaceholder(
+                                PlaceholderKind::Type,
+                                idx,
+                            ))
+                        })
+                        .collect();
+                    NormalizedNode::with_children(NodeKind::TypePath, segments)
+                }
+            }
+            Type::Reference(r) => NormalizedNode::with_children(
+                NodeKind::TypeReference {
+                    mutable: r.mutability.is_some(),
+                },
+                vec![self.normalize_type(&r.elem)],
+            ),
+            Type::Tuple(t) => {
+                if t.elems.is_empty() {
+                    NormalizedNode::leaf(NodeKind::TypeUnit)
+                } else {
+                    NormalizedNode::with_children(
+                        NodeKind::TypeTuple,
+                        t.elems.iter().map(|e| self.normalize_type(e)).collect(),
+                    )
+                }
+            }
+            Type::Slice(s) => NormalizedNode::with_children(
+                NodeKind::TypeSlice,
+                vec![self.normalize_type(&s.elem)],
+            ),
+            Type::Array(a) => NormalizedNode::with_children(
+                NodeKind::TypeArray,
+                vec![self.normalize_type(&a.elem), self.normalize_expr(&a.len)],
+            ),
+            Type::ImplTrait(i) => NormalizedNode::with_children(
+                NodeKind::TypeImplTrait,
+                i.bounds
+                    .iter()
+                    .filter_map(|b| {
+                        if let syn::TypeParamBound::Trait(t) = b {
+                            let segments: Vec<NormalizedNode> = t
+                                .path
+                                .segments
+                                .iter()
+                                .map(|seg| {
+                                    let idx = self
+                                        .placeholder(&seg.ident.to_string(), PlaceholderKind::Type);
+                                    NormalizedNode::leaf(NodeKind::TypePlaceholder(
+                                        PlaceholderKind::Type,
+                                        idx,
+                                    ))
+                                })
+                                .collect();
+                            Some(if segments.len() == 1 {
+                                segments.into_iter().next().unwrap()
+                            } else {
+                                NormalizedNode::with_children(NodeKind::TypePath, segments)
+                            })
+                        } else {
+                            None
+                        }
+                    })
+                    .collect(),
+            ),
+            Type::Infer(_) => NormalizedNode::leaf(NodeKind::TypeInfer),
+            Type::Never(_) => NormalizedNode::leaf(NodeKind::TypeNever),
+            Type::Paren(p) => self.normalize_type(&p.elem),
+            Type::Macro(tm) => self.normalize_macro(&tm.mac),
             _ => NormalizedNode::leaf(NodeKind::Opaque),
-        }
-    }
-
-    #[must_use]
-    pub const fn normalize_bin_op(op: &BinOp) -> BinOpKind {
-        match op {
-            BinOp::Add(_) => BinOpKind::Add,
-            BinOp::Sub(_) => BinOpKind::Sub,
-            BinOp::Mul(_) => BinOpKind::Mul,
-            BinOp::Div(_) => BinOpKind::Div,
-            BinOp::Rem(_) => BinOpKind::Rem,
-            BinOp::And(_) => BinOpKind::And,
-            BinOp::Or(_) => BinOpKind::Or,
-            BinOp::BitXor(_) => BinOpKind::BitXor,
-            BinOp::BitAnd(_) => BinOpKind::BitAnd,
-            BinOp::BitOr(_) => BinOpKind::BitOr,
-            BinOp::Shl(_) => BinOpKind::Shl,
-            BinOp::Shr(_) => BinOpKind::Shr,
-            BinOp::Eq(_) => BinOpKind::Eq,
-            BinOp::Lt(_) => BinOpKind::Lt,
-            BinOp::Le(_) => BinOpKind::Le,
-            BinOp::Ne(_) => BinOpKind::Ne,
-            BinOp::Ge(_) => BinOpKind::Ge,
-            BinOp::Gt(_) => BinOpKind::Gt,
-            BinOp::AddAssign(_) => BinOpKind::AddAssign,
-            BinOp::SubAssign(_) => BinOpKind::SubAssign,
-            BinOp::MulAssign(_) => BinOpKind::MulAssign,
-            BinOp::DivAssign(_) => BinOpKind::DivAssign,
-            BinOp::RemAssign(_) => BinOpKind::RemAssign,
-            BinOp::BitXorAssign(_) => BinOpKind::BitXorAssign,
-            BinOp::BitAndAssign(_) => BinOpKind::BitAndAssign,
-            BinOp::BitOrAssign(_) => BinOpKind::BitOrAssign,
-            BinOp::ShlAssign(_) => BinOpKind::ShlAssign,
-            BinOp::ShrAssign(_) => BinOpKind::ShrAssign,
-            _ => BinOpKind::Other,
         }
     }
 
@@ -706,6 +686,26 @@ impl NormalizationContext {
             UnOp::Neg(_) => UnOpKind::Neg,
             _ => UnOpKind::Other,
         }
+    }
+
+    /// Get or assign a placeholder index for the given identifier and kind.
+    pub fn placeholder(&mut self, name: &str, kind: PlaceholderKind) -> usize {
+        let key = (name.to_string(), kind);
+        if let Some(&idx) = self.mappings.get(&key) {
+            return idx;
+        }
+        let counter = self.counters.entry(kind).or_insert(0);
+        let idx = *counter;
+        *counter += 1;
+        self.mappings.insert(key, idx);
+        idx
+    }
+
+    fn normalize_fn_parts(sig: &Signature, block: &Block) -> NormalizedFn {
+        let mut ctx = Self::new();
+        let signature = ctx.normalize_signature(sig);
+        let body = ctx.normalize_block(block);
+        NormalizedFn::new(signature, body)
     }
 }
 

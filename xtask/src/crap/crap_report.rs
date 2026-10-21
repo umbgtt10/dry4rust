@@ -21,18 +21,18 @@ impl CrapReport {
     }
 
     #[must_use]
-    pub fn summary(&self) -> String {
-        format!(
-            "crap4rust: {}/{} functions crappy ({:.1}%)",
-            self.crappy_functions, self.total_functions, self.crappy_percent
-        )
-    }
-
-    #[must_use]
     pub fn offenders(&self) -> Vec<&CrapFunction> {
         self.functions
             .iter()
             .filter(|function| !function.is_clean())
             .collect()
+    }
+
+    #[must_use]
+    pub fn summary(&self) -> String {
+        format!(
+            "crap4rust: {}/{} functions crappy ({:.1}%)",
+            self.crappy_functions, self.total_functions, self.crappy_percent
+        )
     }
 }

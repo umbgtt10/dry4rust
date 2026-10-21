@@ -75,14 +75,6 @@ impl<'a> CheckCommand<'a> {
             .collect()
     }
 
-    const fn offenders(&self, of_exact: bool) -> &'a [DuplicateGroup] {
-        if of_exact {
-            self.result.exact_groups.as_slice()
-        } else {
-            self.result.near_groups.as_slice()
-        }
-    }
-
     fn ceilings(&self) -> [(Ceiling, bool); 4] {
         let stats = &self.result.stats;
         [
@@ -125,5 +117,13 @@ impl<'a> CheckCommand<'a> {
                 false,
             ),
         ]
+    }
+
+    const fn offenders(&self, of_exact: bool) -> &'a [DuplicateGroup] {
+        if of_exact {
+            self.result.exact_groups.as_slice()
+        } else {
+            self.result.near_groups.as_slice()
+        }
     }
 }

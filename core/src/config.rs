@@ -72,15 +72,6 @@ impl Default for Config {
 }
 
 impl Config {
-    /// Extract the parsing-relevant subset of the configuration.
-    #[must_use]
-    pub const fn analysis_config(&self) -> AnalysisConfig {
-        AnalysisConfig {
-            min_nodes: self.min_nodes,
-            min_lines: self.min_lines,
-        }
-    }
-
     /// Load config with the following precedence:
     /// 1. CLI overrides (applied by the caller after this method)
     /// 2. dry4rust.toml in the project root
@@ -114,6 +105,15 @@ impl Config {
         }
 
         Ok(config)
+    }
+
+    /// Extract the parsing-relevant subset of the configuration.
+    #[must_use]
+    pub const fn analysis_config(&self) -> AnalysisConfig {
+        AnalysisConfig {
+            min_nodes: self.min_nodes,
+            min_lines: self.min_lines,
+        }
     }
 
     fn from_cargo_metadata(root: &Path) -> Option<FileConfig> {

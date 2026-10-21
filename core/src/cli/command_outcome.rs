@@ -18,15 +18,15 @@ pub struct CommandOutcome {
 
 impl CommandOutcome {
     #[must_use]
-    pub const fn new(text: String, result: CliResult) -> Self {
-        Self { text, result }
-    }
-
-    #[must_use]
     pub const fn succeeded(text: String) -> Self {
         Self {
             text,
             result: Ok(()),
         }
+    }
+
+    #[must_use]
+    pub const fn new(text: String, result: CliResult) -> Self {
+        Self { text, result }
     }
 }

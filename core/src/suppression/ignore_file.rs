@@ -32,12 +32,6 @@ pub struct IgnoreFile {
 }
 
 impl IgnoreFile {
-    /// Where the ignore file lives for a project root.
-    #[must_use]
-    pub fn path_in(root: &Path) -> PathBuf {
-        root.join(IGNORE_FILE_NAME)
-    }
-
     /// Read it, or an empty one if there is nothing readable there.
     ///
     /// Unlike a baseline, an absent ignore file is the ordinary case: most
@@ -53,6 +47,40 @@ impl IgnoreFile {
             |_| Self::default(),
             |content| from_str(&content).unwrap_or_default(),
         )
+    }
+
+    /// Whether this fingerprint is suppressed.
+    #[must_use]
+    pub fn contains(&self, fingerprint: &Fingerprint) -> bool {
+        let hex = fingerprint.to_hex();
+        self.ignore.iter().any(|entry| entry.fingerprint == hex)
+    }
+
+    /// Where the ignore file lives for a project root.
+    #[must_use]
+    pub fn path_in(root: &Path) -> PathBuf {
+        root.join(IGNORE_FILE_NAME)
+    }
+
+    /// Take the ignore file away, and say nothing if it was not there.
+    ///
+    /// # Errors
+    ///
+    /// Returns the I/O error if the file exists and cannot be removed.
+    pub fn remove_from(root: &Path) -> io::Result<()> {
+        match fs::remove_file(Self::path_in(root)) {
+            Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
+            outcome => outcome,
+        }
+    }
+
+    /// The groups this file does not suppress.
+    #[must_use]
+    pub fn retain_unsuppressed(&self, groups: Vec<DuplicateGroup>) -> Vec<DuplicateGroup> {
+        groups
+            .into_iter()
+            .filter(|group| !self.contains(&group.fingerprint))
+            .collect()
     }
 
     /// Write it to the project root, or take the file away when there is
@@ -76,16 +104,16 @@ impl IgnoreFile {
         fs::write(Self::path_in(root), content)
     }
 
-    /// Take the ignore file away, and say nothing if it was not there.
+    /// The entries whose fingerprint no longer matches anything live.
     ///
-    /// # Errors
-    ///
-    /// Returns the I/O error if the file exists and cannot be removed.
-    pub fn remove_from(root: &Path) -> io::Result<()> {
-        match fs::remove_file(Self::path_in(root)) {
-            Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
-            outcome => outcome,
-        }
+    /// An entry whose fingerprint is not valid hex is always stale: nothing
+    /// this tool produces could match it.
+    #[must_use]
+    pub fn stale(&self, live: &HashSet<Fingerprint>) -> Vec<&IgnoreEntry> {
+        self.ignore
+            .iter()
+            .filter(|entry| !Self::is_live(entry, live))
+            .collect()
     }
 
     /// The same file with `fingerprint` suppressed, or unchanged if it already
@@ -118,34 +146,6 @@ impl IgnoreFile {
         file.ignore.retain(|entry| entry.fingerprint != fingerprint);
         let removed = file.ignore.len() < before;
         (file, removed)
-    }
-
-    /// Whether this fingerprint is suppressed.
-    #[must_use]
-    pub fn contains(&self, fingerprint: &Fingerprint) -> bool {
-        let hex = fingerprint.to_hex();
-        self.ignore.iter().any(|entry| entry.fingerprint == hex)
-    }
-
-    /// The groups this file does not suppress.
-    #[must_use]
-    pub fn retain_unsuppressed(&self, groups: Vec<DuplicateGroup>) -> Vec<DuplicateGroup> {
-        groups
-            .into_iter()
-            .filter(|group| !self.contains(&group.fingerprint))
-            .collect()
-    }
-
-    /// The entries whose fingerprint no longer matches anything live.
-    ///
-    /// An entry whose fingerprint is not valid hex is always stale: nothing
-    /// this tool produces could match it.
-    #[must_use]
-    pub fn stale(&self, live: &HashSet<Fingerprint>) -> Vec<&IgnoreEntry> {
-        self.ignore
-            .iter()
-            .filter(|entry| !Self::is_live(entry, live))
-            .collect()
     }
 
     /// The same file with the stale entries taken out, and those entries.

@@ -26,16 +26,13 @@ impl Scanner {
         }
     }
 
+    /// Check if a path should be excluded based on exclusion patterns.
     #[must_use]
-    pub fn with_excludes(mut self, patterns: Vec<String>) -> Self {
-        self.exclude_patterns = patterns;
-        self
-    }
-
-    #[must_use]
-    pub fn with_extensions(mut self, extensions: Vec<String>) -> Self {
-        self.extensions = extensions;
-        self
+    pub fn is_excluded(path: &Path, patterns: &[String]) -> bool {
+        let path_str = path.to_string_lossy();
+        patterns
+            .iter()
+            .any(|pattern| path_str.contains(pattern.as_str()))
     }
 
     /// Scan for source files under the given self.
@@ -79,12 +76,15 @@ impl Scanner {
         files
     }
 
-    /// Check if a path should be excluded based on exclusion patterns.
     #[must_use]
-    pub fn is_excluded(path: &Path, patterns: &[String]) -> bool {
-        let path_str = path.to_string_lossy();
-        patterns
-            .iter()
-            .any(|pattern| path_str.contains(pattern.as_str()))
+    pub fn with_excludes(mut self, patterns: Vec<String>) -> Self {
+        self.exclude_patterns = patterns;
+        self
+    }
+
+    #[must_use]
+    pub fn with_extensions(mut self, extensions: Vec<String>) -> Self {
+        self.extensions = extensions;
+        self
     }
 }

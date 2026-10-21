@@ -19,6 +19,13 @@ pub struct BaselineFilter {
 }
 
 impl BaselineFilter {
+    /// A filter that suppresses nothing, for a run recording a baseline rather
+    /// than judging against one.
+    #[must_use]
+    pub const fn none() -> Self {
+        Self { recorded: None }
+    }
+
     /// Read the baseline `config` names, if it names one.
     ///
     /// # Errors
@@ -33,13 +40,6 @@ impl BaselineFilter {
         Ok(Self {
             recorded: Some(BaselineFile::load(&path)?),
         })
-    }
-
-    /// A filter that suppresses nothing, for a run recording a baseline rather
-    /// than judging against one.
-    #[must_use]
-    pub const fn none() -> Self {
-        Self { recorded: None }
     }
 
     /// Whether a baseline was loaded at all.

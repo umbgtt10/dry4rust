@@ -22,18 +22,6 @@ impl UnionFind {
         }
     }
 
-    /// How many elements the forest covers.
-    #[must_use]
-    pub const fn len(&self) -> usize {
-        self.parent.len()
-    }
-
-    /// Whether the forest covers nothing.
-    #[must_use]
-    pub const fn is_empty(&self) -> bool {
-        self.parent.is_empty()
-    }
-
     /// The root of `i`'s set, compressing the path walked to reach it.
     pub fn find(&mut self, i: usize) -> usize {
         if self.parent[i] != i {
@@ -41,15 +29,6 @@ impl UnionFind {
             self.parent[i] = root;
         }
         self.parent[i]
-    }
-
-    /// Merge the sets holding `i` and `j`.
-    pub fn union(&mut self, i: usize, j: usize) {
-        let root_i = self.find(i);
-        let root_j = self.find(j);
-        if root_i != root_j {
-            self.parent[root_i] = root_j;
-        }
     }
 
     /// Every set, as a list of its members.
@@ -70,5 +49,26 @@ impl UnionFind {
             }
         }
         groups
+    }
+
+    /// Whether the forest covers nothing.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.parent.is_empty()
+    }
+
+    /// How many elements the forest covers.
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.parent.len()
+    }
+
+    /// Merge the sets holding `i` and `j`.
+    pub fn union(&mut self, i: usize, j: usize) {
+        let root_i = self.find(i);
+        let root_j = self.find(j);
+        if root_i != root_j {
+            self.parent[root_i] = root_j;
+        }
     }
 }

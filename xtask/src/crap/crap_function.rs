@@ -20,11 +20,6 @@ pub struct CrapFunction {
 
 impl CrapFunction {
     #[must_use]
-    pub fn is_clean(&self) -> bool {
-        self.verdict == CLEAN_VERDICT
-    }
-
-    #[must_use]
     pub fn describe(&self) -> String {
         format!(
             "{}:{} {} (complexity {}, coverage {:.0}%, crap {:.1}) [{}]",
@@ -36,5 +31,10 @@ impl CrapFunction {
             self.crap_score,
             self.verdict,
         )
+    }
+
+    #[must_use]
+    pub fn is_clean(&self) -> bool {
+        self.verdict == CLEAN_VERDICT
     }
 }

@@ -41,33 +41,6 @@ pub struct BaselineFile {
 }
 
 impl BaselineFile {
-    /// Record everything `result` found.
-    ///
-    /// Entries are ordered by kind and then by fingerprint, so re-recording an
-    /// unchanged codebase produces a byte-identical file and a diff shows only
-    /// what actually moved.
-    #[must_use]
-    pub fn record(result: &Analysis) -> Self {
-        let mut entries: Vec<BaselineEntry> = [
-            (BaselineKind::Exact, &result.exact_groups),
-            (BaselineKind::Near, &result.near_groups),
-            (BaselineKind::SubExact, &result.sub_exact_groups),
-            (BaselineKind::SubNear, &result.sub_near_groups),
-        ]
-        .into_iter()
-        .flat_map(|(kind, groups)| groups.iter().map(move |g| BaselineEntry::of(kind, g)))
-        .collect();
-        entries.sort_by(|a, b| {
-            a.kind
-                .cmp(&b.kind)
-                .then_with(|| a.fingerprint.cmp(&b.fingerprint))
-        });
-        Self {
-            version: FORMAT_VERSION,
-            entries,
-        }
-    }
-
     /// Read the baseline at `path`.
     ///
     /// # Errors
@@ -103,38 +76,31 @@ impl BaselineFile {
         }
     }
 
-    /// Write the baseline to `path`, creating the directory above it.
+    /// Record everything `result` found.
     ///
-    /// # Errors
-    ///
-    /// Returns [`Error::Baseline`] if the file cannot be written.
-    pub fn save(&self, path: &Path) -> Result<()> {
-        let problem = |e: IoError| Error::Baseline {
-            path: path.to_path_buf(),
-            problem: e.to_string(),
-        };
-        if let Some(parent) = path.parent()
-            && !parent.as_os_str().is_empty()
-        {
-            fs::create_dir_all(parent).map_err(problem)?;
+    /// Entries are ordered by kind and then by fingerprint, so re-recording an
+    /// unchanged codebase produces a byte-identical file and a diff shows only
+    /// what actually moved.
+    #[must_use]
+    pub fn record(result: &Analysis) -> Self {
+        let mut entries: Vec<BaselineEntry> = [
+            (BaselineKind::Exact, &result.exact_groups),
+            (BaselineKind::Near, &result.near_groups),
+            (BaselineKind::SubExact, &result.sub_exact_groups),
+            (BaselineKind::SubNear, &result.sub_near_groups),
+        ]
+        .into_iter()
+        .flat_map(|(kind, groups)| groups.iter().map(move |g| BaselineEntry::of(kind, g)))
+        .collect();
+        entries.sort_by(|a, b| {
+            a.kind
+                .cmp(&b.kind)
+                .then_with(|| a.fingerprint.cmp(&b.fingerprint))
+        });
+        Self {
+            version: FORMAT_VERSION,
+            entries,
         }
-        let json = to_string_pretty(self).map_err(|e| Error::Baseline {
-            path: path.to_path_buf(),
-            problem: e.to_string(),
-        })?;
-        fs::write(path, format!("{json}\n")).map_err(problem)
-    }
-
-    /// How many groups this baseline records.
-    #[must_use]
-    pub const fn len(&self) -> usize {
-        self.entries.len()
-    }
-
-    /// Whether it records nothing at all.
-    #[must_use]
-    pub const fn is_empty(&self) -> bool {
-        self.entries.is_empty()
     }
 
     /// Whether some entry accounts for `group` in full.
@@ -155,5 +121,39 @@ impl BaselineFile {
         } else {
             root.join(named)
         }
+    }
+
+    /// Whether it records nothing at all.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    /// How many groups this baseline records.
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// Write the baseline to `path`, creating the directory above it.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Baseline`] if the file cannot be written.
+    pub fn save(&self, path: &Path) -> Result<()> {
+        let problem = |e: IoError| Error::Baseline {
+            path: path.to_path_buf(),
+            problem: e.to_string(),
+        };
+        if let Some(parent) = path.parent()
+            && !parent.as_os_str().is_empty()
+        {
+            fs::create_dir_all(parent).map_err(problem)?;
+        }
+        let json = to_string_pretty(self).map_err(|e| Error::Baseline {
+            path: path.to_path_buf(),
+            problem: e.to_string(),
+        })?;
+        fs::write(path, format!("{json}\n")).map_err(problem)
     }
 }

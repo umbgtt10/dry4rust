@@ -26,6 +26,18 @@ pub struct DuplicationStats {
 }
 
 impl DuplicationStats {
+    /// Percentage of total lines that are exact duplicates.
+    #[must_use]
+    pub fn exact_duplicate_percent(&self) -> f64 {
+        self.percent_of_total(self.exact_duplicate_lines)
+    }
+
+    /// Percentage of total lines that are near duplicates.
+    #[must_use]
+    pub fn near_duplicate_percent(&self) -> f64 {
+        self.percent_of_total(self.near_duplicate_lines)
+    }
+
     /// The same statistics, with what the baseline took out of them.
     #[must_use]
     pub const fn with_baseline_suppressed(self, suppressed: Option<usize>) -> Self {
@@ -41,17 +53,5 @@ impl DuplicationStats {
         } else {
             lines as f64 / self.total_lines as f64 * 100.0
         }
-    }
-
-    /// Percentage of total lines that are exact duplicates.
-    #[must_use]
-    pub fn exact_duplicate_percent(&self) -> f64 {
-        self.percent_of_total(self.exact_duplicate_lines)
-    }
-
-    /// Percentage of total lines that are near duplicates.
-    #[must_use]
-    pub fn near_duplicate_percent(&self) -> f64 {
-        self.percent_of_total(self.near_duplicate_lines)
     }
 }

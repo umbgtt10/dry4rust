@@ -25,10 +25,6 @@ impl TextReporter {
         Self { base_path }
     }
 
-    fn section(&self, section: &GroupSection, groups: &[DuplicateGroup]) -> String {
-        section.write(groups, self.base_path.as_deref())
-    }
-
     fn format_with_commas(n: usize) -> String {
         let s = n.to_string();
         let mut result = String::with_capacity(s.len() + s.len() / 3);
@@ -39,6 +35,10 @@ impl TextReporter {
             result.push(c);
         }
         result
+    }
+
+    fn section(&self, section: &GroupSection, groups: &[DuplicateGroup]) -> String {
+        section.write(groups, self.base_path.as_deref())
     }
 }
 
