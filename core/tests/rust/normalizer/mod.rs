@@ -3,9 +3,5 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod expr_tests;
-pub mod helpers_tests;
 pub mod normalization_context_tests;
-pub mod normalize_tests;
 pub mod normalized_fn_tests;
-pub mod pat_tests;

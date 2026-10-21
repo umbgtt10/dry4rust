@@ -61,6 +61,12 @@ subject.
   `normalize_impl_item_fn` return a `rust::normalizer::normalized_fn::NormalizedFn`
   naming the `signature` and the `body`, and `normalize_impl_block` pairs one
   with each method's name.
+- `NormalizationContext` is implemented in one file, which stern4rust's coming
+  `implemented-in-one-file` rule asks for. Its methods sat in five --
+  `normalization_context.rs`, `normalize.rs`, `expr.rs`, `pat.rs` and
+  `helpers.rs` -- and are all in `rust::normalizer::normalization_context` now,
+  with their 79 tests in its test file; the four modules that held only impl
+  blocks are gone. Nothing they declared changes its name or its path.
 
 ## [0.4.0] - 2026-10-10
 
