@@ -15,6 +15,11 @@ split or moved, and two types renamed, so each file is named after its
 subject.
 
 ### Changed
+- `DEFAULT_BASELINE_FILE` and `FORMAT_VERSION` move out of
+  `suppression::baseline_file` into `suppression::baseline_constants`, a file
+  of constants, which stern4rust's coming `shared-constants` rule asks of a
+  public constant several files read: the baseline file reads both, and three
+  test files `FORMAT_VERSION`. Their values are unchanged.
 - Every source file is named after its subject, which stern4rust 0.16.0's new
   `named-subject` rule asks for. `output::json` and `output::text` are
   `output::json_reporter` and `output::text_reporter`. `extractor` is

@@ -5,9 +5,9 @@
 
 use crate::common::group;
 use dry4rust::config::Config;
+use dry4rust::suppression::baseline_constants::FORMAT_VERSION;
 use dry4rust::suppression::baseline_entry::BaselineEntry;
 use dry4rust::suppression::baseline_file::BaselineFile;
-use dry4rust::suppression::baseline_file::FORMAT_VERSION;
 use dry4rust::suppression::baseline_filter::BaselineFilter;
 use dry4rust::suppression::baseline_kind::BaselineKind;
 use std::path::PathBuf;

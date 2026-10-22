@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod baseline_constants;
 pub mod baseline_entry;
 pub mod baseline_file;
 pub mod baseline_filter;

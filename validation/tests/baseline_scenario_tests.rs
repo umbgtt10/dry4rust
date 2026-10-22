@@ -5,8 +5,8 @@
 
 use dry4rust::cli::baseline_command::BaselineCommand;
 use dry4rust::config::Config;
+use dry4rust::suppression::baseline_constants::FORMAT_VERSION;
 use dry4rust::suppression::baseline_file::BaselineFile;
-use dry4rust::suppression::baseline_file::FORMAT_VERSION;
 use dry4rust::suppression::baseline_kind::BaselineKind;
 use predicate::str;
 use predicates::prelude::*;

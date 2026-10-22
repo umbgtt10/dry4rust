@@ -17,19 +17,10 @@ use crate::analysis::Analysis;
 use crate::duplicate_group::DuplicateGroup;
 use crate::error::Error;
 use crate::error::Result;
+use crate::suppression::baseline_constants::DEFAULT_BASELINE_FILE;
+use crate::suppression::baseline_constants::FORMAT_VERSION;
 use crate::suppression::baseline_entry::BaselineEntry;
 use crate::suppression::baseline_kind::BaselineKind;
-
-/// What `baseline` writes when no path says otherwise.
-///
-/// JSON rather than the TOML the ignore file uses, and named for the tool the
-/// way every other file in this family is. The two suppression files differ in
-/// who writes them: an ignore entry is written by a person and carries a reason
-/// in their words, and a baseline is written by the tool and read back by it.
-pub const DEFAULT_BASELINE_FILE: &str = "dry4rust-baseline.json";
-
-/// The format this build writes, and the only one it reads.
-pub const FORMAT_VERSION: u32 = 1;
 
 /// The duplication a codebase already had when the baseline was recorded.
 #[derive(Debug, Clone, Serialize, Deserialize)]
