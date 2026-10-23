@@ -17,6 +17,6 @@ fn new_keeps_the_signature_and_the_body_apart() {
     let normalized = NormalizedFn::new(signature.clone(), body.clone());
 
     // Assert
-    assert_eq!(normalized.signature, signature);
-    assert_eq!(normalized.body, body);
+    assert_eq!(*normalized.signature(), signature);
+    assert_eq!(*normalized.body(), body);
 }

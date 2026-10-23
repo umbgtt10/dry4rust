@@ -52,10 +52,9 @@ impl Fixture {
 
     fn analysed_under(name: &str, sub_function: bool) -> (Config, Analysis) {
         let root = Self::path(name);
-        let config = Config {
-            sub_function,
-            ..Config::load(&root).expect("the fixture configuration is in range")
-        };
+        let config = Config::load(&root)
+            .expect("the fixture configuration is in range")
+            .with_sub_function(sub_function);
         let files = Scanner::new(root).scan_files();
         let result = Analysis::analyze(&RustAnalyzer::new(), &files, &config)
             .expect("the fixture analyses cleanly");

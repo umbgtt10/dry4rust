@@ -31,12 +31,12 @@ impl<'a> IgnoredCommand<'a> {
     pub fn run(&self) -> CliResult<CommandOutcome> {
         let ignore_file = IgnoreFile::load(self.root);
         let mut out = String::new();
-        if ignore_file.ignore.is_empty() {
+        if ignore_file.ignore().is_empty() {
             let _ = writeln!(out, "No ignored fingerprints.");
             return Ok(CommandOutcome::succeeded(out));
         }
         let _ = writeln!(out, "Ignored fingerprints:");
-        for entry in &ignore_file.ignore {
+        for entry in ignore_file.ignore() {
             let _ = writeln!(out, "{}", IgnoreEntryLine::new(entry));
         }
         Ok(CommandOutcome::succeeded(out))

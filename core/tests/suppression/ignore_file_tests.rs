@@ -15,11 +15,7 @@ use std::path::{Path, PathBuf};
 use tempfile::TempDir;
 
 const fn group_of(fingerprint: Fingerprint, similarity: f64) -> DuplicateGroup {
-    DuplicateGroup {
-        fingerprint,
-        members: vec![],
-        similarity,
-    }
+    DuplicateGroup::new(fingerprint, vec![], similarity)
 }
 
 fn other_fingerprint() -> Fingerprint {
@@ -63,7 +59,7 @@ fn load_over_a_root_with_no_ignore_file_returns_an_empty_one() {
 
     // Assert
     assert!(
-        ignore.ignore.is_empty(),
+        ignore.ignore().is_empty(),
         "most projects suppress nothing, and that is indistinguishable from a \
          project that has not started"
     );
@@ -175,10 +171,10 @@ fn save_then_load_returns_what_was_recorded() {
     let loaded = IgnoreFile::load(tmp.path());
 
     // Assert
-    assert_eq!(loaded.ignore.len(), 1);
-    assert_eq!(loaded.ignore[0].fingerprint, fp.to_hex());
-    assert_eq!(loaded.ignore[0].reason, Some("test reason".to_string()));
-    assert_eq!(loaded.ignore[0].members, vec!["foo", "bar"]);
+    assert_eq!(loaded.ignore().len(), 1);
+    assert_eq!(loaded.ignore()[0].fingerprint(), fp.to_hex());
+    assert_eq!(loaded.ignore()[0].reason(), Some("test reason"));
+    assert_eq!(loaded.ignore()[0].members(), vec!["foo", "bar"]);
 }
 
 #[test]
@@ -196,7 +192,7 @@ fn stale_separates_the_entries_that_no_longer_match_anything() {
 
     // Assert
     assert_eq!(stale.len(), 1);
-    assert_eq!(stale[0].reason, Some("stale".to_string()));
+    assert_eq!(stale[0].reason(), Some("stale"));
 }
 
 #[test]
@@ -208,7 +204,7 @@ fn with_ignored_over_the_same_fingerprint_twice_records_it_once() {
     let ignore = suppressing(&[(fp, None), (fp, None)]);
 
     // Assert
-    assert_eq!(ignore.ignore.len(), 1);
+    assert_eq!(ignore.ignore().len(), 1);
 }
 
 #[test]
@@ -221,7 +217,7 @@ fn without_an_entry_that_is_not_there_says_so() {
 
     // Assert
     assert!(!removed);
-    assert!(ignore.ignore.is_empty());
+    assert!(ignore.ignore().is_empty());
 }
 
 #[test]
@@ -235,7 +231,7 @@ fn without_removes_the_entry_and_says_it_did() {
 
     // Assert
     assert!(removed);
-    assert!(ignore.ignore.is_empty());
+    assert!(ignore.ignore().is_empty());
 }
 
 #[test]
@@ -253,7 +249,7 @@ fn without_stale_keeps_the_live_entries_and_hands_back_the_rest() {
 
     // Assert
     assert_eq!(taken.len(), 1);
-    assert_eq!(taken[0].reason, Some("stale".to_string()));
-    assert_eq!(kept.ignore.len(), 1);
-    assert_eq!(kept.ignore[0].reason, Some("live".to_string()));
+    assert_eq!(taken[0].reason(), Some("stale"));
+    assert_eq!(kept.ignore().len(), 1);
+    assert_eq!(kept.ignore()[0].reason(), Some("live"));
 }

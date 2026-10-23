@@ -253,12 +253,8 @@ fn main_dispatches_the_check_subcommand_and_succeeds_on_a_clean_fixture() {
 #[test]
 fn run_over_a_clean_fixture_passes_with_every_ceiling_at_zero() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact: Some(0),
-        max_near: Some(0),
-        max_exact_percent: Some(CheckScenario::percent(0.0)),
-        max_near_percent: Some(CheckScenario::percent(0.0)),
-    };
+    let thresholds = CheckThresholds::new(Some(0), Some(0), Some(0.0), Some(0.0))
+        .expect("every ceiling is in range");
 
     // Act
     let (outcome, text) = CheckScenario::checked("no_dupes", &thresholds);
@@ -271,11 +267,8 @@ fn run_over_a_clean_fixture_passes_with_every_ceiling_at_zero() {
 #[test]
 fn run_with_a_generous_percentage_ceiling_passes() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact_percent: Some(CheckScenario::percent(100.0)),
-        max_near_percent: Some(CheckScenario::percent(100.0)),
-        ..CheckThresholds::default()
-    };
+    let thresholds = CheckThresholds::new(None, None, Some(100.0), Some(100.0))
+        .expect("every ceiling is in range");
 
     // Act
     let (outcome, _) = CheckScenario::checked("exact_dupes", &thresholds);
@@ -289,10 +282,8 @@ fn run_with_a_near_duplicate_ceiling_fails_when_it_is_exceeded() {
     // Arrange
     let (config, result) = Fixture::analysed("near_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let thresholds = CheckThresholds {
-        max_near: Some(0),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(None, Some(0), None, None).expect("every ceiling is in range");
 
     // Act
     let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), &thresholds)
@@ -301,12 +292,12 @@ fn run_with_a_near_duplicate_ceiling_fails_when_it_is_exceeded() {
 
     // Assert
     assert_eq!(
-        result.near_groups.len(),
+        result.near_groups().len(),
         1,
         "the fixture holding a near-duplicate group is why the ceiling is \
          breached; without that this test would prove nothing"
     );
-    assert!(matches!(outcome.result, Err(CliError::CheckFailed)));
+    assert!(matches!(outcome.result(), Err(CliError::CheckFailed)));
 }
 
 #[test]
@@ -314,10 +305,8 @@ fn run_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
     // Arrange
     let (config, result) = Fixture::analysed("near_dupes");
     let reporter = OutputFormat::Text.reporter(None);
-    let thresholds = CheckThresholds {
-        max_near_percent: Some(CheckScenario::percent(0.0)),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(None, None, None, Some(0.0)).expect("every ceiling is in range");
 
     // Act
     let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), &thresholds)
@@ -326,20 +315,18 @@ fn run_with_a_near_percentage_ceiling_of_zero_fails_on_near_duplication() {
 
     // Assert
     assert!(
-        result.stats.near_duplicate_percent() > 0.0,
+        result.stats().near_duplicate_percent() > 0.0,
         "a ceiling of zero percent is only breached because the fixture has \
          near-duplicated lines to measure"
     );
-    assert!(matches!(outcome.result, Err(CliError::CheckFailed)));
+    assert!(matches!(outcome.result(), Err(CliError::CheckFailed)));
 }
 
 #[test]
 fn run_with_a_percentage_ceiling_of_zero_fails_on_any_duplication() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact_percent: Some(CheckScenario::percent(0.0)),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(None, None, Some(0.0), None).expect("every ceiling is in range");
 
     // Act
     let (outcome, _) = CheckScenario::checked("exact_dupes", &thresholds);
@@ -351,10 +338,8 @@ fn run_with_a_percentage_ceiling_of_zero_fails_on_any_duplication() {
 #[test]
 fn run_with_a_zero_threshold_fails_on_duplicates() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact: Some(0),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(Some(0), None, None, None).expect("every ceiling is in range");
 
     // Act
     let (outcome, _) = CheckScenario::checked("exact_dupes", &thresholds);
@@ -366,11 +351,8 @@ fn run_with_a_zero_threshold_fails_on_duplicates() {
 #[test]
 fn run_with_an_exact_count_ceiling_above_the_findings_passes() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact: Some(9999),
-        max_near: Some(9999),
-        ..CheckThresholds::default()
-    };
+    let thresholds = CheckThresholds::new(Some(9999), Some(9999), None, None)
+        .expect("every ceiling is in range");
 
     // Act
     let (outcome, _) = CheckScenario::checked("exact_dupes", &thresholds);
@@ -382,12 +364,8 @@ fn run_with_an_exact_count_ceiling_above_the_findings_passes() {
 #[test]
 fn run_with_every_ceiling_set_reports_each_breach_it_finds() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact: Some(0),
-        max_near: Some(0),
-        max_exact_percent: Some(CheckScenario::percent(0.0)),
-        max_near_percent: Some(CheckScenario::percent(0.0)),
-    };
+    let thresholds = CheckThresholds::new(Some(0), Some(0), Some(0.0), Some(0.0))
+        .expect("every ceiling is in range");
 
     // Act
     let (outcome, text) = CheckScenario::checked("exact_dupes", &thresholds);

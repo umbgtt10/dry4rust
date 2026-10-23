@@ -84,7 +84,7 @@ pub enum UnOpKind {
 
 /// The kind of a normalized AST node. Carries only non-child data
 /// (operator kinds, literal kinds, placeholder indices, mutability flags, macro names).
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub enum NodeKind {
     // Blocks and statements
     Block,
@@ -188,6 +188,7 @@ pub enum NodeKind {
 
     /// Sentinel for absent optional children, ensuring fixed child positions
     /// for correct zip alignment in similarity comparison.
+    #[default]
     None,
 }
 
@@ -214,10 +215,10 @@ pub enum NodeKind {
 /// - **Variable-length (0 or 1)**: `Return`, `Break` -> `[]` or `[value]`
 /// - **Homogeneous**: `Block`, `Tuple`, `Array`, `Path`, `PatTuple`, etc. -> [elem0, ...]
 /// - **All other fixed**: e.g. `BinaryOp` -> [left, right], `ForLoop` -> [pat, iter, body]
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct NormalizedNode {
-    pub kind: NodeKind,
-    pub children: Vec<Self>,
+    kind: NodeKind,
+    children: Vec<Self>,
 }
 
 impl NormalizedNode {
@@ -288,10 +289,20 @@ impl NormalizedNode {
         Self { kind, children }
     }
 
+    #[must_use]
+    pub const fn new(kind: NodeKind, children: Vec<Self>) -> Self {
+        Self { kind, children }
+    }
+
     /// Create a node with children.
     #[must_use]
     pub const fn with_children(kind: NodeKind, children: Vec<Self>) -> Self {
         Self { kind, children }
+    }
+
+    #[must_use]
+    pub fn children(&self) -> &[Self] {
+        &self.children
     }
 
     /// Count the number of nodes in a normalized tree.
@@ -307,6 +318,11 @@ impl NormalizedNode {
     #[must_use]
     pub const fn is_none(&self) -> bool {
         matches!(self.kind, NodeKind::None)
+    }
+
+    #[must_use]
+    pub const fn kind(&self) -> &NodeKind {
+        &self.kind
     }
 }
 

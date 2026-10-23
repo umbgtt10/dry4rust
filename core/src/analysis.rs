@@ -22,15 +22,15 @@ use std::fs;
 
 /// The result of a full analysis run.
 pub struct Analysis {
-    pub stats: DuplicationStats,
-    pub exact_groups: Vec<DuplicateGroup>,
-    pub near_groups: Vec<DuplicateGroup>,
-    pub sub_exact_groups: Vec<DuplicateGroup>,
-    pub sub_near_groups: Vec<DuplicateGroup>,
-    pub warnings: Vec<String>,
+    stats: DuplicationStats,
+    exact_groups: Vec<DuplicateGroup>,
+    near_groups: Vec<DuplicateGroup>,
+    sub_exact_groups: Vec<DuplicateGroup>,
+    sub_near_groups: Vec<DuplicateGroup>,
+    warnings: Vec<String>,
     /// All group fingerprints (exact + near) before ignore filtering.
     /// Used by the cleanup command to identify stale ignore entries.
-    pub all_fingerprints: HashSet<Fingerprint>,
+    all_fingerprints: HashSet<Fingerprint>,
 }
 
 impl Analysis {
@@ -57,7 +57,7 @@ impl Analysis {
             };
             match analyzer.parse_file(path, &source, &analysis_config) {
                 Ok(mut file_units) => {
-                    if config.exclude_tests {
+                    if config.exclude_tests() {
                         file_units.retain(|u| !analyzer.is_test_code(u));
                     }
                     units.extend(file_units);
@@ -82,41 +82,48 @@ impl Analysis {
         let exact_groups = DuplicateGroup::group_exact_duplicates(units);
 
         // 2. Find near-duplicates
-        let exact_fps: Vec<_> = exact_groups.iter().map(|g| g.fingerprint).collect();
+        let exact_fps: Vec<_> = exact_groups
+            .iter()
+            .map(super::duplicate_group::DuplicateGroup::fingerprint)
+            .collect();
         let near_groups = DuplicateGroup::find_near_duplicates(
             units,
-            config.similarity_threshold.as_fraction(),
+            config.similarity_threshold().as_fraction(),
             &exact_fps,
         );
 
         // 3. Sub-function duplicate detection (opt-in)
-        let (sub_exact_groups, sub_near_groups) = if config.sub_function {
+        let (sub_exact_groups, sub_near_groups) = if config.sub_function() {
             // Extract sub-units from each code unit
             let sub_units: Vec<CodeUnit> = units
                 .iter()
                 .flat_map(|unit| {
-                    let sub_units = SubUnit::extract_sub_units(&unit.body, config.min_sub_nodes);
-                    sub_units.into_iter().map(|su| CodeUnit {
-                        kind: su.kind,
-                        name: su.description,
-                        file: unit.file.clone(),
-                        line_start: unit.line_start,
-                        line_end: unit.line_end,
-                        signature: NormalizedNode::leaf(crate::node::NodeKind::Opaque),
-                        body: su.node.clone(),
-                        fingerprint: Fingerprint::from_node(&su.node),
-                        node_count: su.node_count,
-                        parent_name: Some(unit.name.clone()),
-                        is_test: unit.is_test,
+                    let sub_units = SubUnit::extract_sub_units(unit.body(), config.min_sub_nodes());
+                    sub_units.into_iter().map(|su| {
+                        CodeUnit::default()
+                            .with_kind(su.kind().clone())
+                            .with_name(su.description().to_string())
+                            .with_file(unit.file().to_path_buf())
+                            .with_line_start(unit.line_start())
+                            .with_line_end(unit.line_end())
+                            .with_signature(NormalizedNode::leaf(crate::node::NodeKind::Opaque))
+                            .with_body(su.node().clone())
+                            .with_fingerprint(Fingerprint::from_node(su.node()))
+                            .with_node_count(su.node_count())
+                            .with_parent_name(Some(unit.name().to_string()))
+                            .with_is_test(unit.is_test())
                     })
                 })
                 .collect();
 
             let sub_exact = DuplicateGroup::group_exact_duplicates(&sub_units);
-            let sub_exact_fps: Vec<_> = sub_exact.iter().map(|g| g.fingerprint).collect();
+            let sub_exact_fps: Vec<_> = sub_exact
+                .iter()
+                .map(super::duplicate_group::DuplicateGroup::fingerprint)
+                .collect();
             let sub_near = DuplicateGroup::find_near_duplicates(
                 &sub_units,
-                config.similarity_threshold.as_fraction(),
+                config.similarity_threshold().as_fraction(),
                 &sub_exact_fps,
             );
             (sub_exact, sub_near)
@@ -130,11 +137,11 @@ impl Analysis {
             .chain(near_groups.iter())
             .chain(sub_exact_groups.iter())
             .chain(sub_near_groups.iter())
-            .map(|g| g.fingerprint)
+            .map(super::duplicate_group::DuplicateGroup::fingerprint)
             .collect();
 
         // 5. Apply ignore filtering
-        let ignore_file = IgnoreFile::load(&config.root);
+        let ignore_file = IgnoreFile::load(config.root());
         let exact_groups = ignore_file.retain_unsuppressed(exact_groups);
         let near_groups = ignore_file.retain_unsuppressed(near_groups);
         let sub_exact_groups = ignore_file.retain_unsuppressed(sub_exact_groups);
@@ -170,5 +177,61 @@ impl Analysis {
             warnings,
             all_fingerprints,
         })
+    }
+
+    #[must_use]
+    pub const fn new(
+        stats: DuplicationStats,
+        exact_groups: Vec<DuplicateGroup>,
+        near_groups: Vec<DuplicateGroup>,
+        sub_exact_groups: Vec<DuplicateGroup>,
+        sub_near_groups: Vec<DuplicateGroup>,
+        warnings: Vec<String>,
+        all_fingerprints: HashSet<Fingerprint>,
+    ) -> Self {
+        Self {
+            stats,
+            exact_groups,
+            near_groups,
+            sub_exact_groups,
+            sub_near_groups,
+            warnings,
+            all_fingerprints,
+        }
+    }
+
+    #[must_use]
+    pub const fn all_fingerprints(&self) -> &HashSet<Fingerprint> {
+        &self.all_fingerprints
+    }
+
+    #[must_use]
+    pub fn exact_groups(&self) -> &[DuplicateGroup] {
+        &self.exact_groups
+    }
+
+    #[must_use]
+    pub fn near_groups(&self) -> &[DuplicateGroup] {
+        &self.near_groups
+    }
+
+    #[must_use]
+    pub const fn stats(&self) -> &DuplicationStats {
+        &self.stats
+    }
+
+    #[must_use]
+    pub fn sub_exact_groups(&self) -> &[DuplicateGroup] {
+        &self.sub_exact_groups
+    }
+
+    #[must_use]
+    pub fn sub_near_groups(&self) -> &[DuplicateGroup] {
+        &self.sub_near_groups
+    }
+
+    #[must_use]
+    pub fn warnings(&self) -> &[String] {
+        &self.warnings
     }
 }

@@ -33,10 +33,10 @@ impl BaselineFilter {
     /// Returns [`crate::error::Error::Baseline`] when a baseline is named and
     /// cannot be read.
     pub fn load(config: &Config) -> Result<Self> {
-        let Some(configured) = config.baseline.as_deref() else {
+        let Some(configured) = config.baseline() else {
             return Ok(Self { recorded: None });
         };
-        let path = BaselineFile::baseline_path(&config.root, Some(configured));
+        let path = BaselineFile::baseline_path(config.root(), Some(configured));
         Ok(Self {
             recorded: Some(BaselineFile::load(&path)?),
         })

@@ -55,7 +55,7 @@ impl<'a> CheckCommand<'a> {
     /// returned from here.
     pub fn run(&self) -> CliResult<CommandOutcome> {
         let breaches = self.breaches();
-        let text = self.reporter.report_check(&self.result.stats, &breaches)?;
+        let text = self.reporter.report_check(self.result.stats(), &breaches)?;
         let result = if breaches.is_empty() {
             Ok(())
         } else {
@@ -76,22 +76,24 @@ impl<'a> CheckCommand<'a> {
     }
 
     fn ceilings(&self) -> [(Ceiling, bool); 4] {
-        let stats = &self.result.stats;
+        let stats = &self.result.stats();
         [
             (
                 Ceiling::count(
                     self.thresholds
-                        .max_exact
-                        .or(self.config.max_exact_duplicates),
-                    stats.exact_duplicate_groups,
+                        .max_exact()
+                        .or_else(|| self.config.max_exact_duplicates()),
+                    stats.exact_duplicate_groups(),
                     "exact duplicate groups",
                 ),
                 true,
             ),
             (
                 Ceiling::count(
-                    self.thresholds.max_near.or(self.config.max_near_duplicates),
-                    stats.near_duplicate_groups,
+                    self.thresholds
+                        .max_near()
+                        .or_else(|| self.config.max_near_duplicates()),
+                    stats.near_duplicate_groups(),
                     "near duplicate groups",
                 ),
                 false,
@@ -99,8 +101,8 @@ impl<'a> CheckCommand<'a> {
             (
                 Ceiling::percent(
                     self.thresholds
-                        .max_exact_percent
-                        .or(self.config.max_exact_percent),
+                        .max_exact_percent()
+                        .or_else(|| self.config.max_exact_percent()),
                     stats.exact_duplicate_percent(),
                     "exact duplicate lines",
                 ),
@@ -109,8 +111,8 @@ impl<'a> CheckCommand<'a> {
             (
                 Ceiling::percent(
                     self.thresholds
-                        .max_near_percent
-                        .or(self.config.max_near_percent),
+                        .max_near_percent()
+                        .or_else(|| self.config.max_near_percent()),
                     stats.near_duplicate_percent(),
                     "near duplicate lines",
                 ),
@@ -119,11 +121,11 @@ impl<'a> CheckCommand<'a> {
         ]
     }
 
-    const fn offenders(&self, of_exact: bool) -> &'a [DuplicateGroup] {
+    fn offenders(&self, of_exact: bool) -> &'a [DuplicateGroup] {
         if of_exact {
-            self.result.exact_groups.as_slice()
+            self.result.exact_groups()
         } else {
-            self.result.near_groups.as_slice()
+            self.result.near_groups()
         }
     }
 }

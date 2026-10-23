@@ -15,11 +15,11 @@ use crate::output::duplication_stats::DuplicationStats;
 pub struct DuplicateGroup {
     /// Shared fingerprint for exact duplicates, or composite fingerprint
     /// (derived from sorted member fingerprints) for near-duplicate groups.
-    pub fingerprint: Fingerprint,
+    fingerprint: Fingerprint,
     /// The code units in this group.
-    pub members: Vec<CodeUnit>,
+    members: Vec<CodeUnit>,
     /// Similarity score (1.0 for exact duplicates).
-    pub similarity: f64,
+    similarity: f64,
 }
 
 impl DuplicateGroup {
@@ -30,7 +30,7 @@ impl DuplicateGroup {
 
         for unit in units {
             groups
-                .entry(unit.fingerprint)
+                .entry(unit.fingerprint())
                 .or_default()
                 .push(unit.clone());
         }
@@ -67,6 +67,15 @@ impl DuplicateGroup {
         NearDuplicateFinder::new(threshold).find(units, exact_fingerprints)
     }
 
+    #[must_use]
+    pub const fn new(fingerprint: Fingerprint, members: Vec<CodeUnit>, similarity: f64) -> Self {
+        Self {
+            fingerprint,
+            members,
+            similarity,
+        }
+    }
+
     /// Compute duplication statistics.
     pub fn compute_stats(
         units: &[CodeUnit],
@@ -75,24 +84,18 @@ impl DuplicateGroup {
     ) -> DuplicationStats {
         let total_lines: usize = units
             .iter()
-            .map(|u| u.line_end.saturating_sub(u.line_start) + 1)
+            .map(|u| u.line_end().saturating_sub(u.line_start()) + 1)
             .sum();
 
-        DuplicationStats {
-            total_code_units: units.len(),
-            total_lines,
-            exact_duplicate_groups: exact_groups.len(),
-            exact_duplicate_units: exact_groups.iter().map(|g| g.members.len()).sum(),
-            near_duplicate_groups: near_groups.len(),
-            near_duplicate_units: near_groups.iter().map(|g| g.members.len()).sum(),
-            exact_duplicate_lines: exact_groups.iter().map(Self::group_line_count).sum(),
-            near_duplicate_lines: near_groups.iter().map(Self::group_line_count).sum(),
-            sub_exact_groups: 0,
-            sub_exact_units: 0,
-            sub_near_groups: 0,
-            sub_near_units: 0,
-            baseline_suppressed: None,
-        }
+        DuplicationStats::default()
+            .with_total_code_units(units.len())
+            .with_total_lines(total_lines)
+            .with_exact_duplicate_groups(exact_groups.len())
+            .with_exact_duplicate_units(exact_groups.iter().map(|g| g.members.len()).sum())
+            .with_near_duplicate_groups(near_groups.len())
+            .with_near_duplicate_units(near_groups.iter().map(|g| g.members.len()).sum())
+            .with_exact_duplicate_lines(exact_groups.iter().map(Self::group_line_count).sum())
+            .with_near_duplicate_lines(near_groups.iter().map(Self::group_line_count).sum())
     }
 
     /// Compute duplication statistics including sub-function results.
@@ -104,12 +107,26 @@ impl DuplicateGroup {
         sub_exact_groups: &[Self],
         sub_near_groups: &[Self],
     ) -> DuplicationStats {
-        let mut stats = Self::compute_stats(units, exact_groups, near_groups);
-        stats.sub_exact_groups = sub_exact_groups.len();
-        stats.sub_exact_units = sub_exact_groups.iter().map(|g| g.members.len()).sum();
-        stats.sub_near_groups = sub_near_groups.len();
-        stats.sub_near_units = sub_near_groups.iter().map(|g| g.members.len()).sum();
-        stats
+        Self::compute_stats(units, exact_groups, near_groups)
+            .with_sub_exact_groups(sub_exact_groups.len())
+            .with_sub_exact_units(sub_exact_groups.iter().map(|g| g.members.len()).sum())
+            .with_sub_near_groups(sub_near_groups.len())
+            .with_sub_near_units(sub_near_groups.iter().map(|g| g.members.len()).sum())
+    }
+
+    #[must_use]
+    pub const fn fingerprint(&self) -> Fingerprint {
+        self.fingerprint
+    }
+
+    #[must_use]
+    pub fn members(&self) -> &[CodeUnit] {
+        &self.members
+    }
+
+    #[must_use]
+    pub const fn similarity(&self) -> f64 {
+        self.similarity
     }
 
     /// Compute the total number of source lines in a duplicate group.
@@ -117,7 +134,7 @@ impl DuplicateGroup {
         group
             .members
             .iter()
-            .map(|m| m.line_end.saturating_sub(m.line_start) + 1)
+            .map(|m| m.line_end().saturating_sub(m.line_start()) + 1)
             .sum()
     }
 }

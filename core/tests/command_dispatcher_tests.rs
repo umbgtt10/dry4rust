@@ -17,7 +17,7 @@ fn dispatch_in(root: &Path, command: &Command) -> (Result<(), CliError>, String)
     let dispatcher =
         CommandDispatcher::new(&analyzer, root, OutputFormat::Text, CliOverrides::default());
     match dispatcher.dispatch(command) {
-        Ok(outcome) => (outcome.result, outcome.text),
+        Ok(outcome) => outcome.into_parts(),
         Err(error) => (Err(error), String::new()),
     }
 }

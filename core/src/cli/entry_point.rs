@@ -105,16 +105,15 @@ impl EntryPoint {
     /// absence.
     #[must_use]
     pub fn overrides(&self) -> CliOverrides {
-        CliOverrides {
-            min_nodes: self.min_nodes,
-            min_lines: self.min_lines,
-            threshold: self.threshold,
-            exclude: self.exclude.clone(),
-            exclude_tests: self.exclude_tests.then_some(true),
-            sub_function: self.sub_function.then_some(true),
-            min_sub_nodes: self.min_sub_nodes,
-            baseline: self.baseline.clone(),
-        }
+        CliOverrides::default()
+            .with_min_nodes(self.min_nodes)
+            .with_min_lines(self.min_lines)
+            .with_threshold(self.threshold)
+            .with_exclude(self.exclude.clone())
+            .with_exclude_tests(self.exclude_tests.then_some(true))
+            .with_sub_function(self.sub_function.then_some(true))
+            .with_min_sub_nodes(self.min_sub_nodes)
+            .with_baseline(self.baseline.clone())
     }
 
     /// The root to analyse: what `--path` said, or where the shell is.
@@ -146,12 +145,12 @@ impl EntryPoint {
                 let stdout = io::stdout();
                 let mut writer = stdout.lock();
                 match writer
-                    .write_all(outcome.text.as_bytes())
+                    .write_all(outcome.text().as_bytes())
                     .and_then(|()| writer.flush())
                 {
-                    Ok(()) => match outcome.result {
+                    Ok(()) => match outcome.result() {
                         Ok(()) => ExitCode::SUCCESS,
-                        Err(e) => Self::reported(&e),
+                        Err(e) => Self::reported(e),
                     },
                     Err(e) => Self::reported(&CliError::Io(e)),
                 }

@@ -10,6 +10,7 @@ use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::suppression::baseline_file::BaselineFile;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use validation::fixture::Fixture;
@@ -21,26 +22,24 @@ fn analyze_over_a_duplicated_fixture_reports_exact_groups() {
     let (_, result) = Fixture::analysed("exact_dupes");
 
     // Assert
-    assert!(result.stats.total_code_units > 0);
-    assert!(!result.exact_groups.is_empty());
+    assert!(result.stats().total_code_units() > 0);
+    assert!(!result.exact_groups().is_empty());
 }
 
 #[test]
 fn produce_applies_the_overrides_before_scanning() {
     // Arrange
     let root = Fixture::path("exact_dupes");
-    let overrides = CliOverrides {
-        min_nodes: Some(1000),
-        ..CliOverrides::default()
-    };
+    let overrides = CliOverrides::default().with_min_nodes(Some(1000));
 
     // Act
     let output = PipelineScenario::produced(&root, &overrides);
 
     // Assert
-    assert_eq!(output.config.min_nodes, 1000);
+    assert_eq!(output.config().min_nodes(), 1000);
     assert_eq!(
-        output.result.stats.total_code_units, 0,
+        output.result().stats().total_code_units(),
+        0,
         "a floor of 1000 nodes admits nothing this fixture contains"
     );
 }
@@ -56,13 +55,11 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     )
     .expect("copy the fixture");
     let judged = PipelineScenario::produced(tmp.path(), &CliOverrides::default());
-    BaselineFile::record(&judged.result)
+    BaselineFile::record(judged.result())
         .save(&tmp.path().join("dry4rust-baseline.json"))
         .expect("the baseline is written");
-    let overrides = CliOverrides {
-        baseline: Some(PathBuf::from("dry4rust-baseline.json")),
-        ..CliOverrides::default()
-    };
+    let overrides =
+        CliOverrides::default().with_baseline(Some(PathBuf::from("dry4rust-baseline.json")));
 
     // Act
     let recording = AnalysisOutput::produce_ignoring_baseline(
@@ -82,18 +79,18 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     )
     .expect("the fixture analyses cleanly");
     assert_eq!(
-        judging.result.exact_groups.len(),
+        judging.result().exact_groups().len(),
         0,
         "judging against the baseline hides what it recorded"
     );
     assert_eq!(
-        recording.result.exact_groups.len(),
+        recording.result().exact_groups().len(),
         1,
         "recording against it must not, or the second recording empties the file"
     );
     assert_eq!(
-        recording.config.baseline,
-        Some(PathBuf::from("dry4rust-baseline.json")),
+        recording.config().baseline(),
+        Some(Path::new("dry4rust-baseline.json")),
         "and the path survives, because that is where the recording is written"
     );
 }
@@ -107,6 +104,6 @@ fn produce_over_a_fixture_returns_config_and_result_together() {
     let output = PipelineScenario::produced(&root, &CliOverrides::default());
 
     // Assert
-    assert!(output.result.stats.total_code_units > 0);
-    assert_eq!(output.config.min_nodes, Config::default().min_nodes);
+    assert!(output.result().stats().total_code_units() > 0);
+    assert_eq!(output.config().min_nodes(), Config::default().min_nodes());
 }

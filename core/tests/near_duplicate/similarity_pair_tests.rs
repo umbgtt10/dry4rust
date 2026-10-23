@@ -30,8 +30,8 @@ fn key_of_a_pair_with_equal_indices_returns_that_index_twice() {
     let key = pair.key();
 
     // Assert
-    assert_eq!(key.low, 4);
-    assert_eq!(key.high, 4);
+    assert_eq!(key.low(), 4);
+    assert_eq!(key.high(), 4);
 }
 
 #[test]
@@ -43,8 +43,8 @@ fn key_puts_the_lower_index_first() {
     let key = pair.key();
 
     // Assert
-    assert_eq!(key.low, 3);
-    assert_eq!(key.high, 9);
+    assert_eq!(key.low(), 3);
+    assert_eq!(key.high(), 9);
 }
 
 #[test]
@@ -54,9 +54,10 @@ fn new_keeps_the_indices_in_the_order_they_were_given() {
 
     // Assert
     assert_eq!(
-        pair.left, 9,
+        pair.left(),
+        9,
         "the pair records the comparison as it was made"
     );
-    assert_eq!(pair.right, 3);
-    assert!((pair.score - 0.75).abs() < f64::EPSILON);
+    assert_eq!(pair.right(), 3);
+    assert!((pair.score() - 0.75).abs() < f64::EPSILON);
 }

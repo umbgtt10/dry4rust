@@ -26,7 +26,7 @@ impl<'a> StatsCommand<'a> {
     ///
     /// Returns [`crate::cli::cli_error::CliError::Io`] if the reporter fails.
     pub fn run(&self) -> CliResult<CommandOutcome> {
-        let text = self.reporter.report_stats(&self.result.stats)?;
+        let text = self.reporter.report_stats(self.result.stats())?;
         Ok(CommandOutcome::succeeded(text))
     }
 }

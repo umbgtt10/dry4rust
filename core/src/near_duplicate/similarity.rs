@@ -34,20 +34,21 @@ fn count_matching(a: &NormalizedNode, b: &NormalizedNode) -> usize {
     if a.is_none() || b.is_none() {
         return 0;
     }
-    if mem::discriminant(&a.kind) != mem::discriminant(&b.kind) {
+    if mem::discriminant(a.kind()) != mem::discriminant(b.kind()) {
         return 0;
     }
     // MacroCall: different names = no match (no recursion into children)
-    if let (NodeKind::MacroCall { name: na }, NodeKind::MacroCall { name: nb }) = (&a.kind, &b.kind)
+    if let (NodeKind::MacroCall { name: na }, NodeKind::MacroCall { name: nb }) =
+        (a.kind(), b.kind())
         && na != nb
     {
         return 0;
     }
-    let self_match = usize::from(a.kind == b.kind);
-    let children = if is_sequence(&a.kind) {
-        aligned_children(&a.children, &b.children)
+    let self_match = usize::from(a.kind() == b.kind());
+    let children = if is_sequence(a.kind()) {
+        aligned_children(a.children(), b.children())
     } else {
-        slotted_children(&a.children, &b.children)
+        slotted_children(a.children(), b.children())
     };
     self_match + children
 }

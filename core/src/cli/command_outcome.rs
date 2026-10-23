@@ -12,8 +12,8 @@ use crate::cli::cli_error::CliResult;
 /// text and the [`crate::cli::cli_error::CliError::CheckFailed`] both travel up
 /// to the one place that prints and then exits.
 pub struct CommandOutcome {
-    pub text: String,
-    pub result: CliResult,
+    text: String,
+    result: CliResult,
 }
 
 impl CommandOutcome {
@@ -28,5 +28,19 @@ impl CommandOutcome {
     #[must_use]
     pub const fn new(text: String, result: CliResult) -> Self {
         Self { text, result }
+    }
+
+    pub fn into_parts(self) -> (CliResult, String) {
+        (self.result, self.text)
+    }
+
+    #[must_use]
+    pub const fn result(&self) -> &CliResult {
+        &self.result
+    }
+
+    #[must_use]
+    pub fn text(&self) -> &str {
+        &self.text
     }
 }

@@ -22,7 +22,7 @@ fn admits_a_group_some_entry_recorded() {
     // Arrange
     let (_, result) = Fixture::analysed("exact_dupes");
     let recorded = BaselineFile::record(&result);
-    let already_there = result.exact_groups[0].clone();
+    let already_there = result.exact_groups()[0].clone();
 
     // Act
     let admitted = recorded.admits(BaselineKind::Exact, &already_there);
@@ -163,11 +163,12 @@ fn record_orders_entries_so_an_unchanged_codebase_writes_an_unchanged_file() {
 
     // Assert
     assert_eq!(
-        first.entries, second.entries,
+        first.entries(),
+        second.entries(),
         "a baseline is committed, so a re-record of the same tree has to diff \
          as nothing at all"
     );
-    let fingerprints: Vec<_> = first.entries.iter().map(|e| &e.fingerprint).collect();
+    let fingerprints: Vec<_> = first.entries().iter().map(|e| e.fingerprint()).collect();
     let mut sorted = fingerprints.clone();
     sorted.sort();
     assert_eq!(fingerprints, sorted);
@@ -182,9 +183,9 @@ fn record_takes_every_group_the_result_holds() {
     let recorded = BaselineFile::record(&result);
 
     // Assert
-    assert_eq!(recorded.version, FORMAT_VERSION);
-    assert_eq!(recorded.len(), result.exact_groups.len());
-    assert_eq!(recorded.entries[0].kind, BaselineKind::Exact);
+    assert_eq!(recorded.version(), FORMAT_VERSION);
+    assert_eq!(recorded.len(), result.exact_groups().len());
+    assert_eq!(recorded.entries()[0].kind(), BaselineKind::Exact);
 }
 
 #[test]
@@ -197,7 +198,8 @@ fn run_in_dry_run_names_what_it_would_record_without_writing_it() {
     let text = BaselineCommand::new(tmp.path(), &config, &result, true)
         .run()
         .expect("a dry run succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(text.contains("1 groups would be recorded"), "{text}");
@@ -215,7 +217,8 @@ fn run_outside_dry_run_writes_a_baseline_that_loads_back() {
     let text = BaselineCommand::new(tmp.path(), &config, &result, false)
         .run()
         .expect("recording succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(text.contains("Recorded 1 groups"), "{text}");
@@ -229,16 +232,14 @@ fn run_over_a_clean_codebase_records_nothing_and_says_so() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (_, result) = Fixture::analysed("no_dupes");
-    let config = Config {
-        root: tmp.path().to_path_buf(),
-        ..Config::default()
-    };
+    let config = Config::default().with_root(tmp.path().to_path_buf());
 
     // Act
     let text = BaselineCommand::new(tmp.path(), &config, &result, false)
         .run()
         .expect("recording succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert_eq!(
@@ -290,6 +291,6 @@ fn save_then_load_returns_what_was_recorded() {
     let read_back = BaselineFile::load(&path).expect("and read back");
 
     // Assert
-    assert_eq!(read_back.version, recorded.version);
-    assert_eq!(read_back.entries, recorded.entries);
+    assert_eq!(read_back.version(), recorded.version());
+    assert_eq!(read_back.entries(), recorded.entries());
 }

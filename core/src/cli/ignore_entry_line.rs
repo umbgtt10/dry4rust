@@ -26,12 +26,12 @@ impl<'a> IgnoreEntryLine<'a> {
 
 impl fmt::Display for IgnoreEntryLine<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "  {}", self.entry.fingerprint)?;
-        if let Some(reason) = &self.entry.reason {
+        write!(f, "  {}", self.entry.fingerprint())?;
+        if let Some(reason) = &self.entry.reason() {
             write!(f, " (reason: {reason})")?;
         }
-        if !self.entry.members.is_empty() {
-            write!(f, " [{}]", self.entry.members.join(", "))?;
+        if !self.entry.members().is_empty() {
+            write!(f, " [{}]", self.entry.members().join(", "))?;
         }
         Ok(())
     }

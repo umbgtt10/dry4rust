@@ -28,7 +28,7 @@ const IGNORE_FILE_NAME: &str = ".dry4rust-ignore.toml";
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct IgnoreFile {
     #[serde(default)]
-    pub ignore: Vec<IgnoreEntry>,
+    ignore: Vec<IgnoreEntry>,
 }
 
 impl IgnoreFile {
@@ -49,11 +49,21 @@ impl IgnoreFile {
         )
     }
 
+    #[must_use]
+    pub const fn new(ignore: Vec<IgnoreEntry>) -> Self {
+        Self { ignore }
+    }
+
     /// Whether this fingerprint is suppressed.
     #[must_use]
     pub fn contains(&self, fingerprint: &Fingerprint) -> bool {
         let hex = fingerprint.to_hex();
-        self.ignore.iter().any(|entry| entry.fingerprint == hex)
+        self.ignore.iter().any(|entry| entry.fingerprint() == hex)
+    }
+
+    #[must_use]
+    pub fn ignore(&self) -> &[IgnoreEntry] {
+        &self.ignore
     }
 
     /// Where the ignore file lives for a project root.
@@ -79,7 +89,7 @@ impl IgnoreFile {
     pub fn retain_unsuppressed(&self, groups: Vec<DuplicateGroup>) -> Vec<DuplicateGroup> {
         groups
             .into_iter()
-            .filter(|group| !self.contains(&group.fingerprint))
+            .filter(|group| !self.contains(&group.fingerprint()))
             .collect()
     }
 
@@ -126,15 +136,11 @@ impl IgnoreFile {
         members: Vec<String>,
     ) -> Self {
         let hex = fingerprint.to_hex();
-        if self.ignore.iter().any(|entry| entry.fingerprint == hex) {
+        if self.ignore.iter().any(|entry| entry.fingerprint() == hex) {
             return self;
         }
         let mut file = self;
-        file.ignore.push(IgnoreEntry {
-            fingerprint: hex,
-            reason,
-            members,
-        });
+        file.ignore.push(IgnoreEntry::new(hex, reason, members));
         file
     }
 
@@ -143,7 +149,8 @@ impl IgnoreFile {
     pub fn without(self, fingerprint: &str) -> (Self, bool) {
         let mut file = self;
         let before = file.ignore.len();
-        file.ignore.retain(|entry| entry.fingerprint != fingerprint);
+        file.ignore
+            .retain(|entry| entry.fingerprint() != fingerprint);
         let removed = file.ignore.len() < before;
         (file, removed)
     }
@@ -159,6 +166,6 @@ impl IgnoreFile {
     }
 
     fn is_live(entry: &IgnoreEntry, live: &HashSet<Fingerprint>) -> bool {
-        Fingerprint::from_hex(&entry.fingerprint).is_some_and(|fp| live.contains(&fp))
+        Fingerprint::from_hex(entry.fingerprint()).is_some_and(|fp| live.contains(&fp))
     }
 }

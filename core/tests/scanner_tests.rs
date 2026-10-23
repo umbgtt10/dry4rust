@@ -106,6 +106,6 @@ fn with_extensions_replaces_the_default_and_keeps_the_root() {
     let scanner = scanner.with_extensions(vec![String::from("toml"), String::from("md")]);
 
     // Assert
-    assert_eq!(scanner.extensions, vec!["toml", "md"]);
-    assert_eq!(scanner.root, tmp.path());
+    assert_eq!(scanner.extensions(), vec!["toml", "md"]);
+    assert_eq!(scanner.root(), tmp.path());
 }

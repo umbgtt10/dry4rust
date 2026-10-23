@@ -19,19 +19,18 @@ use std::path::Path;
 use std::path::PathBuf;
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
-    CodeUnit {
-        kind: CodeUnitKind::Function,
-        name: name.to_string(),
-        file: PathBuf::from(file),
-        line_start,
-        line_end,
-        signature: NormalizedNode::leaf(NodeKind::Opaque),
-        body: NormalizedNode::with_children(NodeKind::Block, vec![]),
-        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
-        node_count: 10,
-        parent_name: None,
-        is_test: false,
-    }
+    CodeUnit::default()
+        .with_kind(CodeUnitKind::Function)
+        .with_name(name.to_string())
+        .with_file(PathBuf::from(file))
+        .with_line_start(line_start)
+        .with_line_end(line_end)
+        .with_signature(NormalizedNode::leaf(NodeKind::Opaque))
+        .with_body(NormalizedNode::with_children(NodeKind::Block, vec![]))
+        .with_fingerprint(Fingerprint::from_node(&NormalizedNode::leaf(
+            NodeKind::Opaque,
+        )))
+        .with_node_count(10)
 }
 
 #[test]
@@ -106,14 +105,14 @@ fn text_report_exact_empty() {
 fn text_report_exact_with_groups() {
     // Arrange & Act
     let reporter = TextReporter::new(Some(PathBuf::from("/project")));
-    let group = DuplicateGroup {
-        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
-        members: vec![
+    let group = DuplicateGroup::new(
+        Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        vec![
             make_unit("foo", "/project/src/a.rs", 10, 20),
             make_unit("bar", "/project/src/b.rs", 30, 40),
         ],
-        similarity: 1.0,
-    };
+        1.0,
+    );
     let output = reporter.report_exact(&[group]).unwrap();
 
     // Assert
@@ -139,14 +138,14 @@ fn text_report_near_with_groups() {
     // Arrange & Act
     let reporter = TextReporter::new(None);
     let fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
-    let group = DuplicateGroup {
-        fingerprint: fp,
-        members: vec![
+    let group = DuplicateGroup::new(
+        fp,
+        vec![
             make_unit("process", "/src/a.rs", 10, 25),
             make_unit("compute", "/src/b.rs", 30, 45),
         ],
-        similarity: 0.85,
-    };
+        0.85,
+    );
     let output = reporter.report_near(&[group]).unwrap();
 
     // Assert
@@ -161,21 +160,15 @@ fn text_report_near_with_groups() {
 fn text_report_stats() {
     // Arrange & Act
     let reporter = TextReporter::new(None);
-    let stats = DuplicationStats {
-        total_code_units: 100,
-        total_lines: 1000,
-        exact_duplicate_groups: 5,
-        exact_duplicate_units: 12,
-        near_duplicate_groups: 3,
-        near_duplicate_units: 8,
-        exact_duplicate_lines: 60,
-        near_duplicate_lines: 40,
-        sub_exact_groups: 0,
-        sub_exact_units: 0,
-        sub_near_groups: 0,
-        sub_near_units: 0,
-        baseline_suppressed: None,
-    };
+    let stats = DuplicationStats::default()
+        .with_total_code_units(100)
+        .with_total_lines(1000)
+        .with_exact_duplicate_groups(5)
+        .with_exact_duplicate_units(12)
+        .with_near_duplicate_groups(3)
+        .with_near_duplicate_units(8)
+        .with_exact_duplicate_lines(60)
+        .with_near_duplicate_lines(40);
     let output = reporter.report_stats(&stats).unwrap();
 
     // Assert
@@ -188,13 +181,13 @@ fn text_report_stats() {
 fn text_report_sub_exact_heads_its_own_section_and_names_the_parent() {
     // Arrange
     let reporter = TextReporter::new(None);
-    let mut member = make_unit("if-then branch", "/src/a.rs", 10, 25);
-    member.parent_name = Some(String::from("handle_positive"));
-    let group = DuplicateGroup {
-        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
-        members: vec![member],
-        similarity: 1.0,
-    };
+    let member = make_unit("if-then branch", "/src/a.rs", 10, 25)
+        .with_parent_name(Some(String::from("handle_positive")));
+    let group = DuplicateGroup::new(
+        Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        vec![member],
+        1.0,
+    );
 
     // Act
     let output = reporter.report_sub_exact(&[group]).unwrap();
@@ -215,13 +208,13 @@ fn text_report_sub_exact_heads_its_own_section_and_names_the_parent() {
 fn text_report_sub_near_heads_its_own_section_and_states_the_similarity() {
     // Arrange
     let reporter = TextReporter::new(None);
-    let mut member = make_unit("for body", "/src/a.rs", 10, 25);
-    member.parent_name = Some(String::from("total_rising"));
-    let group = DuplicateGroup {
-        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
-        members: vec![member],
-        similarity: 0.95,
-    };
+    let member = make_unit("for body", "/src/a.rs", 10, 25)
+        .with_parent_name(Some(String::from("total_rising")));
+    let group = DuplicateGroup::new(
+        Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        vec![member],
+        0.95,
+    );
 
     // Act
     let output = reporter.report_sub_near(&[group]).unwrap();

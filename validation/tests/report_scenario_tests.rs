@@ -93,7 +93,8 @@ fn run_over_a_clean_fixture_says_so_rather_than_printing_an_empty_section() {
     let text = ReportCommand::new(&result, reporter.as_ref())
         .run()
         .expect("reporting succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(text.contains("No exact duplicates found."), "{text}");
@@ -113,7 +114,8 @@ fn run_writes_both_the_stats_and_the_groups() {
     let text = ReportCommand::new(&result, reporter.as_ref())
         .run()
         .expect("reporting succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(text.contains("Duplication Statistics"), "{text}");
@@ -130,11 +132,12 @@ fn run_writes_the_sub_function_sections_when_there_are_any() {
     let text = ReportCommand::new(&result, reporter.as_ref())
         .run()
         .expect("reporting succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert_eq!(
-        result.sub_near_groups.len(),
+        result.sub_near_groups().len(),
         1,
         "the fixture's two loop bodies differ by one operator, which is what \
          puts them in a near group rather than an exact one"

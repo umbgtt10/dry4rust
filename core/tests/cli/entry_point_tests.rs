@@ -77,14 +77,14 @@ fn overrides_carries_every_flag_that_was_passed() {
     .overrides();
 
     // Assert
-    assert_eq!(overrides.min_nodes, Some(42));
-    assert_eq!(overrides.min_lines, Some(7));
-    assert_eq!(overrides.threshold, Some(0.75));
-    assert_eq!(overrides.exclude, vec!["vendor", "benches"]);
-    assert_eq!(overrides.exclude_tests, Some(true));
-    assert_eq!(overrides.sub_function, Some(true));
-    assert_eq!(overrides.min_sub_nodes, Some(3));
-    assert_eq!(overrides.baseline, Some(PathBuf::from("ci/recorded.json")));
+    assert_eq!(overrides.min_nodes(), Some(42));
+    assert_eq!(overrides.min_lines(), Some(7));
+    assert_eq!(overrides.threshold(), Some(0.75));
+    assert_eq!(overrides.exclude(), vec!["vendor", "benches"]);
+    assert_eq!(overrides.exclude_tests(), Some(true));
+    assert_eq!(overrides.sub_function(), Some(true));
+    assert_eq!(overrides.min_sub_nodes(), Some(3));
+    assert_eq!(overrides.baseline(), Some(Path::new("ci/recorded.json")));
 }
 
 #[test]
@@ -94,12 +94,13 @@ fn overrides_leaves_a_flag_that_was_not_passed_with_no_opinion() {
 
     // Assert
     assert_eq!(
-        overrides.sub_function, None,
+        overrides.sub_function(),
+        None,
         "Some(false) would switch off a dry4rust.toml that turned it on; \
          absence has to mean absence"
     );
-    assert_eq!(overrides.exclude_tests, None);
-    assert!(overrides.exclude.is_empty());
+    assert_eq!(overrides.exclude_tests(), None);
+    assert!(overrides.exclude().is_empty());
 }
 
 #[test]

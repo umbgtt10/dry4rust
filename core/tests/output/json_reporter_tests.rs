@@ -19,30 +19,29 @@ use serde_json::from_str;
 use std::path::PathBuf;
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
-    CodeUnit {
-        kind: CodeUnitKind::Function,
-        name: name.to_string(),
-        file: PathBuf::from(file),
-        line_start,
-        line_end,
-        signature: NormalizedNode::leaf(NodeKind::Opaque),
-        body: NormalizedNode::with_children(NodeKind::Block, vec![]),
-        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
-        node_count: 10,
-        parent_name: None,
-        is_test: false,
-    }
+    CodeUnit::default()
+        .with_kind(CodeUnitKind::Function)
+        .with_name(name.to_string())
+        .with_file(PathBuf::from(file))
+        .with_line_start(line_start)
+        .with_line_end(line_end)
+        .with_signature(NormalizedNode::leaf(NodeKind::Opaque))
+        .with_body(NormalizedNode::with_children(NodeKind::Block, vec![]))
+        .with_fingerprint(Fingerprint::from_node(&NormalizedNode::leaf(
+            NodeKind::Opaque,
+        )))
+        .with_node_count(10)
 }
 
 #[test]
 fn json_is_valid() {
     // Arrange & Act
     let reporter = JsonReporter::new(Some(PathBuf::from("/project")));
-    let group = DuplicateGroup {
-        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
-        members: vec![make_unit("foo", "/project/src/a.rs", 10, 20)],
-        similarity: 1.0,
-    };
+    let group = DuplicateGroup::new(
+        Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        vec![make_unit("foo", "/project/src/a.rs", 10, 20)],
+        1.0,
+    );
     let output = reporter.report_exact(&[group]).unwrap();
     // Should be valid JSON
 
@@ -55,11 +54,11 @@ fn json_relative_paths() {
     // Arrange & Act
     let reporter = JsonReporter::new(Some(PathBuf::from("/home/user/project")));
     let fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
-    let group = DuplicateGroup {
-        fingerprint: fp,
-        members: vec![make_unit("foo", "/home/user/project/src/main.rs", 1, 10)],
-        similarity: 0.9,
-    };
+    let group = DuplicateGroup::new(
+        fp,
+        vec![make_unit("foo", "/home/user/project/src/main.rs", 1, 10)],
+        0.9,
+    );
     let output = reporter.report_near(&[group]).unwrap();
 
     // Assert
@@ -117,14 +116,14 @@ fn json_report_exact_empty() {
 fn json_report_exact_with_groups() {
     // Arrange & Act
     let reporter = JsonReporter::new(Some(PathBuf::from("/project")));
-    let group = DuplicateGroup {
-        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
-        members: vec![
+    let group = DuplicateGroup::new(
+        Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        vec![
             make_unit("foo", "/project/src/a.rs", 10, 20),
             make_unit("bar", "/project/src/b.rs", 30, 40),
         ],
-        similarity: 1.0,
-    };
+        1.0,
+    );
     let output = reporter.report_exact(&[group]).unwrap();
     let parsed: Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
@@ -141,14 +140,14 @@ fn json_report_near_with_groups() {
     // Arrange & Act
     let reporter = JsonReporter::new(None);
     let fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
-    let group = DuplicateGroup {
-        fingerprint: fp,
-        members: vec![
+    let group = DuplicateGroup::new(
+        fp,
+        vec![
             make_unit("process", "/src/a.rs", 10, 25),
             make_unit("compute", "/src/b.rs", 30, 45),
         ],
-        similarity: 0.85,
-    };
+        0.85,
+    );
     let output = reporter.report_near(&[group]).unwrap();
     let parsed: Value = from_str(&output).unwrap();
     let groups = parsed.as_array().unwrap();
@@ -163,21 +162,15 @@ fn json_report_near_with_groups() {
 fn json_report_stats() {
     // Arrange & Act
     let reporter = JsonReporter::new(None);
-    let stats = DuplicationStats {
-        total_code_units: 50,
-        total_lines: 500,
-        exact_duplicate_groups: 3,
-        exact_duplicate_units: 8,
-        near_duplicate_groups: 2,
-        near_duplicate_units: 5,
-        exact_duplicate_lines: 30,
-        near_duplicate_lines: 20,
-        sub_exact_groups: 0,
-        sub_exact_units: 0,
-        sub_near_groups: 0,
-        sub_near_units: 0,
-        baseline_suppressed: None,
-    };
+    let stats = DuplicationStats::default()
+        .with_total_code_units(50)
+        .with_total_lines(500)
+        .with_exact_duplicate_groups(3)
+        .with_exact_duplicate_units(8)
+        .with_near_duplicate_groups(2)
+        .with_near_duplicate_units(5)
+        .with_exact_duplicate_lines(30)
+        .with_near_duplicate_lines(20);
     let output = reporter.report_stats(&stats).unwrap();
     let parsed: Value = from_str(&output).unwrap();
 
@@ -191,11 +184,11 @@ fn json_report_sub_exact_with_groups() {
     // Arrange
     let reporter = JsonReporter::new(None);
     let fp = Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque));
-    let group = DuplicateGroup {
-        fingerprint: fp,
-        members: vec![make_unit("if-then branch", "/src/a.rs", 10, 25)],
-        similarity: 1.0,
-    };
+    let group = DuplicateGroup::new(
+        fp,
+        vec![make_unit("if-then branch", "/src/a.rs", 10, 25)],
+        1.0,
+    );
 
     // Act
     let output = reporter.report_sub_exact(&[group]).unwrap();
@@ -213,11 +206,7 @@ fn json_report_sub_near_with_groups() {
     // Arrange
     let reporter = JsonReporter::new(None);
     let fp = Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque));
-    let group = DuplicateGroup {
-        fingerprint: fp,
-        members: vec![make_unit("for body", "/src/a.rs", 10, 25)],
-        similarity: 0.95,
-    };
+    let group = DuplicateGroup::new(fp, vec![make_unit("for body", "/src/a.rs", 10, 25)], 0.95);
 
     // Act
     let output = reporter.report_sub_near(&[group]).unwrap();

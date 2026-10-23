@@ -44,40 +44,42 @@ impl FileConfig {
     pub fn apply_to(&self, config: Config) -> Result<Config> {
         let mut config = config;
         if let Some(v) = self.min_nodes {
-            config.min_nodes = v;
+            config = config.with_min_nodes(v);
         }
         if let Some(v) = self.similarity_threshold {
-            config.similarity_threshold = Threshold::fraction("similarity_threshold", v)?;
+            config =
+                config.with_similarity_threshold(Threshold::fraction("similarity_threshold", v)?);
         }
         if let Some(ref v) = self.exclude {
-            config.exclude.clone_from(v);
+            config = config.with_exclude(v.clone());
         }
         if let Some(v) = self.max_exact_duplicates {
-            config.max_exact_duplicates = Some(v);
+            config = config.with_max_exact_duplicates(Some(v));
         }
         if let Some(v) = self.max_near_duplicates {
-            config.max_near_duplicates = Some(v);
+            config = config.with_max_near_duplicates(Some(v));
         }
         if let Some(v) = self.max_exact_percent {
-            config.max_exact_percent = Some(Threshold::percent("max_exact_percent", v)?);
+            config =
+                config.with_max_exact_percent(Some(Threshold::percent("max_exact_percent", v)?));
         }
         if let Some(v) = self.max_near_percent {
-            config.max_near_percent = Some(Threshold::percent("max_near_percent", v)?);
+            config = config.with_max_near_percent(Some(Threshold::percent("max_near_percent", v)?));
         }
         if let Some(v) = self.min_lines {
-            config.min_lines = v;
+            config = config.with_min_lines(v);
         }
         if let Some(v) = self.exclude_tests {
-            config.exclude_tests = v;
+            config = config.with_exclude_tests(v);
         }
         if let Some(v) = self.sub_function {
-            config.sub_function = v;
+            config = config.with_sub_function(v);
         }
         if let Some(v) = self.min_sub_nodes {
-            config.min_sub_nodes = v;
+            config = config.with_min_sub_nodes(v);
         }
         if let Some(ref v) = self.baseline {
-            config.baseline = Some(v.clone());
+            config = config.with_baseline(Some(v.clone()));
         }
         Ok(config)
     }

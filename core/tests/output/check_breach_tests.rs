@@ -20,7 +20,7 @@ fn groups_returns_the_groups_the_breach_was_built_over() {
 
     // Assert
     assert_eq!(breach.groups().len(), 1);
-    assert_eq!(breach.groups()[0].fingerprint.value(), 0x11);
+    assert_eq!(breach.groups()[0].fingerprint().value(), 0x11);
 }
 
 #[test]

@@ -8,7 +8,6 @@ use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use dry4rust::node::PlaceholderKind;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
-use dry4rust::rust::normalizer::normalized_fn::NormalizedFn;
 use syn::BinOp;
 use syn::Block;
 use syn::Expr;
@@ -59,8 +58,8 @@ fn array_expression_normalized() {
     let n = normalize_code_expr("[1, 2, 3]");
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Array);
-    assert_eq!(n.children.len(), 3);
+    assert_eq!(*n.kind(), NodeKind::Array);
+    assert_eq!(n.children().len(), 3);
 }
 
 #[test]
@@ -69,7 +68,7 @@ fn assign_expression_normalized() {
     let n = normalize_code_expr("x = 5");
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Assign);
+    assert_eq!(*n.kind(), NodeKind::Assign);
 }
 
 #[test]
@@ -78,7 +77,7 @@ fn await_expression_normalized() {
     let n = normalize_code_expr("fut.await");
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Await);
+    assert_eq!(*n.kind(), NodeKind::Await);
 }
 
 #[test]
@@ -107,7 +106,7 @@ fn cast_expression_normalized() {
     let n = normalize_code_expr("x as f64");
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Cast);
+    assert_eq!(*n.kind(), NodeKind::Cast);
 }
 
 #[test]
@@ -137,14 +136,12 @@ fn complex_function_normalization() {
     ";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let NormalizedFn {
-        signature: sig1,
-        body: body1,
-    } = NormalizationContext::normalize_item_fn(&f1);
-    let NormalizedFn {
-        signature: sig2,
-        body: body2,
-    } = NormalizationContext::normalize_item_fn(&f2);
+    let normalized_body1 = NormalizationContext::normalize_item_fn(&f1);
+    let sig1 = normalized_body1.signature().clone();
+    let body1 = normalized_body1.body().clone();
+    let normalized_body2 = NormalizationContext::normalize_item_fn(&f2);
+    let sig2 = normalized_body2.signature().clone();
+    let body2 = normalized_body2.body().clone();
 
     // Assert
     assert_eq!(sig1, sig2);
@@ -166,11 +163,11 @@ fn empty_block_normalized() {
     // Arrange & Act
     let code = "fn foo() {}";
     let f = parse_fn(code);
-    let NormalizedFn { signature: _, body } = NormalizationContext::normalize_item_fn(&f);
+    let body = NormalizationContext::normalize_item_fn(&f).body().clone();
 
     // Assert
-    assert_eq!(body.kind, NodeKind::Block);
-    assert!(body.children.is_empty());
+    assert_eq!(*body.kind(), NodeKind::Block);
+    assert!(body.children().is_empty());
 }
 
 #[test]
@@ -179,7 +176,7 @@ fn field_access_normalized() {
     let n = normalize_code_expr("foo.bar");
 
     // Assert
-    assert_eq!(n.kind, NodeKind::FieldAccess);
+    assert_eq!(*n.kind(), NodeKind::FieldAccess);
 }
 
 #[test]
@@ -242,7 +239,7 @@ fn index_expression_normalized() {
     let n = normalize_code_expr("arr[0]");
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Index);
+    assert_eq!(*n.kind(), NodeKind::Index);
 }
 
 #[test]
@@ -273,12 +270,12 @@ fn macro_invocations_produce_macro_call() {
     let n = normalize_code_expr("println!(\"hello\")");
 
     // Assert
-    match &n.kind {
+    match &n.kind() {
         NodeKind::MacroCall { name } => {
             assert_eq!(name, "println");
-            assert_eq!(n.children.len(), 1);
+            assert_eq!(n.children().len(), 1);
             assert_eq!(
-                n.children[0],
+                n.children()[0],
                 NormalizedNode::leaf(NodeKind::Literal(LiteralKind::Str))
             );
         }
@@ -294,9 +291,9 @@ fn match_arms_normalized() {
     // Match -> [expr, arm0, arm1]
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Match);
+    assert_eq!(*n.kind(), NodeKind::Match);
     // children[0] is expr, children[1..] are arms
-    assert_eq!(n.children.len(), 3); // expr + 2 arms
+    assert_eq!(n.children().len(), 3); // expr + 2 arms
 }
 
 #[test]
@@ -335,7 +332,7 @@ fn multi_segment_macro_path_uses_last_segment() {
     let n = normalize_code_expr("std::println!(\"hello\")");
 
     // Assert
-    match &n.kind {
+    match &n.kind() {
         NodeKind::MacroCall { name } => {
             assert_eq!(name, "println");
         }
@@ -348,10 +345,9 @@ fn node_counting_works() {
     // Arrange & Act
     let code = "fn foo(x: i32) -> i32 { x + 1 }";
     let f = parse_fn(code);
-    let NormalizedFn {
-        signature: sig,
-        body,
-    } = NormalizationContext::normalize_item_fn(&f);
+    let normalized_body = NormalizationContext::normalize_item_fn(&f);
+    let sig = normalized_body.signature().clone();
+    let body = normalized_body.body().clone();
     let sig_count = NormalizedNode::count_nodes(&sig);
     let body_count = NormalizedNode::count_nodes(&body);
 
@@ -441,14 +437,13 @@ fn normalize_impl_item_fn_splits_a_method_into_signature_and_body() {
     };
 
     // Act
-    let NormalizedFn {
-        signature: sig,
-        body,
-    } = NormalizationContext::normalize_impl_item_fn(&method);
+    let normalized_body = NormalizationContext::normalize_impl_item_fn(&method);
+    let sig = normalized_body.signature().clone();
+    let body = normalized_body.body().clone();
 
     // Assert
     assert_ne!(sig, body);
-    assert_ne!(sig.kind, NodeKind::None);
+    assert_ne!(*sig.kind(), NodeKind::None);
 }
 
 #[test]
@@ -476,7 +471,7 @@ fn normalize_loop_produces_a_loop_node() {
     let n = normalize_code_expr(code);
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Loop);
+    assert_eq!(*n.kind(), NodeKind::Loop);
 }
 
 #[test]
@@ -802,7 +797,7 @@ fn pat_macro_normalized() {
 
     // Assert
     if let Ok(f) = parse_str::<ItemFn>(code) {
-        let NormalizedFn { signature: _, body } = NormalizationContext::normalize_item_fn(&f);
+        let body = NormalizationContext::normalize_item_fn(&f).body().clone();
 
         assert!(NormalizedNode::count_nodes(&body) > 0);
     }
@@ -856,10 +851,10 @@ fn range_expression_normalized() {
     // Range -> [from_or_None, to_or_None]
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Range);
-    assert_eq!(n.children.len(), 2);
-    assert!(!n.children[0].is_none());
-    assert!(!n.children[1].is_none());
+    assert_eq!(*n.kind(), NodeKind::Range);
+    assert_eq!(n.children().len(), 2);
+    assert!(!n.children()[0].is_none());
+    assert!(!n.children()[1].is_none());
 }
 
 #[test]
@@ -879,26 +874,20 @@ fn reindex_from_real_function_subtrees() {
     let f2 = parse_fn(
         "fn bar(unused: i32, a: i32, b: i32) -> i32 { if a > 0 { let c = b + 1; c } else { a } }",
     );
-    let NormalizedFn {
-        signature: _,
-        body: body1,
-    } = NormalizationContext::normalize_item_fn(&f1);
-    let NormalizedFn {
-        signature: _,
-        body: body2,
-    } = NormalizationContext::normalize_item_fn(&f2);
+    let body1 = NormalizationContext::normalize_item_fn(&f1).body().clone();
+    let body2 = NormalizationContext::normalize_item_fn(&f2).body().clone();
 
     // Extract the then_branch from each: Block -> stmts[0] -> If -> children[1]
-    let then1 = match &body1.kind {
-        NodeKind::Block => match &body1.children[0].kind {
-            NodeKind::If => body1.children[0].children[1].clone(),
+    let then1 = match &body1.kind() {
+        NodeKind::Block => match &body1.children()[0].kind() {
+            NodeKind::If => body1.children()[0].children()[1].clone(),
             _ => panic!("expected If"),
         },
         _ => panic!("expected Block"),
     };
-    let then2 = match &body2.kind {
-        NodeKind::Block => match &body2.children[0].kind {
-            NodeKind::If => body2.children[0].children[1].clone(),
+    let then2 = match &body2.kind() {
+        NodeKind::Block => match &body2.children()[0].kind() {
+            NodeKind::If => body2.children()[0].children()[1].clone(),
             _ => panic!("expected If"),
         },
         _ => panic!("expected Block"),
@@ -919,14 +908,12 @@ fn renamed_variables_produce_identical_trees() {
     let code2 = "fn bar(a: i32) -> i32 { let b = a + 1; b }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let NormalizedFn {
-        signature: sig1,
-        body: body1,
-    } = NormalizationContext::normalize_item_fn(&f1);
-    let NormalizedFn {
-        signature: sig2,
-        body: body2,
-    } = NormalizationContext::normalize_item_fn(&f2);
+    let normalized_body1 = NormalizationContext::normalize_item_fn(&f1);
+    let sig1 = normalized_body1.signature().clone();
+    let body1 = normalized_body1.body().clone();
+    let normalized_body2 = NormalizationContext::normalize_item_fn(&f2);
+    let sig2 = normalized_body2.signature().clone();
+    let body2 = normalized_body2.body().clone();
 
     // Assert
     assert_eq!(sig1, sig2);
@@ -983,10 +970,10 @@ fn struct_init_normalized() {
     // Both have StructInit; children[0] is rest_or_None, rest are fields
 
     // Assert
-    assert_eq!(n1.kind, NodeKind::StructInit);
-    assert_eq!(n2.kind, NodeKind::StructInit);
+    assert_eq!(*n1.kind(), NodeKind::StructInit);
+    assert_eq!(*n2.kind(), NodeKind::StructInit);
     // Same number of fields
-    assert_eq!(n1.children.len(), n2.children.len());
+    assert_eq!(n1.children().len(), n2.children().len());
 }
 
 #[test]
@@ -996,14 +983,8 @@ fn structural_changes_produce_different_trees() {
     let code2 = "fn foo(x: i32) -> i32 { x * 1 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let NormalizedFn {
-        signature: _,
-        body: body1,
-    } = NormalizationContext::normalize_item_fn(&f1);
-    let NormalizedFn {
-        signature: _,
-        body: body2,
-    } = NormalizationContext::normalize_item_fn(&f2);
+    let body1 = NormalizationContext::normalize_item_fn(&f1).body().clone();
+    let body2 = NormalizationContext::normalize_item_fn(&f2).body().clone();
 
     // Assert
     assert_ne!(body1, body2);
@@ -1015,7 +996,7 @@ fn try_expression_normalized() {
     let n = normalize_code_expr("result?");
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Try);
+    assert_eq!(*n.kind(), NodeKind::Try);
 }
 
 #[test]
@@ -1024,8 +1005,8 @@ fn tuple_expression_normalized() {
     let n = normalize_code_expr("(1, 2, 3)");
 
     // Assert
-    assert_eq!(n.kind, NodeKind::Tuple);
-    assert_eq!(n.children.len(), 3);
+    assert_eq!(*n.kind(), NodeKind::Tuple);
+    assert_eq!(n.children().len(), 3);
 }
 
 #[test]
@@ -1035,14 +1016,8 @@ fn tuple_pattern_normalized() {
     let code2 = "fn bar() { let (x, y) = (1, 2); }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let NormalizedFn {
-        signature: _,
-        body: body1,
-    } = NormalizationContext::normalize_item_fn(&f1);
-    let NormalizedFn {
-        signature: _,
-        body: body2,
-    } = NormalizationContext::normalize_item_fn(&f2);
+    let body1 = NormalizationContext::normalize_item_fn(&f1).body().clone();
+    let body2 = NormalizationContext::normalize_item_fn(&f2).body().clone();
 
     // Assert
     assert_eq!(body1, body2);
@@ -1055,10 +1030,9 @@ fn type_position_macro_normalized() {
 
     // Assert
     if let Ok(f) = parse_str::<ItemFn>(code) {
-        let NormalizedFn {
-            signature: sig,
-            body: _,
-        } = NormalizationContext::normalize_item_fn(&f);
+        let sig = NormalizationContext::normalize_item_fn(&f)
+            .signature()
+            .clone();
 
         assert!(NormalizedNode::count_nodes(&sig) > 0);
     }
@@ -1080,11 +1054,11 @@ fn unparseable_macro_args_produce_opaque() {
     let n = normalize_code_expr("vec![x; 10]");
 
     // Assert
-    match &n.kind {
+    match &n.kind() {
         NodeKind::MacroCall { name } => {
             assert_eq!(name, "vec");
-            assert_eq!(n.children.len(), 1);
-            assert_eq!(n.children[0], NormalizedNode::leaf(NodeKind::Opaque));
+            assert_eq!(n.children().len(), 1);
+            assert_eq!(n.children()[0], NormalizedNode::leaf(NodeKind::Opaque));
         }
         _ => panic!("Expected MacroCall node, got {n:?}"),
     }
@@ -1097,12 +1071,12 @@ fn unparseable_macro_differs_from_no_args() {
     let n_unparseable = normalize_code_expr("vec![x; 10]");
 
     // Assert
-    match (&n_empty.kind, &n_unparseable.kind) {
+    match (&n_empty.kind(), &n_unparseable.kind()) {
         (NodeKind::MacroCall { .. }, NodeKind::MacroCall { .. }) => {
-            assert!(n_empty.children.is_empty());
-            assert_eq!(n_unparseable.children.len(), 1);
+            assert!(n_empty.children().is_empty());
+            assert_eq!(n_unparseable.children().len(), 1);
             assert_eq!(
-                n_unparseable.children[0],
+                n_unparseable.children()[0],
                 NormalizedNode::leaf(NodeKind::Opaque)
             );
         }
@@ -1116,10 +1090,10 @@ fn vec_macro_normalized() {
     let n = normalize_code_expr("vec![1, 2, 3]");
 
     // Assert
-    match &n.kind {
+    match &n.kind() {
         NodeKind::MacroCall { name } => {
             assert_eq!(name, "vec");
-            assert_eq!(n.children.len(), 3);
+            assert_eq!(n.children().len(), 3);
         }
         _ => panic!("Expected MacroCall node, got {n:?}"),
     }

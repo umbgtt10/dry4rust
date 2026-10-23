@@ -11,8 +11,8 @@
 /// which index is which.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PairKey {
-    pub low: usize,
-    pub high: usize,
+    low: usize,
+    high: usize,
 }
 
 impl PairKey {
@@ -29,5 +29,15 @@ impl PairKey {
                 high: first,
             }
         }
+    }
+
+    #[must_use]
+    pub const fn high(&self) -> usize {
+        self.high
+    }
+
+    #[must_use]
+    pub const fn low(&self) -> usize {
+        self.low
     }
 }

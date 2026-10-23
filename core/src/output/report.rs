@@ -13,9 +13,53 @@ use crate::output::duplication_stats::DuplicationStats;
 /// correctly; JSON cannot, and a caller that emitted one section per call
 /// produced several top-level documents rather than one.
 pub struct Report<'a> {
-    pub stats: &'a DuplicationStats,
-    pub exact: &'a [DuplicateGroup],
-    pub near: &'a [DuplicateGroup],
-    pub sub_exact: &'a [DuplicateGroup],
-    pub sub_near: &'a [DuplicateGroup],
+    stats: &'a DuplicationStats,
+    exact: &'a [DuplicateGroup],
+    near: &'a [DuplicateGroup],
+    sub_exact: &'a [DuplicateGroup],
+    sub_near: &'a [DuplicateGroup],
+}
+
+impl<'a> Report<'a> {
+    #[must_use]
+    pub const fn new(
+        stats: &'a DuplicationStats,
+        exact: &'a [DuplicateGroup],
+        near: &'a [DuplicateGroup],
+        sub_exact: &'a [DuplicateGroup],
+        sub_near: &'a [DuplicateGroup],
+    ) -> Self {
+        Self {
+            stats,
+            exact,
+            near,
+            sub_exact,
+            sub_near,
+        }
+    }
+
+    #[must_use]
+    pub const fn exact(&self) -> &'a [DuplicateGroup] {
+        self.exact
+    }
+
+    #[must_use]
+    pub const fn near(&self) -> &'a [DuplicateGroup] {
+        self.near
+    }
+
+    #[must_use]
+    pub const fn stats(&self) -> &'a DuplicationStats {
+        self.stats
+    }
+
+    #[must_use]
+    pub const fn sub_exact(&self) -> &'a [DuplicateGroup] {
+        self.sub_exact
+    }
+
+    #[must_use]
+    pub const fn sub_near(&self) -> &'a [DuplicateGroup] {
+        self.sub_near
+    }
 }

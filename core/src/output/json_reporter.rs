@@ -15,7 +15,7 @@ use serde_json::to_string_pretty;
 use std::path::PathBuf;
 
 pub struct JsonReporter {
-    pub base_path: Option<PathBuf>,
+    base_path: Option<PathBuf>,
 }
 
 impl JsonReporter {
@@ -100,11 +100,11 @@ struct JsonMember {
 impl Reporter for JsonReporter {
     fn report(&self, report: &Report<'_>) -> io::Result<String> {
         let document = JsonReport {
-            stats: Self::to_json_stats(report.stats),
-            exact: self.to_json_groups(report.exact),
-            near: self.to_json_groups(report.near),
-            sub_exact: self.to_json_groups(report.sub_exact),
-            sub_near: self.to_json_groups(report.sub_near),
+            stats: Self::to_json_stats(report.stats()),
+            exact: self.to_json_groups(report.exact()),
+            near: self.to_json_groups(report.near()),
+            sub_exact: self.to_json_groups(report.sub_exact()),
+            sub_near: self.to_json_groups(report.sub_near()),
         };
         Self::write_document(&document)
     }
@@ -157,17 +157,17 @@ impl Reporter for JsonReporter {
 impl JsonReporter {
     fn to_json_group(&self, group: &DuplicateGroup) -> JsonGroup {
         JsonGroup {
-            fingerprint: group.fingerprint.to_hex(),
-            similarity: group.similarity,
+            fingerprint: group.fingerprint().to_hex(),
+            similarity: group.similarity(),
             members: group
-                .members
+                .members()
                 .iter()
                 .map(|m| JsonMember {
-                    name: m.name.clone(),
-                    kind: m.kind.to_string(),
-                    file: DisplayPath::of(self.base_path.as_deref(), &m.file).into_owned(),
-                    line_start: m.line_start,
-                    line_end: m.line_end,
+                    name: m.name().to_string(),
+                    kind: m.kind().to_string(),
+                    file: DisplayPath::of(self.base_path.as_deref(), m.file()).into_owned(),
+                    line_start: m.line_start(),
+                    line_end: m.line_end(),
                 })
                 .collect(),
         }
@@ -179,21 +179,21 @@ impl JsonReporter {
 
     fn to_json_stats(stats: &DuplicationStats) -> JsonStats {
         JsonStats {
-            total_code_units: stats.total_code_units,
-            total_lines: stats.total_lines,
-            exact_duplicate_groups: stats.exact_duplicate_groups,
-            exact_duplicate_units: stats.exact_duplicate_units,
-            near_duplicate_groups: stats.near_duplicate_groups,
-            near_duplicate_units: stats.near_duplicate_units,
-            exact_duplicate_lines: stats.exact_duplicate_lines,
-            near_duplicate_lines: stats.near_duplicate_lines,
+            total_code_units: stats.total_code_units(),
+            total_lines: stats.total_lines(),
+            exact_duplicate_groups: stats.exact_duplicate_groups(),
+            exact_duplicate_units: stats.exact_duplicate_units(),
+            near_duplicate_groups: stats.near_duplicate_groups(),
+            near_duplicate_units: stats.near_duplicate_units(),
+            exact_duplicate_lines: stats.exact_duplicate_lines(),
+            near_duplicate_lines: stats.near_duplicate_lines(),
             exact_duplicate_percent: stats.exact_duplicate_percent(),
             near_duplicate_percent: stats.near_duplicate_percent(),
-            sub_exact_groups: stats.sub_exact_groups,
-            sub_exact_units: stats.sub_exact_units,
-            sub_near_groups: stats.sub_near_groups,
-            sub_near_units: stats.sub_near_units,
-            baseline_suppressed: stats.baseline_suppressed,
+            sub_exact_groups: stats.sub_exact_groups(),
+            sub_exact_units: stats.sub_exact_units(),
+            sub_near_groups: stats.sub_near_groups(),
+            sub_near_units: stats.sub_near_units(),
+            baseline_suppressed: stats.baseline_suppressed(),
         }
     }
 

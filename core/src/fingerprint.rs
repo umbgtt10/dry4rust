@@ -10,7 +10,7 @@ use std::fmt;
 use crate::node::NormalizedNode;
 
 /// A fingerprint of a normalized AST node, wrapping a u64 hash.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Fingerprint(u64);
 
 impl Fingerprint {

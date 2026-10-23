@@ -112,10 +112,7 @@ fn new_stores_the_overrides_it_is_given_and_applies_them_to_the_analysis() {
     // Arrange
     let analyzer = RustAnalyzer::new();
     let root = Fixture::path("exact_dupes");
-    let overrides = CliOverrides {
-        min_nodes: Some(100_000),
-        ..CliOverrides::default()
-    };
+    let overrides = CliOverrides::default().with_min_nodes(Some(100_000));
     let dispatcher = CommandDispatcher::new(&analyzer, &root, OutputFormat::Text, overrides);
 
     // Act

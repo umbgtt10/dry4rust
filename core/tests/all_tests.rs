@@ -13,6 +13,7 @@ pub mod analysis_config_tests;
 pub mod analysis_tests;
 pub mod cli;
 pub mod code_unit_kind_tests;
+pub mod code_unit_tests;
 pub mod command_dispatcher_tests;
 pub mod common;
 pub mod config_tests;

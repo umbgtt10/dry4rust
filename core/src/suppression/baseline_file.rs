@@ -26,9 +26,9 @@ use crate::suppression::baseline_kind::BaselineKind;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BaselineFile {
     /// The format the entries are written in.
-    pub version: u32,
+    version: u32,
     /// Every group that was there at the time.
-    pub entries: Vec<BaselineEntry>,
+    entries: Vec<BaselineEntry>,
 }
 
 impl BaselineFile {
@@ -75,23 +75,28 @@ impl BaselineFile {
     #[must_use]
     pub fn record(result: &Analysis) -> Self {
         let mut entries: Vec<BaselineEntry> = [
-            (BaselineKind::Exact, &result.exact_groups),
-            (BaselineKind::Near, &result.near_groups),
-            (BaselineKind::SubExact, &result.sub_exact_groups),
-            (BaselineKind::SubNear, &result.sub_near_groups),
+            (BaselineKind::Exact, &result.exact_groups()),
+            (BaselineKind::Near, &result.near_groups()),
+            (BaselineKind::SubExact, &result.sub_exact_groups()),
+            (BaselineKind::SubNear, &result.sub_near_groups()),
         ]
         .into_iter()
         .flat_map(|(kind, groups)| groups.iter().map(move |g| BaselineEntry::of(kind, g)))
         .collect();
         entries.sort_by(|a, b| {
-            a.kind
-                .cmp(&b.kind)
-                .then_with(|| a.fingerprint.cmp(&b.fingerprint))
+            a.kind()
+                .cmp(&b.kind())
+                .then_with(|| a.fingerprint().cmp(b.fingerprint()))
         });
         Self {
             version: FORMAT_VERSION,
             entries,
         }
+    }
+
+    #[must_use]
+    pub const fn new(version: u32, entries: Vec<BaselineEntry>) -> Self {
+        Self { version, entries }
     }
 
     /// Whether some entry accounts for `group` in full.
@@ -112,6 +117,11 @@ impl BaselineFile {
         } else {
             root.join(named)
         }
+    }
+
+    #[must_use]
+    pub fn entries(&self) -> &[BaselineEntry] {
+        &self.entries
     }
 
     /// Whether it records nothing at all.
@@ -146,5 +156,10 @@ impl BaselineFile {
             problem: e.to_string(),
         })?;
         fs::write(path, format!("{json}\n")).map_err(problem)
+    }
+
+    #[must_use]
+    pub const fn version(&self) -> u32 {
+        self.version
     }
 }

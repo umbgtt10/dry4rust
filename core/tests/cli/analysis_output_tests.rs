@@ -9,6 +9,8 @@ use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::suppression::baseline_file::BaselineFile;
+use serde_json::Value;
+use serde_json::from_str;
 use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -35,6 +37,30 @@ pub fn compute_total(values: Vec<i32>) -> i32 {
 ";
 
 #[test]
+fn produce_hands_out_the_reporter_of_the_format_it_was_given() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    fs::create_dir_all(tmp.path().join("src")).expect("src");
+    fs::write(tmp.path().join("src/lib.rs"), DUPLICATED).expect("write");
+
+    // Act
+    let output = AnalysisOutput::produce(
+        &RustAnalyzer::new(),
+        tmp.path(),
+        OutputFormat::Json,
+        &CliOverrides::default(),
+    )
+    .expect("it analyses cleanly");
+
+    // Assert
+    let stats = output
+        .reporter()
+        .report_stats(output.result().stats())
+        .expect("the statistics are reported");
+    assert!(from_str::<Value>(&stats).is_ok(), "{stats}");
+}
+
+#[test]
 fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
@@ -47,13 +73,11 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
         &CliOverrides::default(),
     )
     .expect("it analyses cleanly");
-    BaselineFile::record(&judged.result)
+    BaselineFile::record(judged.result())
         .save(&tmp.path().join("dry4rust-baseline.json"))
         .expect("the baseline is written");
-    let overrides = CliOverrides {
-        baseline: Some(PathBuf::from("dry4rust-baseline.json")),
-        ..CliOverrides::default()
-    };
+    let overrides =
+        CliOverrides::default().with_baseline(Some(PathBuf::from("dry4rust-baseline.json")));
 
     // Act
     let recording = AnalysisOutput::produce_ignoring_baseline(
@@ -73,15 +97,36 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     )
     .expect("it analyses cleanly");
     assert_eq!(
-        judging.result.exact_groups.len(),
+        judging.result().exact_groups().len(),
         0,
         "judging against the baseline hides what it recorded"
     );
     assert_eq!(
-        recording.result.exact_groups.len(),
+        recording.result().exact_groups().len(),
         1,
         "recording against it must not, or the second recording empties the file"
     );
+}
+
+#[test]
+fn produce_keeps_the_configuration_its_overrides_set() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    fs::create_dir_all(tmp.path().join("src")).expect("src");
+    fs::write(tmp.path().join("src/lib.rs"), DUPLICATED).expect("write");
+    let overrides = CliOverrides::default().with_min_nodes(Some(12));
+
+    // Act
+    let output = AnalysisOutput::produce(
+        &RustAnalyzer::new(),
+        tmp.path(),
+        OutputFormat::Text,
+        &overrides,
+    )
+    .expect("it analyses cleanly");
+
+    // Assert
+    assert_eq!(output.config().min_nodes(), 12);
 }
 
 #[test]

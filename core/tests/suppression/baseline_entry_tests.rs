@@ -95,8 +95,8 @@ fn of_records_the_fingerprint_the_count_and_the_names() {
     let entry = BaselineEntry::of(BaselineKind::Near, &recorded);
 
     // Assert
-    assert_eq!(entry.kind, BaselineKind::Near);
-    assert_eq!(entry.fingerprint, "00000000000000ab");
-    assert_eq!(entry.members, 2);
-    assert_eq!(entry.names, vec!["process_data", "compute_total"]);
+    assert_eq!(entry.kind(), BaselineKind::Near);
+    assert_eq!(entry.fingerprint(), "00000000000000ab");
+    assert_eq!(entry.members(), 2);
+    assert_eq!(entry.names(), vec!["process_data", "compute_total"]);
 }

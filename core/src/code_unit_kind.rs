@@ -6,8 +6,9 @@
 use std::fmt;
 
 /// The kind of code unit extracted from source.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, serde::Serialize)]
 pub enum CodeUnitKind {
+    #[default]
     Function,
     Method,
     Closure,

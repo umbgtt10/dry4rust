@@ -7,11 +7,11 @@ use dry4rust::cli::ignore_entry_line::IgnoreEntryLine;
 use dry4rust::suppression::ignore_entry::IgnoreEntry;
 
 fn entry(reason: Option<&str>, members: &[&str]) -> IgnoreEntry {
-    IgnoreEntry {
-        fingerprint: String::from("deadbeef12345678"),
-        reason: reason.map(ToOwned::to_owned),
-        members: members.iter().map(|m| (*m).to_owned()).collect(),
-    }
+    IgnoreEntry::new(
+        String::from("deadbeef12345678"),
+        reason.map(ToOwned::to_owned),
+        members.iter().map(|m| (*m).to_owned()).collect(),
+    )
 }
 
 #[test]

@@ -21,14 +21,14 @@ use crate::suppression::baseline_kind::BaselineKind;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BaselineEntry {
     /// Which set of groups this was recorded from.
-    pub kind: BaselineKind,
+    kind: BaselineKind,
     /// The group's fingerprint, as hex.
-    pub fingerprint: String,
+    fingerprint: String,
     /// How many members the group had when it was recorded.
-    pub members: usize,
+    members: usize,
     /// What those members were called, for a reader.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub names: Vec<String>,
+    names: Vec<String>,
 }
 
 impl BaselineEntry {
@@ -37,9 +37,28 @@ impl BaselineEntry {
     pub fn of(kind: BaselineKind, group: &DuplicateGroup) -> Self {
         Self {
             kind,
-            fingerprint: group.fingerprint.to_hex(),
-            members: group.members.len(),
-            names: group.members.iter().map(|m| m.name.clone()).collect(),
+            fingerprint: group.fingerprint().to_hex(),
+            members: group.members().len(),
+            names: group
+                .members()
+                .iter()
+                .map(|m| m.name().to_string())
+                .collect(),
+        }
+    }
+
+    #[must_use]
+    pub const fn new(
+        kind: BaselineKind,
+        fingerprint: String,
+        members: usize,
+        names: Vec<String>,
+    ) -> Self {
+        Self {
+            kind,
+            fingerprint,
+            members,
+            names,
         }
     }
 
@@ -50,7 +69,27 @@ impl BaselineEntry {
     #[must_use]
     pub fn admits(&self, kind: BaselineKind, group: &DuplicateGroup) -> bool {
         self.kind == kind
-            && self.fingerprint == group.fingerprint.to_hex()
-            && group.members.len() <= self.members
+            && self.fingerprint == group.fingerprint().to_hex()
+            && group.members().len() <= self.members
+    }
+
+    #[must_use]
+    pub fn fingerprint(&self) -> &str {
+        &self.fingerprint
+    }
+
+    #[must_use]
+    pub const fn kind(&self) -> BaselineKind {
+        self.kind
+    }
+
+    #[must_use]
+    pub const fn members(&self) -> usize {
+        self.members
+    }
+
+    #[must_use]
+    pub fn names(&self) -> &[String] {
+        &self.names
     }
 }

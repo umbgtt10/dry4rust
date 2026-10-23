@@ -13,15 +13,16 @@ use crate::threshold::Threshold;
 /// it. `Default` therefore describes a `check` that reports and never fails,
 /// which is what running `check` with no flags does.
 #[derive(Debug, Clone, Default)]
+#[allow(clippy::struct_field_names)] // each field is named after its --max-* flag
 pub struct CheckThresholds {
     /// Most exact-duplicate groups allowed.
-    pub max_exact: Option<usize>,
+    max_exact: Option<usize>,
     /// Most near-duplicate groups allowed.
-    pub max_near: Option<usize>,
+    max_near: Option<usize>,
     /// Largest share of lines allowed to be exact duplicates.
-    pub max_exact_percent: Option<Threshold>,
+    max_exact_percent: Option<Threshold>,
     /// Largest share of lines allowed to be near duplicates.
-    pub max_near_percent: Option<Threshold>,
+    max_near_percent: Option<Threshold>,
 }
 
 impl CheckThresholds {
@@ -59,5 +60,25 @@ impl CheckThresholds {
             && self.max_near.is_none()
             && self.max_exact_percent.is_none()
             && self.max_near_percent.is_none()
+    }
+
+    #[must_use]
+    pub const fn max_exact(&self) -> Option<usize> {
+        self.max_exact
+    }
+
+    #[must_use]
+    pub const fn max_exact_percent(&self) -> Option<Threshold> {
+        self.max_exact_percent
+    }
+
+    #[must_use]
+    pub const fn max_near(&self) -> Option<usize> {
+        self.max_near
+    }
+
+    #[must_use]
+    pub const fn max_near_percent(&self) -> Option<Threshold> {
+        self.max_near_percent
     }
 }

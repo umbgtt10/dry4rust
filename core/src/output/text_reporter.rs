@@ -16,7 +16,7 @@ use std::path::PathBuf;
 
 pub struct TextReporter {
     /// Base path for displaying relative paths.
-    pub base_path: Option<PathBuf>,
+    base_path: Option<PathBuf>,
 }
 
 impl TextReporter {
@@ -44,17 +44,17 @@ impl TextReporter {
 
 impl Reporter for TextReporter {
     fn report(&self, report: &Report<'_>) -> io::Result<String> {
-        let mut out = self.report_stats(report.stats)?;
+        let mut out = self.report_stats(report.stats())?;
         let _ = writeln!(out);
-        out.push_str(&self.report_exact(report.exact)?);
-        if !report.near.is_empty() {
-            out.push_str(&self.report_near(report.near)?);
+        out.push_str(&self.report_exact(report.exact())?);
+        if !report.near().is_empty() {
+            out.push_str(&self.report_near(report.near())?);
         }
-        if !report.sub_exact.is_empty() {
-            out.push_str(&self.report_sub_exact(report.sub_exact)?);
+        if !report.sub_exact().is_empty() {
+            out.push_str(&self.report_sub_exact(report.sub_exact())?);
         }
-        if !report.sub_near.is_empty() {
-            out.push_str(&self.report_sub_near(report.sub_near)?);
+        if !report.sub_near().is_empty() {
+            out.push_str(&self.report_sub_near(report.sub_near())?);
         }
         Ok(out)
     }
@@ -83,50 +83,58 @@ impl Reporter for TextReporter {
         let mut out = String::new();
         let _ = writeln!(out, "Duplication Statistics");
         let _ = writeln!(out, "=====================");
-        let _ = writeln!(out, "Total code units analyzed: {}", stats.total_code_units);
+        let _ = writeln!(
+            out,
+            "Total code units analyzed: {}",
+            stats.total_code_units()
+        );
         let _ = writeln!(out);
         let _ = writeln!(
             out,
             "Exact duplicates: {} groups ({} code units)",
-            stats.exact_duplicate_groups, stats.exact_duplicate_units
+            stats.exact_duplicate_groups(),
+            stats.exact_duplicate_units()
         );
         let _ = writeln!(
             out,
             "Near duplicates:  {} groups ({} code units)",
-            stats.near_duplicate_groups, stats.near_duplicate_units
+            stats.near_duplicate_groups(),
+            stats.near_duplicate_units()
         );
         let _ = writeln!(out);
         let _ = writeln!(
             out,
             "Duplicated lines (exact): {}",
-            stats.exact_duplicate_lines
+            stats.exact_duplicate_lines()
         );
         let _ = writeln!(
             out,
             "Duplicated lines (near):  {}",
-            stats.near_duplicate_lines
+            stats.near_duplicate_lines()
         );
         let _ = writeln!(
             out,
             "Duplication: {:.1}% exact, {:.1}% near (of {} total lines)",
             stats.exact_duplicate_percent(),
             stats.near_duplicate_percent(),
-            Self::format_with_commas(stats.total_lines),
+            Self::format_with_commas(stats.total_lines()),
         );
-        if let Some(suppressed) = stats.baseline_suppressed {
+        if let Some(suppressed) = stats.baseline_suppressed() {
             let _ = writeln!(out, "Baseline: {suppressed} groups suppressed");
         }
-        if stats.sub_exact_groups > 0 || stats.sub_near_groups > 0 {
+        if stats.sub_exact_groups() > 0 || stats.sub_near_groups() > 0 {
             let _ = writeln!(out);
             let _ = writeln!(
                 out,
                 "Sub-function exact: {} groups ({} units)",
-                stats.sub_exact_groups, stats.sub_exact_units
+                stats.sub_exact_groups(),
+                stats.sub_exact_units()
             );
             let _ = writeln!(
                 out,
                 "Sub-function near:  {} groups ({} units)",
-                stats.sub_near_groups, stats.sub_near_units
+                stats.sub_near_groups(),
+                stats.sub_near_units()
             );
         }
         Ok(out)

@@ -12,9 +12,9 @@ use crate::near_duplicate::pair_key::PairKey;
 /// carries no meaning without it.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SimilarityPair {
-    pub left: usize,
-    pub right: usize,
-    pub score: f64,
+    left: usize,
+    right: usize,
+    score: f64,
 }
 
 impl SimilarityPair {
@@ -27,5 +27,20 @@ impl SimilarityPair {
     #[must_use]
     pub const fn key(&self) -> PairKey {
         PairKey::new(self.left, self.right)
+    }
+
+    #[must_use]
+    pub const fn left(&self) -> usize {
+        self.left
+    }
+
+    #[must_use]
+    pub const fn right(&self) -> usize {
+        self.right
+    }
+
+    #[must_use]
+    pub const fn score(&self) -> f64 {
+        self.score
     }
 }

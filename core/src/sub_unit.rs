@@ -9,10 +9,10 @@ use crate::sub_unit_extractor::SubUnitExtractor;
 
 /// A sub-unit extracted from a normalized function body.
 pub struct SubUnit {
-    pub kind: CodeUnitKind,
-    pub node: NormalizedNode,
-    pub node_count: usize,
-    pub description: String,
+    kind: CodeUnitKind,
+    node: NormalizedNode,
+    node_count: usize,
+    description: String,
 }
 
 impl SubUnit {
@@ -24,5 +24,40 @@ impl SubUnit {
     #[must_use]
     pub fn extract_sub_units(node: &NormalizedNode, min_node_count: usize) -> Vec<Self> {
         SubUnitExtractor::new(min_node_count).extract(node)
+    }
+
+    #[must_use]
+    pub const fn new(
+        kind: CodeUnitKind,
+        node: NormalizedNode,
+        node_count: usize,
+        description: String,
+    ) -> Self {
+        Self {
+            kind,
+            node,
+            node_count,
+            description,
+        }
+    }
+
+    #[must_use]
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    #[must_use]
+    pub const fn kind(&self) -> &CodeUnitKind {
+        &self.kind
+    }
+
+    #[must_use]
+    pub const fn node(&self) -> &NormalizedNode {
+        &self.node
+    }
+
+    #[must_use]
+    pub const fn node_count(&self) -> usize {
+        self.node_count
     }
 }

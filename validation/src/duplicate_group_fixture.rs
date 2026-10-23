@@ -19,25 +19,24 @@ impl DuplicateGroupFixture {
     #[must_use]
     pub fn of(fingerprint: u64, names: &[&str]) -> DuplicateGroup {
         let fingerprint = Fingerprint::new(fingerprint);
-        DuplicateGroup {
+        DuplicateGroup::new(
             fingerprint,
-            members: names
+            names
                 .iter()
-                .map(|name| CodeUnit {
-                    kind: CodeUnitKind::Function,
-                    name: (*name).to_owned(),
-                    file: PathBuf::from("src/lib.rs"),
-                    line_start: 1,
-                    line_end: 9,
-                    signature: NormalizedNode::leaf(NodeKind::Opaque),
-                    body: NormalizedNode::leaf(NodeKind::Opaque),
-                    fingerprint,
-                    node_count: 9,
-                    parent_name: None,
-                    is_test: false,
+                .map(|name| {
+                    CodeUnit::default()
+                        .with_kind(CodeUnitKind::Function)
+                        .with_name((*name).to_owned())
+                        .with_file(PathBuf::from("src/lib.rs"))
+                        .with_line_start(1)
+                        .with_line_end(9)
+                        .with_signature(NormalizedNode::leaf(NodeKind::Opaque))
+                        .with_body(NormalizedNode::leaf(NodeKind::Opaque))
+                        .with_fingerprint(fingerprint)
+                        .with_node_count(9)
                 })
                 .collect(),
-            similarity: 1.0,
-        }
+            1.0,
+        )
     }
 }

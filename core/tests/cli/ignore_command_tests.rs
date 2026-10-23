@@ -22,7 +22,7 @@ fn run_over_the_same_fingerprint_twice_records_it_once() {
         .expect("the second is accepted");
 
     // Assert
-    assert_eq!(IgnoreFile::load(tmp.path()).ignore.len(), 1);
+    assert_eq!(IgnoreFile::load(tmp.path()).ignore().len(), 1);
 }
 
 #[test]
@@ -41,10 +41,10 @@ fn run_records_the_fingerprint_with_the_reason_it_was_given() {
 
     // Assert
     let ignore_file = IgnoreFile::load(tmp.path());
-    assert_eq!(ignore_file.ignore.len(), 1);
-    assert_eq!(ignore_file.ignore[0].fingerprint, "deadbeef12345678");
+    assert_eq!(ignore_file.ignore().len(), 1);
+    assert_eq!(ignore_file.ignore()[0].fingerprint(), "deadbeef12345678");
     assert_eq!(
-        ignore_file.ignore[0].reason.as_deref(),
+        ignore_file.ignore()[0].reason(),
         Some("trait impls are meant to look alike")
     );
 }

@@ -16,7 +16,8 @@ fn report_of(exact: Vec<DuplicateGroup>, near: Vec<DuplicateGroup>) -> String {
     ReportCommand::new(&result, reporter.as_ref())
         .run()
         .expect("reporting succeeds")
-        .text
+        .text()
+        .to_string()
 }
 
 #[test]

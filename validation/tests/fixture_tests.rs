@@ -13,8 +13,8 @@ fn analysed_leaves_sub_function_analysis_off() {
     let (config, result) = Fixture::analysed("sub_function_near_dupes");
 
     // Assert
-    assert!(!config.sub_function);
-    assert!(result.sub_near_groups.is_empty());
+    assert!(!config.sub_function());
+    assert!(result.sub_near_groups().is_empty());
 }
 
 #[test]
@@ -23,8 +23,8 @@ fn analysed_over_a_duplicated_fixture_finds_its_one_exact_group() {
     let (_, result) = Fixture::analysed("exact_dupes");
 
     // Assert
-    assert_eq!(result.exact_groups.len(), 1);
-    assert_eq!(result.exact_groups[0].members.len(), 3);
+    assert_eq!(result.exact_groups().len(), 1);
+    assert_eq!(result.exact_groups()[0].members().len(), 3);
 }
 
 #[test]
@@ -33,7 +33,7 @@ fn analysed_roots_its_configuration_at_the_fixture() {
     let (config, _) = Fixture::analysed("no_dupes");
 
     // Assert
-    assert_eq!(config.root, Fixture::path("no_dupes"));
+    assert_eq!(config.root(), Fixture::path("no_dupes"));
 }
 
 #[test]
@@ -42,8 +42,8 @@ fn analysed_with_sub_function_turns_sub_function_analysis_on() {
     let (config, result) = Fixture::analysed_with_sub_function("sub_function_near_dupes");
 
     // Assert
-    assert!(config.sub_function);
-    assert_eq!(result.sub_near_groups.len(), 1);
+    assert!(config.sub_function());
+    assert_eq!(result.sub_near_groups().len(), 1);
 }
 
 #[test]

@@ -16,7 +16,8 @@ fn summary_in(format: OutputFormat) -> String {
     StatsCommand::new(&result, reporter.as_ref())
         .run()
         .expect("reporting succeeds")
-        .text
+        .text()
+        .to_string()
 }
 
 #[test]

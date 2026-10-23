@@ -4,11 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::cli::checking::check_thresholds::CheckThresholds;
-use dry4rust::threshold::Threshold;
-
-fn percent(value: f64) -> Threshold {
-    Threshold::percent("a ceiling", value).expect("the test states a share of a hundred")
-}
 
 #[test]
 fn default_sets_no_ceiling_at_all() {
@@ -16,19 +11,17 @@ fn default_sets_no_ceiling_at_all() {
     let thresholds = CheckThresholds::default();
 
     // Assert
-    assert_eq!(thresholds.max_exact, None);
-    assert_eq!(thresholds.max_near, None);
-    assert_eq!(thresholds.max_exact_percent, None);
-    assert_eq!(thresholds.max_near_percent, None);
+    assert_eq!(thresholds.max_exact(), None);
+    assert_eq!(thresholds.max_near(), None);
+    assert_eq!(thresholds.max_exact_percent(), None);
+    assert_eq!(thresholds.max_near_percent(), None);
 }
 
 #[test]
 fn is_unbounded_is_false_once_a_count_ceiling_is_set() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact: Some(0),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(Some(0), None, None, None).expect("every ceiling is in range");
 
     // Act & Assert
     assert!(!thresholds.is_unbounded());
@@ -37,10 +30,8 @@ fn is_unbounded_is_false_once_a_count_ceiling_is_set() {
 #[test]
 fn is_unbounded_is_false_once_a_percentage_ceiling_is_set() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_near_percent: Some(percent(0.0)),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(None, None, None, Some(0.0)).expect("every ceiling is in range");
 
     // Act & Assert
     assert!(

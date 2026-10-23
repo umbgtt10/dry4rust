@@ -19,20 +19,29 @@ use crate::scanner::Scanner;
 /// Everything one analysis run produces: the configuration it ran under, what
 /// it found, and the reporter that can write it out.
 pub struct AnalysisOutput {
-    pub config: Config,
-    pub result: Analysis,
-    pub reporter: Box<dyn Reporter>,
+    config: Config,
+    result: Analysis,
+    reporter: Box<dyn Reporter>,
 }
 
 impl AnalysisOutput {
+    #[must_use]
+    pub fn new(config: Config, result: Analysis, reporter: Box<dyn Reporter>) -> Self {
+        Self {
+            config,
+            result,
+            reporter,
+        }
+    }
+
     fn from_config(
         analyzer: &dyn LanguageAnalyzer,
         root: &Path,
         format: OutputFormat,
         config: Config,
     ) -> CliResult<Self> {
-        let scanner = Scanner::new(config.root.clone())
-            .with_excludes(config.exclude.clone())
+        let scanner = Scanner::new(config.root().to_path_buf())
+            .with_excludes(config.exclude().to_vec())
             .with_extensions(
                 analyzer
                     .file_extensions()
@@ -43,7 +52,7 @@ impl AnalysisOutput {
         let files = scanner.scan_files();
 
         if files.is_empty() {
-            return Err(CliError::NoSourceFiles(config.root));
+            return Err(CliError::NoSourceFiles(config.root().to_path_buf()));
         }
 
         let result = Analysis::analyze(analyzer, &files, &config)?;
@@ -91,16 +100,28 @@ impl AnalysisOutput {
         format: OutputFormat,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
-        let mut config = Self::configure(root, overrides)?;
-        let named = config.baseline.take();
-        let output = Self::from_config(analyzer, root, format, config)?;
+        let config = Self::configure(root, overrides)?;
+        let named = config.baseline().map(Path::to_path_buf);
+        let output = Self::from_config(analyzer, root, format, config.with_baseline(None))?;
         Ok(Self {
-            config: Config {
-                baseline: named,
-                ..output.config
-            },
+            config: output.config.with_baseline(named),
             ..output
         })
+    }
+
+    #[must_use]
+    pub const fn config(&self) -> &Config {
+        &self.config
+    }
+
+    #[must_use]
+    pub fn reporter(&self) -> &dyn Reporter {
+        self.reporter.as_ref()
+    }
+
+    #[must_use]
+    pub const fn result(&self) -> &Analysis {
+        &self.result
     }
 
     fn configure(root: &Path, overrides: &CliOverrides) -> CliResult<Config> {

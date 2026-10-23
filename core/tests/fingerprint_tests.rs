@@ -97,8 +97,8 @@ fn increment(value: i32) -> i32 {
 ";
 
     // Act
-    let original = only_unit(GOLDEN).fingerprint;
-    let copy = only_unit(renamed).fingerprint;
+    let original = only_unit(GOLDEN).fingerprint();
+    let copy = only_unit(renamed).fingerprint();
 
     // Assert
     assert_eq!(
@@ -118,8 +118,8 @@ fn add_one(x: i32) -> i32 {
 ";
 
     // Act
-    let original = only_unit(GOLDEN).fingerprint;
-    let other = only_unit(different).fingerprint;
+    let original = only_unit(GOLDEN).fingerprint();
+    let other = only_unit(different).fingerprint();
 
     // Assert
     assert_ne!(original, other);
@@ -132,7 +132,7 @@ fn parse_file_gives_the_golden_sample_a_stable_fingerprint() {
 
     // Assert
     assert_eq!(
-        unit.fingerprint.value(),
+        unit.fingerprint().value(),
         16_368_680_241_809_348_210,
         "the fingerprint format changed. That is a BREAKING change: every          recorded suppression stops matching. If it was deliberate, update          this value and say so in CHANGELOG.md"
     );

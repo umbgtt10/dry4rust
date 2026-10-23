@@ -24,31 +24,31 @@ use crate::threshold::Threshold;
 #[derive(Debug, Clone)]
 pub struct Config {
     /// Minimum number of AST nodes for a code unit to be analyzed.
-    pub min_nodes: usize,
+    min_nodes: usize,
     /// Similarity threshold for near-duplicates.
-    pub similarity_threshold: Threshold,
+    similarity_threshold: Threshold,
     /// Path patterns to exclude from scanning.
-    pub exclude: Vec<String>,
+    exclude: Vec<String>,
     /// Exit code threshold: fail if exact duplicate count exceeds this.
-    pub max_exact_duplicates: Option<usize>,
+    max_exact_duplicates: Option<usize>,
     /// Exit code threshold: fail if near duplicate count exceeds this.
-    pub max_near_duplicates: Option<usize>,
+    max_near_duplicates: Option<usize>,
     /// Exit code threshold: fail if exact duplicate percentage exceeds this.
-    pub max_exact_percent: Option<Threshold>,
+    max_exact_percent: Option<Threshold>,
     /// Exit code threshold: fail if near duplicate percentage exceeds this.
-    pub max_near_percent: Option<Threshold>,
+    max_near_percent: Option<Threshold>,
     /// Minimum number of source lines for a code unit to be analyzed.
-    pub min_lines: usize,
+    min_lines: usize,
     /// Exclude test code (#[test] functions and #[cfg(test)] modules).
-    pub exclude_tests: bool,
+    exclude_tests: bool,
     /// Enable sub-function duplicate detection.
-    pub sub_function: bool,
+    sub_function: bool,
     /// Minimum number of AST nodes for a sub-function unit to be analyzed.
-    pub min_sub_nodes: usize,
+    min_sub_nodes: usize,
     /// Baseline of inherited duplication to judge against, if any.
-    pub baseline: Option<PathBuf>,
+    baseline: Option<PathBuf>,
     /// Root path to analyze.
-    pub root: PathBuf,
+    root: PathBuf,
 }
 
 impl Default for Config {
@@ -110,9 +110,160 @@ impl Config {
     /// Extract the parsing-relevant subset of the configuration.
     #[must_use]
     pub const fn analysis_config(&self) -> AnalysisConfig {
-        AnalysisConfig {
-            min_nodes: self.min_nodes,
-            min_lines: self.min_lines,
+        AnalysisConfig::new(self.min_nodes, self.min_lines)
+    }
+
+    #[must_use]
+    pub fn baseline(&self) -> Option<&Path> {
+        self.baseline.as_deref()
+    }
+
+    #[must_use]
+    pub fn exclude(&self) -> &[String] {
+        &self.exclude
+    }
+
+    #[must_use]
+    pub const fn exclude_tests(&self) -> bool {
+        self.exclude_tests
+    }
+
+    #[must_use]
+    pub const fn max_exact_duplicates(&self) -> Option<usize> {
+        self.max_exact_duplicates
+    }
+
+    #[must_use]
+    pub const fn max_exact_percent(&self) -> Option<Threshold> {
+        self.max_exact_percent
+    }
+
+    #[must_use]
+    pub const fn max_near_duplicates(&self) -> Option<usize> {
+        self.max_near_duplicates
+    }
+
+    #[must_use]
+    pub const fn max_near_percent(&self) -> Option<Threshold> {
+        self.max_near_percent
+    }
+
+    #[must_use]
+    pub const fn min_lines(&self) -> usize {
+        self.min_lines
+    }
+
+    #[must_use]
+    pub const fn min_nodes(&self) -> usize {
+        self.min_nodes
+    }
+
+    #[must_use]
+    pub const fn min_sub_nodes(&self) -> usize {
+        self.min_sub_nodes
+    }
+
+    #[must_use]
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
+    #[must_use]
+    pub const fn similarity_threshold(&self) -> Threshold {
+        self.similarity_threshold
+    }
+
+    #[must_use]
+    pub const fn sub_function(&self) -> bool {
+        self.sub_function
+    }
+
+    #[must_use]
+    pub fn with_baseline(self, baseline: Option<PathBuf>) -> Self {
+        Self { baseline, ..self }
+    }
+
+    #[must_use]
+    pub fn with_exclude(self, exclude: Vec<String>) -> Self {
+        Self { exclude, ..self }
+    }
+
+    #[must_use]
+    pub fn with_exclude_tests(self, exclude_tests: bool) -> Self {
+        Self {
+            exclude_tests,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_max_exact_duplicates(self, max_exact_duplicates: Option<usize>) -> Self {
+        Self {
+            max_exact_duplicates,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_max_exact_percent(self, max_exact_percent: Option<Threshold>) -> Self {
+        Self {
+            max_exact_percent,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_max_near_duplicates(self, max_near_duplicates: Option<usize>) -> Self {
+        Self {
+            max_near_duplicates,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_max_near_percent(self, max_near_percent: Option<Threshold>) -> Self {
+        Self {
+            max_near_percent,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_min_lines(self, min_lines: usize) -> Self {
+        Self { min_lines, ..self }
+    }
+
+    #[must_use]
+    pub fn with_min_nodes(self, min_nodes: usize) -> Self {
+        Self { min_nodes, ..self }
+    }
+
+    #[must_use]
+    pub fn with_min_sub_nodes(self, min_sub_nodes: usize) -> Self {
+        Self {
+            min_sub_nodes,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_root(self, root: PathBuf) -> Self {
+        Self { root, ..self }
+    }
+
+    #[must_use]
+    pub fn with_similarity_threshold(self, similarity_threshold: Threshold) -> Self {
+        Self {
+            similarity_threshold,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_sub_function(self, sub_function: bool) -> Self {
+        Self {
+            sub_function,
+            ..self
         }
     }
 

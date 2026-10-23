@@ -69,7 +69,8 @@ fn run_over_a_clean_fixture_still_writes_the_summary() {
     let text = StatsCommand::new(&result, reporter.as_ref())
         .run()
         .expect("reporting succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(text.contains("Exact duplicates: 0 groups"), "{text}");
@@ -85,7 +86,8 @@ fn run_writes_the_summary_and_nothing_else() {
     let text = StatsCommand::new(&result, reporter.as_ref())
         .run()
         .expect("reporting succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(text.contains("Duplication Statistics"), "{text}");

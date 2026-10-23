@@ -14,17 +14,12 @@ use std::path::PathBuf;
 use tempfile::TempDir;
 
 fn recorded_in(root: &TempDir, entries: Vec<BaselineEntry>) -> Config {
-    let file = BaselineFile {
-        version: FORMAT_VERSION,
-        entries,
-    };
+    let file = BaselineFile::new(FORMAT_VERSION, entries);
     file.save(&root.path().join("dry4rust-baseline.json"))
         .expect("the baseline is written");
-    Config {
-        root: root.path().to_path_buf(),
-        baseline: Some(PathBuf::from("dry4rust-baseline.json")),
-        ..Config::default()
-    }
+    Config::default()
+        .with_root(root.path().to_path_buf())
+        .with_baseline(Some(PathBuf::from("dry4rust-baseline.json")))
 }
 
 #[test]
@@ -59,11 +54,9 @@ fn is_in_effect_is_true_once_one_is_loaded() {
 fn load_of_a_baseline_that_is_not_there_fails_rather_than_suppressing_nothing() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    let config = Config {
-        root: tmp.path().to_path_buf(),
-        baseline: Some(PathBuf::from("dry4rust-baseline.json")),
-        ..Config::default()
-    };
+    let config = Config::default()
+        .with_root(tmp.path().to_path_buf())
+        .with_baseline(Some(PathBuf::from("dry4rust-baseline.json")));
 
     // Act
     let outcome = BaselineFilter::load(&config);
@@ -142,7 +135,7 @@ fn retain_new_keeps_a_group_the_baseline_never_saw() {
 
     // Assert
     assert_eq!(kept.len(), 1, "new duplication is the whole point");
-    assert_eq!(kept[0].fingerprint.value(), 0x5678);
+    assert_eq!(kept[0].fingerprint().value(), 0x5678);
 }
 
 #[test]

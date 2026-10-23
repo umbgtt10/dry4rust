@@ -6,7 +6,7 @@
 use dry4rust::config::Config;
 use dry4rust::file_config::FileConfig;
 use dry4rust::threshold::Threshold;
-use std::path::PathBuf;
+use std::path::Path;
 use toml::from_str;
 
 fn stating(toml: &str) -> FileConfig {
@@ -16,11 +16,7 @@ fn stating(toml: &str) -> FileConfig {
 #[test]
 fn apply_to_changes_only_the_fields_the_file_states() {
     // Arrange
-    let config = Config {
-        min_nodes: 7,
-        min_lines: 3,
-        ..Config::default()
-    };
+    let config = Config::default().with_min_nodes(7).with_min_lines(3);
 
     // Act
     let config = stating("min_nodes = 25\n")
@@ -28,18 +24,14 @@ fn apply_to_changes_only_the_fields_the_file_states() {
         .expect("25 is in range");
 
     // Assert
-    assert_eq!(config.min_nodes, 25);
-    assert_eq!(config.min_lines, 3, "a file says nothing about the rest");
+    assert_eq!(config.min_nodes(), 25);
+    assert_eq!(config.min_lines(), 3, "a file says nothing about the rest");
 }
 
 #[test]
 fn apply_to_of_an_empty_file_changes_nothing() {
     // Arrange
-    let config = Config {
-        min_nodes: 7,
-        sub_function: true,
-        ..Config::default()
-    };
+    let config = Config::default().with_min_nodes(7).with_sub_function(true);
 
     // Act
     let config = FileConfig::default()
@@ -47,8 +39,8 @@ fn apply_to_of_an_empty_file_changes_nothing() {
         .expect("nothing stated is always in range");
 
     // Assert
-    assert_eq!(config.min_nodes, 7);
-    assert!(config.sub_function);
+    assert_eq!(config.min_nodes(), 7);
+    assert!(config.sub_function());
 }
 
 #[test]
@@ -59,7 +51,7 @@ fn apply_to_reads_a_baseline_path_as_written() {
         .expect("a path is always in range");
 
     // Assert
-    assert_eq!(config.baseline, Some(PathBuf::from("ci/recorded.json")));
+    assert_eq!(config.baseline(), Some(Path::new("ci/recorded.json")));
 }
 
 #[test]
@@ -89,10 +81,7 @@ fn apply_to_rejects_a_similarity_threshold_outside_one() {
 #[test]
 fn apply_to_replaces_the_excludes_rather_than_appending_to_them() {
     // Arrange
-    let config = Config {
-        exclude: vec![String::from("vendor")],
-        ..Config::default()
-    };
+    let config = Config::default().with_exclude(vec![String::from("vendor")]);
 
     // Act
     let config = stating("exclude = [\"tests\"]\n")
@@ -101,7 +90,7 @@ fn apply_to_replaces_the_excludes_rather_than_appending_to_them() {
 
     // Assert
     assert_eq!(
-        config.exclude,
+        config.exclude(),
         vec![String::from("tests")],
         "a config file states the whole list, unlike --exclude, which adds to it"
     );
@@ -116,7 +105,7 @@ fn apply_to_takes_a_percentage_as_a_share_of_a_hundred() {
 
     // Assert
     assert_eq!(
-        config.max_exact_percent.map(Threshold::as_percent),
+        config.max_exact_percent().map(Threshold::as_percent),
         Some(5.0)
     );
 }

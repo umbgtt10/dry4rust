@@ -58,8 +58,8 @@ impl NearDuplicateFinder {
         let mut forest = UnionFind::new(candidates.len());
         let mut scores: Scores = HashMap::new();
         for pair in pairs {
-            forest.union(pair.left, pair.right);
-            scores.insert(pair.key(), pair.score);
+            forest.union(pair.left(), pair.right());
+            scores.insert(pair.key(), pair.score());
         }
         forest
             .groups()
@@ -77,7 +77,7 @@ impl NearDuplicateFinder {
         let exact: HashSet<Fingerprint> = exact_fingerprints.iter().copied().collect();
         units
             .iter()
-            .filter(|unit| !exact.contains(&unit.fingerprint))
+            .filter(|unit| !exact.contains(&unit.fingerprint()))
             .collect()
     }
 
@@ -93,27 +93,30 @@ impl NearDuplicateFinder {
             .iter()
             .map(|&i| candidates[i].clone())
             .collect();
-        let member_fingerprints: Vec<Fingerprint> = members.iter().map(|m| m.fingerprint).collect();
-        DuplicateGroup {
-            fingerprint: Fingerprint::from_fingerprints(&member_fingerprints),
+        let member_fingerprints: Vec<Fingerprint> = members
+            .iter()
+            .map(super::super::code_unit::CodeUnit::fingerprint)
+            .collect();
+        DuplicateGroup::new(
+            Fingerprint::from_fingerprints(&member_fingerprints),
             members,
-            similarity: self.weakest_link(member_indices, scores),
-        }
+            self.weakest_link(member_indices, scores),
+        )
     }
 
     /// Biggest groups first, then most similar, then by fingerprint so that
     /// ties resolve the same way on every run.
     fn ranked(mut groups: Vec<DuplicateGroup>) -> Vec<DuplicateGroup> {
         groups.sort_by(|a, b| {
-            b.members
+            b.members()
                 .len()
-                .cmp(&a.members.len())
+                .cmp(&a.members().len())
                 .then_with(|| {
-                    b.similarity
-                        .partial_cmp(&a.similarity)
+                    b.similarity()
+                        .partial_cmp(&a.similarity())
                         .unwrap_or(Ordering::Equal)
                 })
-                .then_with(|| a.fingerprint.cmp(&b.fingerprint))
+                .then_with(|| a.fingerprint().cmp(&b.fingerprint()))
         });
         groups
     }

@@ -50,18 +50,18 @@ impl<'a> BaselineCommand<'a> {
     /// carried in the outcome's result as [`CliError::Analysis`], beside the
     /// entries already listed, so they still reach stdout ahead of the error.
     pub fn run(&self) -> CliResult<CommandOutcome> {
-        let path = BaselineFile::baseline_path(self.root, self.config.baseline.as_deref());
+        let path = BaselineFile::baseline_path(self.root, self.config.baseline());
         let recorded = BaselineFile::record(self.result);
 
         let mut out = String::new();
-        for entry in &recorded.entries {
+        for entry in recorded.entries() {
             let _ = writeln!(
                 out,
                 "  {} {} ({} members: {})",
-                entry.kind,
-                entry.fingerprint,
-                entry.members,
-                entry.names.join(", ")
+                entry.kind(),
+                entry.fingerprint(),
+                entry.members(),
+                entry.names().join(", ")
             );
         }
 

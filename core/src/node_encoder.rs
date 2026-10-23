@@ -35,9 +35,9 @@ impl NodeEncoder {
 
     /// Absorb a whole tree.
     pub fn encode(&mut self, node: &NormalizedNode) {
-        self.encode_kind(&node.kind);
-        self.hasher.write_u64(node.children.len() as u64);
-        for child in &node.children {
+        self.encode_kind(node.kind());
+        self.hasher.write_u64(node.children().len() as u64);
+        for child in node.children() {
             self.encode(child);
         }
     }

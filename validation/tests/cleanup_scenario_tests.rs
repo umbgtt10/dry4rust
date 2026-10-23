@@ -147,7 +147,8 @@ fn run_outside_dry_run_takes_away_a_file_it_emptied() {
     let text = CleanupCommand::new(tmp.path(), &result, false)
         .run()
         .expect("cleanup succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(
@@ -170,7 +171,8 @@ fn run_with_nothing_stale_says_so_and_writes_no_file() {
     let text = CleanupCommand::new(tmp.path(), &result, false)
         .run()
         .expect("cleanup succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert_eq!(text, "No stale entries found.\n");

@@ -35,7 +35,7 @@ impl Default for RustAnalyzer {
 
 impl LanguageAnalyzer for RustAnalyzer {
     fn is_test_code(&self, unit: &CodeUnit) -> bool {
-        unit.is_test
+        unit.is_test()
     }
 
     fn file_extensions(&self) -> &[&str] {
@@ -48,6 +48,6 @@ impl LanguageAnalyzer for RustAnalyzer {
         source: &str,
         config: &AnalysisConfig,
     ) -> Result<Vec<CodeUnit>, Error> {
-        parse_source(path, source, config.min_nodes, config.min_lines)
+        parse_source(path, source, config.min_nodes(), config.min_lines())
     }
 }

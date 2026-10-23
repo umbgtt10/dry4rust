@@ -32,18 +32,18 @@ impl SubUnitExtractor {
     #[must_use]
     pub fn extract(&self, node: &NormalizedNode) -> Vec<SubUnit> {
         let mut found = self.own_units(node);
-        for child in &node.children {
+        for child in node.children() {
             found.extend(self.extract(child));
         }
         found
     }
 
     fn bodied_unit(&self, node: &NormalizedNode) -> Vec<SubUnit> {
-        let Some(target) = Self::body_target(&node.kind) else {
+        let Some(target) = Self::body_target(node.kind()) else {
             return Vec::new();
         };
         let (index, kind, description) = target;
-        node.children
+        node.children()
             .get(index)
             .and_then(|body| self.made(body, kind, description))
             .into_iter()
@@ -67,11 +67,11 @@ impl SubUnitExtractor {
     /// told apart from a real one by asking the node rather than the slot.
     fn if_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
         let then_branch = node
-            .children
+            .children()
             .get(1)
             .and_then(|n| self.made(n, CodeUnitKind::IfBranch, "if-then branch"));
         let else_branch = node
-            .children
+            .children()
             .get(2)
             .filter(|n| !n.is_none())
             .and_then(|n| self.made(n, CodeUnitKind::IfBranch, "if-else branch"));
@@ -91,24 +91,24 @@ impl SubUnitExtractor {
         if node_count < self.min_node_count {
             return None;
         }
-        Some(SubUnit {
+        Some(SubUnit::new(
             kind,
-            node: reindexed,
+            reindexed,
             node_count,
-            description: description.to_string(),
-        })
+            description.to_string(),
+        ))
     }
 
     /// `Match` is `[expr, arm0, arm1, ...]` and each arm is
     /// `[pattern, guard_or_None, body]`. Arms are numbered from one in the
     /// description because that is what a reader counting them would say.
     fn match_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
-        node.children
+        node.children()
             .iter()
             .skip(1)
             .enumerate()
             .filter_map(|(i, arm)| {
-                let body = arm.children.get(2)?;
+                let body = arm.children().get(2)?;
                 self.made(
                     body,
                     CodeUnitKind::MatchArm,
@@ -119,7 +119,7 @@ impl SubUnitExtractor {
     }
 
     fn own_units(&self, node: &NormalizedNode) -> Vec<SubUnit> {
-        match &node.kind {
+        match node.kind() {
             NodeKind::If => self.if_units(node),
             NodeKind::Match => self.match_units(node),
             _ => self.bodied_unit(node),

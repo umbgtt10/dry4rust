@@ -9,11 +9,11 @@ use walkdir::WalkDir;
 /// Scans the filesystem for source files.
 pub struct Scanner {
     /// Root directory to scan.
-    pub root: PathBuf,
+    root: PathBuf,
     /// Glob patterns to exclude (simple substring matching for now).
-    pub exclude_patterns: Vec<String>,
+    exclude_patterns: Vec<String>,
     /// File extensions to include (without the leading dot). Defaults to `["rs"]`.
-    pub extensions: Vec<String>,
+    extensions: Vec<String>,
 }
 
 impl Scanner {
@@ -26,6 +26,11 @@ impl Scanner {
         }
     }
 
+    #[must_use]
+    pub fn extensions(&self) -> &[String] {
+        &self.extensions
+    }
+
     /// Check if a path should be excluded based on exclusion patterns.
     #[must_use]
     pub fn is_excluded(path: &Path, patterns: &[String]) -> bool {
@@ -33,6 +38,11 @@ impl Scanner {
         patterns
             .iter()
             .any(|pattern| path_str.contains(pattern.as_str()))
+    }
+
+    #[must_use]
+    pub fn root(&self) -> &Path {
+        &self.root
     }
 
     /// Scan for source files under the given self.

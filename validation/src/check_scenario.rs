@@ -8,7 +8,6 @@ use dry4rust::cli::check_command::CheckCommand;
 use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::cli_error::CliResult;
 use dry4rust::cli::output_format::OutputFormat;
-use dry4rust::threshold::Threshold;
 
 pub struct CheckScenario;
 
@@ -21,11 +20,6 @@ impl CheckScenario {
             .run()
             .expect("check produces a report");
 
-        (outcome.result, outcome.text)
-    }
-
-    #[must_use]
-    pub fn percent(value: f64) -> Threshold {
-        Threshold::percent("a ceiling", value).expect("the test states a share of a hundred")
+        outcome.into_parts()
     }
 }

@@ -40,19 +40,16 @@ fn beta(values: &[i32]) -> i32 {
 fn sized_unit(name: &str, node_count: usize) -> CodeUnit {
     let children = vec![NormalizedNode::leaf(NodeKind::Block); node_count - 1];
     let body = NormalizedNode::with_children(NodeKind::Block, children);
-    CodeUnit {
-        kind: CodeUnitKind::Function,
-        name: name.to_string(),
-        file: PathBuf::from("sized.rs"),
-        line_start: 1,
-        line_end: 2,
-        signature: NormalizedNode::leaf(NodeKind::Block),
-        body,
-        fingerprint: Fingerprint::new(node_count as u64),
-        node_count,
-        parent_name: None,
-        is_test: false,
-    }
+    CodeUnit::default()
+        .with_kind(CodeUnitKind::Function)
+        .with_name(name.to_string())
+        .with_file(PathBuf::from("sized.rs"))
+        .with_line_start(1)
+        .with_line_end(2)
+        .with_signature(NormalizedNode::leaf(NodeKind::Block))
+        .with_body(body)
+        .with_fingerprint(Fingerprint::new(node_count as u64))
+        .with_node_count(node_count)
 }
 
 fn units_from(code: &str) -> Vec<CodeUnit> {
@@ -66,7 +63,10 @@ fn units_from(code: &str) -> Vec<CodeUnit> {
 fn find_excluding_every_fingerprint_returns_nothing() {
     // Arrange
     let units = units_from(NEAR_PAIR);
-    let all: Vec<Fingerprint> = units.iter().map(|u| u.fingerprint).collect();
+    let all: Vec<Fingerprint> = units
+        .iter()
+        .map(dry4rust::code_unit::CodeUnit::fingerprint)
+        .collect();
 
     // Act
     let groups = NearDuplicateFinder::new(0.5).find(&units, &all);
@@ -93,7 +93,7 @@ fn find_groups_a_pair_whose_sizes_straddle_a_power_of_two() {
         "7 and 8 nodes are one apart and score 0.933; bucketing by log2 put a \
          boundary between them and lost the pair"
     );
-    assert!((groups[0].similarity - 14.0 / 15.0).abs() < 1e-9);
+    assert!((groups[0].similarity() - 14.0 / 15.0).abs() < 1e-9);
 }
 
 #[test]
@@ -151,11 +151,11 @@ fn find_reports_a_similarity_no_higher_than_the_weakest_pair() {
     // Assert
     for group in &groups {
         assert!(
-            group.similarity >= 0.5,
+            group.similarity() >= 0.5,
             "every reported group cleared the threshold, got {}",
-            group.similarity
+            group.similarity()
         );
-        assert!(group.similarity <= 1.0);
+        assert!(group.similarity() <= 1.0);
     }
 }
 
@@ -173,7 +173,7 @@ fn find_run_twice_over_the_same_units_returns_the_same_groups() {
     let shape = |groups: &[DuplicateGroup]| -> Vec<(usize, u64)> {
         groups
             .iter()
-            .map(|g| (g.members.len(), g.fingerprint.value()))
+            .map(|g| (g.members().len(), g.fingerprint().value()))
             .collect()
     };
     assert_eq!(
@@ -208,7 +208,7 @@ fn find_with_a_permissive_threshold_groups_the_two_similar_functions() {
 
     // Assert
     assert!(
-        groups.iter().any(|g| g.members.len() >= 2),
+        groups.iter().any(|g| g.members().len() >= 2),
         "two functions differing only in names and one literal are near duplicates"
     );
 }
@@ -224,9 +224,9 @@ fn find_with_a_threshold_of_one_groups_only_what_is_identical() {
     // Assert
     for group in &groups {
         assert!(
-            (group.similarity - 1.0).abs() < f64::EPSILON,
+            (group.similarity() - 1.0).abs() < f64::EPSILON,
             "a threshold of 1.0 admits nothing below 1.0, got {}",
-            group.similarity
+            group.similarity()
         );
     }
 }

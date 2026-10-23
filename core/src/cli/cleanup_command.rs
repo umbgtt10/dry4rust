@@ -44,10 +44,10 @@ impl<'a> CleanupCommand<'a> {
         let taken;
 
         let report = if self.dry_run {
-            StaleReport::dry_run(ignore_file.stale(&self.result.all_fingerprints))
+            StaleReport::dry_run(ignore_file.stale(self.result.all_fingerprints()))
         } else {
             let pruned;
-            (pruned, taken) = ignore_file.without_stale(&self.result.all_fingerprints);
+            (pruned, taken) = ignore_file.without_stale(self.result.all_fingerprints());
             if !taken.is_empty() {
                 pruned.save(self.root)?;
             }

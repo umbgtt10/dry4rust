@@ -87,12 +87,12 @@ impl GroupSection {
     }
 
     fn heading(&self, number: usize, group: &DuplicateGroup) -> String {
-        let fingerprint = group.fingerprint.to_hex();
-        let members = group.members.len();
+        let fingerprint = group.fingerprint().to_hex();
+        let members = group.members().len();
         if self.show_similarity {
             format!(
                 "Group {number} (fingerprint: {fingerprint}, similarity: {:.0}%, {members} members):",
-                group.similarity * 100.0
+                group.similarity() * 100.0
             )
         } else {
             format!("Group {number} (fingerprint: {fingerprint}, {members} members):")
@@ -102,20 +102,19 @@ impl GroupSection {
     fn member_line(&self, member: &CodeUnit, base: Option<&Path>) -> String {
         format!(
             "  - {} ({}){} at {}:{}-{}",
-            member.name,
-            member.kind,
+            member.name(),
+            member.kind(),
             self.parent_of(member),
-            DisplayPath::of(base, &member.file),
-            member.line_start,
-            member.line_end,
+            DisplayPath::of(base, member.file()),
+            member.line_start(),
+            member.line_end(),
         )
     }
 
     fn parent_of(&self, member: &CodeUnit) -> String {
         if self.show_parent {
             member
-                .parent_name
-                .as_deref()
+                .parent_name()
                 .map_or_else(String::new, |parent| format!(" in {parent}"))
         } else {
             String::new()
@@ -132,7 +131,7 @@ impl GroupSection {
     fn write_group(&self, number: usize, group: &DuplicateGroup, base: Option<&Path>) -> String {
         let mut out = String::new();
         let _ = writeln!(out, "{}", self.heading(number, group));
-        for member in &group.members {
+        for member in group.members() {
             let _ = writeln!(out, "{}", self.member_line(member, base));
         }
         let _ = writeln!(out);

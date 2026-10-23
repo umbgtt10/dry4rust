@@ -86,10 +86,10 @@ impl<'a> CommandDispatcher<'a> {
     }
 
     fn render(&self, command: &Command, output: &AnalysisOutput) -> CliResult<CommandOutcome> {
-        let reporter: &dyn Reporter = &*output.reporter;
+        let reporter: &dyn Reporter = output.reporter();
         match command {
-            Command::Stats => StatsCommand::new(&output.result, reporter).run(),
-            Command::Report => ReportCommand::new(&output.result, reporter).run(),
+            Command::Stats => StatsCommand::new(output.result(), reporter).run(),
+            Command::Report => ReportCommand::new(output.result(), reporter).run(),
             Command::Check {
                 max_exact,
                 max_near,
@@ -103,20 +103,20 @@ impl<'a> CommandDispatcher<'a> {
                     *max_near_percent,
                 )
                 .map_err(|e| CliError::InvalidConfig(e.to_string()))?;
-                CheckCommand::new(&output.config, &output.result, reporter, &thresholds).run()
+                CheckCommand::new(output.config(), output.result(), reporter, &thresholds).run()
             }
             Command::Cleanup { dry_run } => {
-                CleanupCommand::new(self.root, &output.result, *dry_run).run()
+                CleanupCommand::new(self.root, output.result(), *dry_run).run()
             }
             Command::Baseline { dry_run } => {
-                BaselineCommand::new(self.root, &output.config, &output.result, *dry_run).run()
+                BaselineCommand::new(self.root, output.config(), output.result(), *dry_run).run()
             }
             Command::Ignore { .. } | Command::Ignored => unreachable!(),
         }
     }
 
     fn report_warnings(output: &AnalysisOutput) {
-        for warning in &output.result.warnings {
+        for warning in output.result().warnings() {
             eprintln!("Warning: {warning}");
         }
     }

@@ -10,9 +10,11 @@ use std::path::Path;
 use std::path::PathBuf;
 
 fn parented(name: &str, parent: &str) -> DuplicateGroup {
-    let mut group = group(0x11, &[name]);
-    group.members[0].parent_name = Some(parent.to_owned());
-    group
+    let base = group(0x11, &[name]);
+    let member = base.members()[0]
+        .clone()
+        .with_parent_name(Some(parent.to_owned()));
+    DuplicateGroup::new(base.fingerprint(), vec![member], base.similarity())
 }
 
 fn written(section: &GroupSection, groups: &[DuplicateGroup], base: Option<&Path>) -> String {
@@ -89,8 +91,15 @@ fn write_over_an_empty_sub_section_says_nothing_at_all() {
 #[test]
 fn write_shows_a_member_path_relative_to_the_base_it_is_given() {
     // Arrange
-    let mut groups = vec![group(0x11, &["a"])];
-    groups[0].members[0].file = PathBuf::from("/project/src/lib.rs");
+    let base = group(0x11, &["a"]);
+    let member = base.members()[0]
+        .clone()
+        .with_file(PathBuf::from("/project/src/lib.rs"));
+    let groups = vec![DuplicateGroup::new(
+        base.fingerprint(),
+        vec![member],
+        base.similarity(),
+    )];
 
     // Act
     let output = written(&GroupSection::exact(), &groups, Some(Path::new("/project")));

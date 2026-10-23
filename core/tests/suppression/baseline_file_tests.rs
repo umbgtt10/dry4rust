@@ -143,9 +143,9 @@ fn record_orders_entries_by_kind_then_fingerprint() {
 
     // Assert
     let order: Vec<_> = recorded
-        .entries
+        .entries()
         .iter()
-        .map(|entry| (entry.kind, entry.fingerprint.as_str()))
+        .map(|entry| (entry.kind(), entry.fingerprint()))
         .collect();
     assert_eq!(
         order,
@@ -165,10 +165,7 @@ fn save_where_the_parent_is_a_file_reports_the_failure() {
     let tmp = TempDir::new().expect("temp dir");
     let blocker = tmp.path().join("blocker");
     fs::write(&blocker, "not a directory").expect("write");
-    let recorded = BaselineFile {
-        version: FORMAT_VERSION,
-        entries: Vec::new(),
-    };
+    let recorded = BaselineFile::new(FORMAT_VERSION, Vec::new());
 
     // Act
     let outcome = recorded.save(&blocker.join("dry4rust-baseline.json"));
@@ -181,4 +178,21 @@ fn save_where_the_parent_is_a_file_reports_the_failure() {
         message.contains("baseline"),
         "a write that failed says which file it was, got: {message}"
     );
+}
+
+#[test]
+fn version_of_a_recording_is_the_format_this_build_writes() {
+    // Arrange
+    let recorded = BaselineFile::record(&result_with(
+        vec![group(0x11, &["a", "b"])],
+        vec![],
+        vec![],
+        vec![],
+    ));
+
+    // Act
+    let version = recorded.version();
+
+    // Assert
+    assert_eq!(version, FORMAT_VERSION);
 }

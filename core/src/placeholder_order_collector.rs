@@ -30,12 +30,12 @@ impl PlaceholderOrderCollector {
     pub fn collect(&mut self, node: &NormalizedNode) {
         if let NodeKind::Placeholder(kind, idx)
         | NodeKind::PatPlaceholder(kind, idx)
-        | NodeKind::TypePlaceholder(kind, idx) = &node.kind
+        | NodeKind::TypePlaceholder(kind, idx) = node.kind()
             && self.seen.insert((*kind, *idx))
         {
             self.order.push((*kind, *idx));
         }
-        for child in &node.children {
+        for child in node.children() {
             self.collect(child);
         }
     }

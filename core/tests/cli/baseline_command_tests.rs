@@ -20,15 +20,13 @@ fn recorded(dry_run: bool) -> (TempDir, String) {
         vec![],
         vec![],
     );
-    let config = Config {
-        root: tmp.path().to_path_buf(),
-        ..Config::default()
-    };
+    let config = Config::default().with_root(tmp.path().to_path_buf());
 
     let text = BaselineCommand::new(tmp.path(), &config, &result, dry_run)
         .run()
         .expect("recording succeeds")
-        .text;
+        .text()
+        .to_string();
 
     (tmp, text)
 }
@@ -61,16 +59,14 @@ fn run_over_a_clean_result_records_nothing_and_says_so() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let result = result_with(vec![], vec![], vec![], vec![]);
-    let config = Config {
-        root: tmp.path().to_path_buf(),
-        ..Config::default()
-    };
+    let config = Config::default().with_root(tmp.path().to_path_buf());
 
     // Act
     let text = BaselineCommand::new(tmp.path(), &config, &result, false)
         .run()
         .expect("recording succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(
@@ -93,11 +89,9 @@ fn run_with_an_unwritable_baseline_keeps_the_entries_it_listed_and_fails() {
         vec![],
         vec![],
     );
-    let config = Config {
-        root: tmp.path().to_path_buf(),
-        baseline: Some(tmp.path().join("blocker").join("baseline.json")),
-        ..Config::default()
-    };
+    let config = Config::default()
+        .with_root(tmp.path().to_path_buf())
+        .with_baseline(Some(tmp.path().join("blocker").join("baseline.json")));
 
     // Act
     let outcome = BaselineCommand::new(tmp.path(), &config, &result, false)
@@ -106,8 +100,8 @@ fn run_with_an_unwritable_baseline_keeps_the_entries_it_listed_and_fails() {
 
     // Assert
     assert_eq!(
-        outcome.text,
+        outcome.text(),
         "  exact 0000000000000011 (2 members: process_data, compute_total)\n"
     );
-    assert!(matches!(outcome.result, Err(CliError::Analysis(_))));
+    assert!(matches!(outcome.result(), Err(CliError::Analysis(_))));
 }

@@ -24,16 +24,14 @@ fn checked(exact: usize, thresholds: &CheckThresholds) -> (CliResult, String) {
         .run()
         .expect("check produces a report");
 
-    (outcome.result, outcome.text)
+    outcome.into_parts()
 }
 
 #[test]
 fn run_over_a_clean_result_passes_with_a_ceiling_of_zero() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact: Some(0),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(Some(0), None, None, None).expect("every ceiling is in range");
 
     // Act
     let (outcome, text) = checked(0, &thresholds);
@@ -46,10 +44,8 @@ fn run_over_a_clean_result_passes_with_a_ceiling_of_zero() {
 #[test]
 fn run_with_a_ceiling_above_the_findings_passes() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact: Some(9999),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(Some(9999), None, None, None).expect("every ceiling is in range");
 
     // Act
     let (outcome, _) = checked(2, &thresholds);
@@ -61,10 +57,8 @@ fn run_with_a_ceiling_above_the_findings_passes() {
 #[test]
 fn run_with_a_zero_ceiling_fails_on_any_group() {
     // Arrange
-    let thresholds = CheckThresholds {
-        max_exact: Some(0),
-        ..CheckThresholds::default()
-    };
+    let thresholds =
+        CheckThresholds::new(Some(0), None, None, None).expect("every ceiling is in range");
 
     // Act
     let (outcome, text) = checked(1, &thresholds);

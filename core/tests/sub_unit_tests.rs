@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::node::NodeKind;
 use dry4rust::node::NormalizedNode;
 use dry4rust::sub_unit::SubUnit;
@@ -32,4 +33,18 @@ fn extract_sub_units_with_a_high_minimum_returns_nothing() {
 
     // Assert
     assert!(units.is_empty());
+}
+
+#[test]
+fn new_keeps_the_node_count_it_was_given() {
+    // Arrange & Act
+    let unit = SubUnit::new(
+        CodeUnitKind::Block,
+        NormalizedNode::leaf(NodeKind::Opaque),
+        7,
+        String::from("block"),
+    );
+
+    // Assert
+    assert_eq!(unit.node_count(), 7);
 }

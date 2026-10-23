@@ -10,21 +10,15 @@ use dry4rust::output::duplication_stats::DuplicationStats;
 #[test]
 fn duplication_stats_percentages_match_their_counts() {
     // Arrange & Act
-    let stats = DuplicationStats {
-        total_code_units: 10,
-        total_lines: 200,
-        exact_duplicate_groups: 2,
-        exact_duplicate_units: 4,
-        near_duplicate_groups: 1,
-        near_duplicate_units: 3,
-        exact_duplicate_lines: 50,
-        near_duplicate_lines: 30,
-        sub_exact_groups: 0,
-        sub_exact_units: 0,
-        sub_near_groups: 0,
-        sub_near_units: 0,
-        baseline_suppressed: None,
-    };
+    let stats = DuplicationStats::default()
+        .with_total_code_units(10)
+        .with_total_lines(200)
+        .with_exact_duplicate_groups(2)
+        .with_exact_duplicate_units(4)
+        .with_near_duplicate_groups(1)
+        .with_near_duplicate_units(3)
+        .with_exact_duplicate_lines(50)
+        .with_near_duplicate_lines(30);
 
     // Assert
     assert!((stats.exact_duplicate_percent() - 25.0).abs() < f64::EPSILON);
@@ -34,21 +28,7 @@ fn duplication_stats_percentages_match_their_counts() {
 #[test]
 fn percentage_helpers_zero_total() {
     // Arrange & Act
-    let stats = DuplicationStats {
-        total_code_units: 0,
-        total_lines: 0,
-        exact_duplicate_groups: 0,
-        exact_duplicate_units: 0,
-        near_duplicate_groups: 0,
-        near_duplicate_units: 0,
-        exact_duplicate_lines: 0,
-        near_duplicate_lines: 0,
-        sub_exact_groups: 0,
-        sub_exact_units: 0,
-        sub_near_groups: 0,
-        sub_near_units: 0,
-        baseline_suppressed: None,
-    };
+    let stats = DuplicationStats::default();
 
     // Assert
     assert!((stats.exact_duplicate_percent() - 0.0).abs() < f64::EPSILON);
@@ -68,12 +48,73 @@ fn with_baseline_suppressed_distinguishes_none_suppressed_from_no_baseline() {
 
     // Assert
     assert_eq!(
-        judged.baseline_suppressed,
+        judged.baseline_suppressed(),
         Some(0),
         "a baseline that suppressed nothing is still a baseline that was applied"
     );
     assert_eq!(
-        unjudged.baseline_suppressed, None,
+        unjudged.baseline_suppressed(),
+        None,
         "and no baseline at all is a different fact"
     );
+}
+
+#[test]
+fn with_near_duplicate_units_sets_the_units_in_near_groups() {
+    // Arrange
+    let stats = DuplicationStats::default();
+
+    // Act
+    let stats = stats.with_near_duplicate_units(4);
+
+    // Assert
+    assert_eq!(stats.near_duplicate_units(), 4);
+}
+
+#[test]
+fn with_sub_exact_groups_sets_the_sub_function_exact_groups() {
+    // Arrange
+    let stats = DuplicationStats::default();
+
+    // Act
+    let stats = stats.with_sub_exact_groups(2);
+
+    // Assert
+    assert_eq!(stats.sub_exact_groups(), 2);
+}
+
+#[test]
+fn with_sub_exact_units_sets_the_units_in_sub_function_exact_groups() {
+    // Arrange
+    let stats = DuplicationStats::default();
+
+    // Act
+    let stats = stats.with_sub_exact_units(5);
+
+    // Assert
+    assert_eq!(stats.sub_exact_units(), 5);
+}
+
+#[test]
+fn with_sub_near_groups_sets_the_sub_function_near_groups() {
+    // Arrange
+    let stats = DuplicationStats::default();
+
+    // Act
+    let stats = stats.with_sub_near_groups(3);
+
+    // Assert
+    assert_eq!(stats.sub_near_groups(), 3);
+}
+
+#[test]
+fn with_sub_near_units_sets_the_units_in_sub_function_near_groups() {
+    // Arrange
+    let stats = DuplicationStats::default();
+
+    // Act
+    let stats = stats.with_sub_near_units(6);
+
+    // Assert
+    assert_eq!(stats.sub_near_units(), 6);
 }

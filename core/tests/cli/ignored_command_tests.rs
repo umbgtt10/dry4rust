@@ -19,7 +19,8 @@ fn run_after_ignore_lists_what_was_added() {
     let listed = IgnoredCommand::new(tmp.path())
         .run()
         .expect("listing succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert!(listed.contains("Ignored fingerprints:"), "{listed}");
@@ -36,7 +37,8 @@ fn run_without_an_ignore_file_says_there_is_nothing_ignored() {
     let listed = IgnoredCommand::new(tmp.path())
         .run()
         .expect("listing succeeds")
-        .text;
+        .text()
+        .to_string();
 
     // Assert
     assert_eq!(listed, "No ignored fingerprints.\n");

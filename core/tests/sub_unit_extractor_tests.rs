@@ -35,8 +35,8 @@ fn extract_from_a_closure_takes_the_first_child_as_the_body() {
 
     // Assert
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].description, "closure body");
-    assert_eq!(units[0].kind, CodeUnitKind::Block);
+    assert_eq!(units[0].description(), "closure body");
+    assert_eq!(*units[0].kind(), CodeUnitKind::Block);
 }
 
 #[test]
@@ -56,8 +56,8 @@ fn extract_from_a_for_loop_takes_the_third_child_as_the_body() {
 
     // Assert
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].description, "for body");
-    assert_eq!(units[0].kind, CodeUnitKind::LoopBody);
+    assert_eq!(units[0].description(), "for body");
+    assert_eq!(*units[0].kind(), CodeUnitKind::LoopBody);
 }
 
 #[test]
@@ -70,8 +70,8 @@ fn extract_from_a_loop_takes_the_first_child_as_the_body() {
 
     // Assert
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].description, "loop body");
-    assert_eq!(units[0].kind, CodeUnitKind::LoopBody);
+    assert_eq!(units[0].description(), "loop body");
+    assert_eq!(*units[0].kind(), CodeUnitKind::LoopBody);
 }
 
 #[test]
@@ -92,7 +92,10 @@ fn extract_from_a_match_numbers_its_arms_from_one() {
     let units = SubUnitExtractor::new(1).extract(&match_node);
 
     // Assert
-    let descriptions: Vec<&str> = units.iter().map(|u| u.description.as_str()).collect();
+    let descriptions: Vec<&str> = units
+        .iter()
+        .map(dry4rust::sub_unit::SubUnit::description)
+        .collect();
     assert_eq!(
         descriptions,
         vec!["match arm 1", "match arm 2", "match arm 3"]
@@ -115,7 +118,8 @@ fn extract_from_a_match_skips_an_arm_that_has_no_body() {
     // Assert
     assert_eq!(units.len(), 1);
     assert_eq!(
-        units[0].description, "match arm 2",
+        units[0].description(),
+        "match arm 2",
         "the surviving arm keeps its own position, not a renumbered one"
     );
 }
@@ -133,7 +137,7 @@ fn extract_from_a_while_takes_the_second_child_as_the_body() {
 
     // Assert
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].description, "while body");
+    assert_eq!(units[0].description(), "while body");
 }
 
 #[test]
@@ -148,7 +152,10 @@ fn extract_from_an_if_with_a_real_else_returns_both_branches_in_order() {
     let units = SubUnitExtractor::new(1).extract(&if_node);
 
     // Assert
-    let descriptions: Vec<&str> = units.iter().map(|u| u.description.as_str()).collect();
+    let descriptions: Vec<&str> = units
+        .iter()
+        .map(dry4rust::sub_unit::SubUnit::description)
+        .collect();
     assert_eq!(descriptions, vec!["if-then branch", "if-else branch"]);
 }
 
@@ -169,7 +176,7 @@ fn extract_from_an_if_without_an_else_returns_only_the_then_branch() {
 
     // Assert
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].description, "if-then branch");
+    assert_eq!(units[0].description(), "if-then branch");
 }
 
 #[test]
@@ -185,7 +192,10 @@ fn extract_over_a_nested_tree_reports_the_outer_body_before_the_inner_one() {
     let units = SubUnitExtractor::new(1).extract(&outer);
 
     // Assert
-    let descriptions: Vec<&str> = units.iter().map(|u| u.description.as_str()).collect();
+    let descriptions: Vec<&str> = units
+        .iter()
+        .map(dry4rust::sub_unit::SubUnit::description)
+        .collect();
     assert_eq!(
         descriptions,
         vec!["while body", "loop body"],
