@@ -419,6 +419,11 @@ Exit codes:
 | **Trait impls** | `fn` items inside `impl Trait for Type` blocks |
 | **Closures** | Closure expressions (above the min node threshold) |
 
+A **plain constructor** is not analyzed: a method in an inherent impl whose whole body builds the impl's own type from
+its parameters -- `Self { x, y }`, `Self { start: first }`, `Self(left, right)`. Its fingerprint is the struct's
+shape, so two of them with as many fields would match whatever they build. A constructor that converts, defaults or
+computes a field is analyzed as before ([ADR](docs/ADRs/ADR-PlainConstructorsAreTheStructsShape.md)).
+
 The scanner automatically:
 - Skips `target/` directories
 - Skips hidden directories (starting with `.`)

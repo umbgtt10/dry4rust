@@ -6,4 +6,5 @@
 pub mod code_unit_extractor_tests;
 pub mod normalizer;
 pub mod parser_tests;
+pub mod plain_constructor_tests;
 pub mod rust_analyzer_tests;

@@ -9,12 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-The binary is unchanged: its command line, output, exit codes and file formats
-are exactly 0.4.0's. The library is not: seven `core/` modules are renamed,
-split or moved, and two types renamed, so each file is named after its
-subject.
+The binary changes in one respect: a plain constructor -- a method in an
+inherent impl whose whole body builds its own type from its parameters -- is no
+longer a code unit, so it is neither reported nor counted against a ceiling.
+Its command line, exit codes and file formats are 0.4.0's. The library changes
+more: seven `core/` modules are renamed, split or moved, and two types renamed,
+so each file is named after its subject.
 
 ### Changed
+- **A plain constructor is not a code unit.** `Self { x, y }`, `Self { start:
+  first }` and `Self(left, right)`, the whole body of a method in an inherent
+  impl, built from that method's parameters alone, fingerprint as the struct's
+  field count: stern4rust's coming `private-fields` rule makes every struct
+  have one, and two with as many fields formed an exact-duplicate group over no
+  copied logic. `PlainConstructor::is_plain` decides and `CodeUnitExtractor`
+  skips them; a constructor that converts, defaults or computes a field is
+  analyzed as before. Trait impls' functions are unaffected
+  (ADR-PlainConstructorsAreTheStructsShape).
 - `DEFAULT_BASELINE_FILE` and `FORMAT_VERSION` move out of
   `suppression::baseline_file` into `suppression::baseline_constants`, a file
   of constants, which stern4rust's coming `shared-constants` rule asks of a

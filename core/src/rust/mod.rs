@@ -6,4 +6,5 @@
 pub mod code_unit_extractor;
 pub mod normalizer;
 pub mod parser;
+pub mod plain_constructor;
 pub mod rust_analyzer;

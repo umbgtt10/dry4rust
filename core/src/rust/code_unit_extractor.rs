@@ -16,6 +16,7 @@ use crate::fingerprint::Fingerprint;
 use crate::node::NormalizedNode;
 use crate::rust::parser::has_cfg_test_attr;
 use crate::rust::parser::has_test_attr;
+use crate::rust::plain_constructor::PlainConstructor;
 use syn::ExprClosure;
 use syn::ItemFn;
 use syn::ItemImpl;
@@ -174,6 +175,9 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         // Visit each method in the impl block
         for item in &node.items {
             if let syn::ImplItem::Fn(method) = item {
+                if !is_trait_impl && PlainConstructor::is_plain(method, &type_name) {
+                    continue;
+                }
                 let method_name = method.sig.ident.to_string();
                 let full_name = if is_trait_impl {
                     format!("<{type_name} as {trait_name}>::{method_name}")

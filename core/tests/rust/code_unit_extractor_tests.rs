@@ -33,12 +33,50 @@ fn into_units_after_visiting_a_function_holds_it_with_its_file() {
 }
 
 #[test]
+fn into_units_keeps_a_constructor_that_converts_its_parameters() {
+    // Arrange & Act
+    let units = visited(
+        "impl Named { fn new(name: &str, line: usize) -> Self { Self { name: name.to_string(), line } } }",
+        1,
+    );
+
+    // Assert
+    assert_eq!(units.len(), 1);
+    assert_eq!(units[0].name, "Named::new");
+}
+
+#[test]
+fn into_units_keeps_a_trait_impls_plain_function() {
+    // Arrange & Act
+    let units = visited(
+        "impl From<i32> for Meters { fn from(value: i32) -> Self { Self(value) } }",
+        1,
+    );
+
+    // Assert
+    assert_eq!(units.len(), 1);
+}
+
+#[test]
 fn into_units_leaves_out_a_function_below_the_node_floor() {
     // Arrange & Act
     let units = visited(SOURCE, 10_000);
 
     // Assert
     assert!(units.is_empty());
+}
+
+#[test]
+fn into_units_leaves_out_a_plain_constructor() {
+    // Arrange & Act
+    let units = visited(
+        "impl Point { fn new(x: i32, y: i32) -> Self { Self { x, y } } fn sum(&self) -> i32 { self.x + self.y } }",
+        1,
+    );
+
+    // Assert
+    assert_eq!(units.len(), 1);
+    assert_eq!(units[0].name, "Point::sum");
 }
 
 #[test]
