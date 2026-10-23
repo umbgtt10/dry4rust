@@ -472,7 +472,8 @@ argument lists and failure messages are covered by its own integration tests.
 `xtask` is itself a workspace member and is gated like everything else — the
 crate that runs the gates is not exempt from them.
 
-Its second gate is dry4rust run on itself: this checkout's binary, built from
+Its second gate is `cargo shear`, every declared dependency used; its third is
+dry4rust run on itself: this checkout's binary, built from
 source rather than installed, over `core/src` with zero ceilings against
 `dry4rust-baseline.json`, at a floor of 25 AST nodes. A tool that enforces a
 check it does not pass is not worth installing. It needs nothing beyond cargo,
@@ -489,6 +490,7 @@ Everything the two stages need, none of which ships with cargo:
 | `cargo-crap4rust` | `cargo install cargo-crap4rust` | stage 2 |
 | `cargo-twin4rust` | `cargo install cargo-twin4rust` | stage 2 |
 | `cargo-iceberg4rust` | `cargo install cargo-iceberg4rust` | stage 2 |
+| [`cargo-shear`](https://github.com/Boshen/cargo-shear) | `cargo install --locked cargo-shear --version 1.14.0` | stage 2 |
 
 `cargo-llvm-cov` and `llvm-tools` are what the CRAP gate needs; without them it
 fails with a bare exit code that says nothing about a missing install.

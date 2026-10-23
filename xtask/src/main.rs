@@ -12,6 +12,7 @@ use xtask::gates::crap_gate::CrapGate;
 use xtask::gates::dry_self_gate::DrySelfGate;
 use xtask::gates::gate::Gate;
 use xtask::gates::iceberg_gate::IcebergGate;
+use xtask::gates::shear_gate::ShearGate;
 use xtask::gates::stage2::Stage2;
 use xtask::gates::stern_gate::SternGate;
 use xtask::gates::twin_gate::TwinGate;
@@ -49,7 +50,12 @@ fn run_stage2() -> ExitCode {
     // sees.
     let stern = SternGate::new(&runner, manifest_path.clone(), Vec::new());
 
-    // Second, for the same reason stern4rust is first: removing a duplicate
+    // Second: every declared dependency used, in the section that uses it. Its
+    // corrections edit manifests only, so they move nothing the gates behind it
+    // measure, and it costs a second.
+    let shear = ShearGate::new(&runner, manifest_path.clone());
+
+    // Third, for the same reason stern4rust is first: removing a duplicate
     // moves code between files, which changes what the three behind it measure.
     // This checkout's own dry4rust, built from source -- a tool that enforces a
     // check it does not pass is not worth installing. The published crate's
@@ -99,7 +105,7 @@ fn run_stage2() -> ExitCode {
         String::from(ICEBERG_THRESHOLD),
     );
 
-    let gates: Vec<&dyn Gate> = vec![&stern, &dry, &crap, &twin, &iceberg];
+    let gates: Vec<&dyn Gate> = vec![&stern, &shear, &dry, &crap, &twin, &iceberg];
 
     match Stage2::new(gates).run() {
         Ok(()) => {

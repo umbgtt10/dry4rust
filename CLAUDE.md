@@ -55,13 +55,14 @@ warn, that combination is what holds the tests to the same bar as the sources.
 Stage 2 is `cargo xtask stage2` -- a real crate under `xtask/`, gated like any
 other code, rather than a script. Each gate is a `Gate` implementation
 constructed against a `CommandRunner` trait, so the argument lists and the
-failure messages are covered by `xtask`'s own integration tests. It runs five
-gates, in this order -- four installed cargo subcommands and this checkout's own
+failure messages are covered by `xtask`'s own integration tests. It runs six
+gates, in this order -- five installed cargo subcommands and this checkout's own
 dry4rust, built from source:
 
 | gate | asks |
 |---|---|
 | `cargo stern4rust` | do the house coding rules hold |
+| `cargo shear` | is every declared dependency used, in the section that uses it |
 | own duplication (`dry4rust`, from source) | did this change add duplicated code |
 | `cargo crap4rust` | is any function complex and untested |
 | `cargo twin4rust` | does every source file have a mirrored test file |
@@ -71,7 +72,20 @@ stern4rust runs **first** because its corrections are renames, file moves and
 directory splits: a layout it is about to reject is a layout the others would
 have measured for nothing. Its findings are also the cheapest to act on.
 
-dry4rust runs **second**, for the same reason: removing a duplicate moves code
+cargo-shear runs **second**, after the house rules: its corrections edit
+manifests only -- a dependency removed, or moved to the section that uses it --
+so they change nothing the gates behind it measure, and it takes a second. It
+runs `--locked`, reading the lock file and never writing it, and
+`--deny-warnings`, so an optional dependency no feature's code uses fails as an
+unused one does. A dependency it cannot see used -- linked only for what it
+provides, declared only to switch on a feature, used only by generated code --
+goes in `[package.metadata.cargo-shear] ignored`, or the workspace's, and the
+gate refuses an entry without its reason in the same table's `reasons`. The one
+today is `proc-macro2`, declared for its `span-locations` feature: the code unit
+extractor reads line numbers from syn's spans, and only that feature gives a
+span its line. Pinned at 1.14.0, as CI installs it.
+
+dry4rust runs **third**, for the same reason: removing a duplicate moves code
 between files, which changes what the three behind it measure. It is this
 checkout's dry4rust, run with `cargo run --bin cargo-dry4rust`, never an
 installed copy. A tool that enforces a check it does not pass is not worth
@@ -169,6 +183,7 @@ move is the one taken here: split the function.
 `cargo install cargo-crap4rust`
 `cargo install cargo-twin4rust`
 `cargo install cargo-iceberg4rust`
+`cargo install --locked cargo-shear --version 1.14.0`
 
 cargo-dry4rust is deliberately not in that list; the gate builds it from this
 checkout.
