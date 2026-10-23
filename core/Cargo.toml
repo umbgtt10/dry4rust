@@ -40,9 +40,7 @@ toml = { workspace = true }
 walkdir = { workspace = true }
 
 [dev-dependencies]
-assert_cmd = { workspace = true }
 clap = { workspace = true }
-predicates = { workspace = true }
 tempfile = { workspace = true }
 
 # Upstream's lint configuration, kept. pedantic and nursery at warn are

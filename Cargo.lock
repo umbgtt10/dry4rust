@@ -109,9 +109,7 @@ dependencies = [
 name = "cargo-dry4rust"
 version = "0.4.0"
 dependencies = [
- "assert_cmd",
  "clap",
- "predicates",
  "proc-macro2",
  "serde",
  "serde_json",
@@ -635,7 +633,6 @@ dependencies = [
  "predicates",
  "serde_json",
  "tempfile",
- "toml",
 ]
 
 [[package]]

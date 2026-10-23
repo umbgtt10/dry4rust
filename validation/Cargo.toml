@@ -43,4 +43,3 @@ tempfile = { workspace = true }
 [dev-dependencies]
 predicates = { workspace = true }
 serde_json = { workspace = true }
-toml = { workspace = true }
