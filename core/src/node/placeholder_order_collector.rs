@@ -5,9 +5,9 @@
 
 use std::collections::HashSet;
 
-use crate::node::NodeKind;
-use crate::node::NormalizedNode;
-use crate::node::PlaceholderKind;
+use crate::node::node_kind::NodeKind;
+use crate::node::normalized_node::NormalizedNode;
+use crate::node::placeholder_kind::PlaceholderKind;
 
 /// Gathers every placeholder occurrence in first-occurrence depth-first order,
 /// deduplicating by (kind, old index) so a placeholder is recorded once.

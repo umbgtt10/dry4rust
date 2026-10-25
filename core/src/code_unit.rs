@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use crate::code_unit_kind::CodeUnitKind;
 use crate::fingerprint::Fingerprint;
-use crate::node::NormalizedNode;
+use crate::node::normalized_node::NormalizedNode;
 
 /// A unit of code extracted and normalized for duplication analysis.
 #[derive(Debug, Clone, Default)]

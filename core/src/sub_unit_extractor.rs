@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: MIT
 
 use crate::code_unit_kind::CodeUnitKind;
-use crate::node::NodeKind;
-use crate::node::NormalizedNode;
+use crate::node::node_kind::NodeKind;
+use crate::node::normalized_node::NormalizedNode;
 use crate::sub_unit::SubUnit;
 
 /// Walks a normalized tree and collects the compound structures inside it.

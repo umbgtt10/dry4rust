@@ -3,12 +3,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::node::BinOpKind;
-use crate::node::LiteralKind;
-use crate::node::NodeKind;
-use crate::node::NormalizedNode;
-use crate::node::PlaceholderKind;
-use crate::node::UnOpKind;
+use crate::node::bin_op_kind::BinOpKind;
+use crate::node::literal_kind::LiteralKind;
+use crate::node::node_kind::NodeKind;
+use crate::node::normalized_node::NormalizedNode;
+use crate::node::placeholder_kind::PlaceholderKind;
+use crate::node::un_op_kind::UnOpKind;
 use crate::rust::normalizer::normalized_fn::NormalizedFn;
 use std::collections::HashMap;
 use syn::BinOp;

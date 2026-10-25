@@ -10,10 +10,11 @@ use crate::analyzer::LanguageAnalyzer;
 use crate::code_unit::CodeUnit;
 use crate::config::Config;
 use crate::duplicate_group::DuplicateGroup;
+use crate::duplication_stats::DuplicationStats;
 use crate::error::Result;
 use crate::fingerprint::Fingerprint;
-use crate::node::NormalizedNode;
-use crate::output::duplication_stats::DuplicationStats;
+use crate::node::node_kind::NodeKind;
+use crate::node::normalized_node::NormalizedNode;
 use crate::sub_unit::SubUnit;
 use crate::suppression::baseline_filter::BaselineFilter;
 use crate::suppression::baseline_kind::BaselineKind;
@@ -105,7 +106,7 @@ impl Analysis {
                         file: unit.file.clone(),
                         line_start: unit.line_start,
                         line_end: unit.line_end,
-                        signature: NormalizedNode::leaf(crate::node::NodeKind::Opaque),
+                        signature: NormalizedNode::leaf(NodeKind::Opaque),
                         body: su.node().clone(),
                         fingerprint: Fingerprint::from_node(su.node()),
                         node_count: su.node_count(),

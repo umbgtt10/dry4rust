@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::output::display_path::DisplayPath;
+use dry4rust::cli::output::display_path::DisplayPath;
 use std::path::Path;
 
 #[test]

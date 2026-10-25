@@ -6,8 +6,8 @@
 use crate::analysis::Analysis;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
-use crate::output::report::Report;
-use crate::output::reporter::Reporter;
+use crate::cli::output::report::Report;
+use crate::cli::output::reporter::Reporter;
 
 /// `report`: the summary followed by every group that survived filtering.
 ///

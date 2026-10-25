@@ -9,8 +9,8 @@ use dry4rust::fingerprint::Fingerprint;
 use dry4rust::near_duplicate::pair_key::PairKey;
 use dry4rust::near_duplicate::pair_scanner::PairScanner;
 use dry4rust::near_duplicate::similarity_pair::SimilarityPair;
-use dry4rust::node::NodeKind;
-use dry4rust::node::NormalizedNode;
+use dry4rust::node::node_kind::NodeKind;
+use dry4rust::node::normalized_node::NormalizedNode;
 use std::path::PathBuf;
 
 fn sized_unit(kind: CodeUnitKind, node_count: usize) -> CodeUnit {

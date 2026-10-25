@@ -16,6 +16,7 @@ pub mod entry_point;
 pub mod ignore_command;
 pub mod ignore_entry_line;
 pub mod ignored_command;
+pub mod output;
 pub mod output_format;
 pub mod report_command;
 pub mod stats_command;

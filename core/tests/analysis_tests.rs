@@ -10,11 +10,11 @@
 use dry4rust::analysis::Analysis;
 use dry4rust::config::Config;
 use dry4rust::duplicate_group::DuplicateGroup;
+use dry4rust::duplication_stats::DuplicationStats;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::near_duplicate::similarity::similarity_score;
-use dry4rust::node::NodeKind;
-use dry4rust::node::NormalizedNode;
-use dry4rust::output::duplication_stats::DuplicationStats;
+use dry4rust::node::node_kind::NodeKind;
+use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
 use dry4rust::rust::rust_analyzer::RustAnalyzer;

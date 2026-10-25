@@ -1,0 +1,8 @@
+// Copyright (c) 2026 Matjaz Domen Pecan
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
+pub mod node_encoder_tests;
+pub mod normalized_node_tests;
+pub mod placeholder_order_collector_tests;

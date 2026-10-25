@@ -4,17 +4,17 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
+use dry4rust::cli::output::check_breach::CheckBreach;
+use dry4rust::cli::output::display_path::DisplayPath;
+use dry4rust::cli::output::reporter::Reporter;
+use dry4rust::cli::output::text_reporter::*;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::duplicate_group::DuplicateGroup;
+use dry4rust::duplication_stats::DuplicationStats;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::node::NodeKind;
-use dry4rust::node::NormalizedNode;
-use dry4rust::output::check_breach::CheckBreach;
-use dry4rust::output::display_path::DisplayPath;
-use dry4rust::output::duplication_stats::DuplicationStats;
-use dry4rust::output::reporter::Reporter;
-use dry4rust::output::text_reporter::*;
+use dry4rust::node::node_kind::NodeKind;
+use dry4rust::node::normalized_node::NormalizedNode;
 use std::path::Path;
 use std::path::PathBuf;
 

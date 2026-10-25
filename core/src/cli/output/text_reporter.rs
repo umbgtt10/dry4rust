@@ -6,12 +6,12 @@
 use std::fmt::Write as _;
 use std::io;
 
+use crate::cli::output::check_breach::CheckBreach;
+use crate::cli::output::group_section::GroupSection;
+use crate::cli::output::report::Report;
+use crate::cli::output::reporter::Reporter;
 use crate::duplicate_group::DuplicateGroup;
-use crate::output::check_breach::CheckBreach;
-use crate::output::duplication_stats::DuplicationStats;
-use crate::output::group_section::GroupSection;
-use crate::output::report::Report;
-use crate::output::reporter::Reporter;
+use crate::duplication_stats::DuplicationStats;
 use std::path::PathBuf;
 
 pub struct TextReporter {

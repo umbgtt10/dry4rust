@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::code_unit_kind::CodeUnitKind;
-use crate::node::NormalizedNode;
+use crate::node::normalized_node::NormalizedNode;
 use crate::sub_unit_extractor::SubUnitExtractor;
 
 /// A sub-unit extracted from a normalized function body.

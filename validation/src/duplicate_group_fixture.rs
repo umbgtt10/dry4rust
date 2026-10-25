@@ -7,8 +7,8 @@ use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::node::NodeKind;
-use dry4rust::node::NormalizedNode;
+use dry4rust::node::node_kind::NodeKind;
+use dry4rust::node::normalized_node::NormalizedNode;
 use std::path::PathBuf;
 
 pub struct DuplicateGroupFixture;

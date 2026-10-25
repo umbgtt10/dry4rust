@@ -3,10 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::node::LiteralKind;
-use dry4rust::node::NodeKind;
-use dry4rust::node::NormalizedNode;
-use dry4rust::node::PlaceholderKind;
+use dry4rust::node::literal_kind::LiteralKind;
+use dry4rust::node::node_kind::NodeKind;
+use dry4rust::node::normalized_node::NormalizedNode;
+use dry4rust::node::placeholder_kind::PlaceholderKind;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 use syn::BinOp;
 use syn::Block;

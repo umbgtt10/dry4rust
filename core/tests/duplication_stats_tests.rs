@@ -5,7 +5,7 @@
 
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::output::duplication_stats::DuplicationStats;
+use dry4rust::duplication_stats::DuplicationStats;
 
 #[test]
 fn duplication_stats_percentages_match_their_counts() {

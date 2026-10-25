@@ -13,7 +13,7 @@ The binary changes in one respect: a plain constructor -- a method in an
 inherent impl whose whole body builds its own type from its parameters -- is no
 longer a code unit, so it is neither reported nor counted against a ceiling.
 Its command line, exit codes and file formats are 0.4.0's. The library changes
-more: seven `core/` modules are renamed, split or moved, and two types renamed,
+more: `core/` modules are renamed, split or moved, and two types renamed,
 so each file is named after its subject; the types with behaviour keep their
 fields behind getters, two that have none lose theirs, and the reporter is built
 where a run is composed rather than by the analysis.
@@ -35,9 +35,9 @@ where a run is composed rather than by the analysis.
   test files `FORMAT_VERSION`. Their values are unchanged.
 - Every source file is named after its subject, which stern4rust 0.16.0's new
   `named-subject` rule asks for. `output::json` and `output::text` are
-  `output::json_reporter` and `output::text_reporter`. `extractor` is
+  `cli::output::json_reporter` and `cli::output::text_reporter`. `extractor` is
   `sub_unit`, after the `SubUnit` it declares. `grouper` is `duplicate_group`,
-  and `DuplicationStats` moves out of it to `output::duplication_stats`.
+  and `DuplicationStats` moves out of it to `duplication_stats`.
   `CodeUnitKind` moves out of `code_unit` to `code_unit_kind`.
   `rust::parser`'s visitor moves to `rust::code_unit_extractor` as
   `CodeUnitExtractor`, with `new` and `into_units` public and three tests of
@@ -54,8 +54,18 @@ where a run is composed rather than by the analysis.
   normaliser's public entry points and helpers are `NormalizationContext`'s;
   `extract_sub_units`, `is_excluded` and `baseline_path` belong to `SubUnit`,
   `Scanner` and `BaselineFile`. `output::reporter::display_path`, beside a trait
-  that cannot hold it, is `output::display_path::DisplayPath::of`, with its
+  that cannot hold it, is `cli::output::display_path::DisplayPath::of`, with its
   three tests. All twenty-four stern4rust rules apply to every member.
+- The node kinds each have a file of their own, which stern4rust's coming
+  `record-home` rule asks of a type the public API names. `node` is a folder:
+  `node::normalized_node::NormalizedNode`, `node::node_kind::NodeKind`,
+  `node::literal_kind::LiteralKind`, `node::placeholder_kind::PlaceholderKind`,
+  `node::bin_op_kind::BinOpKind` and `node::un_op_kind::UnOpKind`, with
+  `node::node_encoder` and `node::placeholder_order_collector` beside them. Its
+  directory slot comes from the reporters: `output::*` is `cli::output::*`, the
+  command line being their only user, and `DuplicationStats`, which the analysis
+  computes, is `duplication_stats::DuplicationStats`. Tests moved with the code
+  they test; none was removed and no assertion changed.
 - `validation` pairs its scenario files with source instead of baselining
   `paired-test-file`. Its shared harness moved out of `tests/common.rs` into
   `validation/src/`, one type per file -- `Fixture` (`path`, `analysed`,
@@ -106,7 +116,7 @@ where a run is composed rather than by the analysis.
   its verdict and its text away together. `CodeUnit`, `CodeUnitKind`
   (`Function`), `Fingerprint`, `NodeKind` (`None`), `NormalizedNode` and
   `DuplicationStats` derive `Default`.
-- `output::check_breach::CheckBreach` and `cli::ignore_entry_line::IgnoreEntryLine`
+- `cli::output::check_breach::CheckBreach` and `cli::ignore_entry_line::IgnoreEntryLine`
   are records: their fields are `pub` and their getters and constructors are
   gone, for stern4rust's coming `records-and-objects` rule. Build them by
   literal, `CheckBreach { message, groups, of_exact }` and

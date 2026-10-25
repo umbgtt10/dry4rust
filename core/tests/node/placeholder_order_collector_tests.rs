@@ -3,10 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::node::NodeKind;
-use dry4rust::node::NormalizedNode;
-use dry4rust::node::PlaceholderKind;
-use dry4rust::placeholder_order_collector::PlaceholderOrderCollector;
+use dry4rust::node::node_kind::NodeKind;
+use dry4rust::node::normalized_node::NormalizedNode;
+use dry4rust::node::placeholder_kind::PlaceholderKind;
+use dry4rust::node::placeholder_order_collector::PlaceholderOrderCollector;
 
 #[test]
 fn collect_records_each_placeholder_once_in_first_occurrence_order() {

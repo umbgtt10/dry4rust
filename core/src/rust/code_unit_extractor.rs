@@ -12,7 +12,8 @@ use syn::visit::Visit;
 use crate::code_unit::CodeUnit;
 use crate::code_unit_kind::CodeUnitKind;
 use crate::fingerprint::Fingerprint;
-use crate::node::NormalizedNode;
+use crate::node::node_kind::NodeKind;
+use crate::node::normalized_node::NormalizedNode;
 use crate::rust::parser::has_cfg_test_attr;
 use crate::rust::parser::has_test_attr;
 use crate::rust::plain_constructor::PlainConstructor;
@@ -238,7 +239,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
                 file: self.file.clone(),
                 line_start,
                 line_end,
-                signature: NormalizedNode::leaf(crate::node::NodeKind::Opaque),
+                signature: NormalizedNode::leaf(NodeKind::Opaque),
                 body: normalized,
                 fingerprint,
                 node_count,

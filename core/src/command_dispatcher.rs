@@ -18,9 +18,9 @@ use crate::cli::command::Command;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_command::IgnoreCommand;
 use crate::cli::ignored_command::IgnoredCommand;
+use crate::cli::output::reporter::Reporter;
 use crate::cli::report_command::ReportCommand;
 use crate::cli::stats_command::StatsCommand;
-use crate::output::reporter::Reporter;
 
 /// Routes a parsed [`Command`] to the type that serves it.
 ///

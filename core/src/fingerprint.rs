@@ -3,11 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::node_encoder::NodeEncoder;
+use crate::node::node_encoder::NodeEncoder;
 use crate::stable_hasher::StableHasher;
 use std::fmt;
 
-use crate::node::NormalizedNode;
+use crate::node::normalized_node::NormalizedNode;
 
 /// A fingerprint of a normalized AST node, wrapping a u64 hash.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]

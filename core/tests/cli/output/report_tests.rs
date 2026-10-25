@@ -4,11 +4,11 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
+use dry4rust::cli::output::json_reporter::JsonReporter;
+use dry4rust::cli::output::report::Report;
+use dry4rust::cli::output::reporter::Reporter;
+use dry4rust::cli::output::text_reporter::TextReporter;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::output::json_reporter::JsonReporter;
-use dry4rust::output::report::Report;
-use dry4rust::output::reporter::Reporter;
-use dry4rust::output::text_reporter::TextReporter;
 use serde_json::Value;
 use serde_json::from_str;
 

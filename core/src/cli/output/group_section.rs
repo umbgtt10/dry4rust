@@ -6,9 +6,9 @@
 use std::fmt::Write as _;
 use std::path::Path;
 
+use crate::cli::output::display_path::DisplayPath;
 use crate::code_unit::CodeUnit;
 use crate::duplicate_group::DuplicateGroup;
-use crate::output::display_path::DisplayPath;
 
 /// One headed section of a text report, and how the groups under it read.
 ///

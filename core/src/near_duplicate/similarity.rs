@@ -3,8 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::node::NodeKind;
-use crate::node::NormalizedNode;
+use crate::node::node_kind::NodeKind;
+use crate::node::normalized_node::NormalizedNode;
 use std::mem;
 
 /// Compute a similarity score between two normalized trees using the Dice coefficient.

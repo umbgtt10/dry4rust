@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::node::NormalizedNode;
+use crate::node::normalized_node::NormalizedNode;
 
 /// A function normalized: its signature and its body, kept apart because the
 /// analysis compares them apart -- and named, because both are a

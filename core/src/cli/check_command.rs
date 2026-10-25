@@ -9,10 +9,10 @@ use crate::cli::checking::check_thresholds::CheckThresholds;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
+use crate::cli::output::check_breach::CheckBreach;
+use crate::cli::output::reporter::Reporter;
 use crate::config::Config;
 use crate::duplicate_group::DuplicateGroup;
-use crate::output::check_breach::CheckBreach;
-use crate::output::reporter::Reporter;
 
 /// `check`: the summary, then a non-zero exit if any ceiling is breached.
 ///

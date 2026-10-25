@@ -5,7 +5,6 @@
 
 pub mod check_breach;
 pub mod display_path;
-pub mod duplication_stats;
 pub mod group_section;
 pub mod json_reporter;
 pub mod report;

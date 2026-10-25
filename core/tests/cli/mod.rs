@@ -16,6 +16,7 @@ pub mod entry_point_tests;
 pub mod ignore_command_tests;
 pub mod ignore_entry_line_tests;
 pub mod ignored_command_tests;
+pub mod output;
 pub mod output_format_tests;
 pub mod report_command_tests;
 pub mod stats_command_tests;

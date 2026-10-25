@@ -4,9 +4,9 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
+use dry4rust::cli::output::group_section::GroupSection;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::output::group_section::GroupSection;
 use std::path::Path;
 use std::path::PathBuf;
 

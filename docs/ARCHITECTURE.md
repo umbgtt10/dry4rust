@@ -9,16 +9,21 @@ matches and compared tree-to-tree for near ones. Nothing is inferred from
 names, comments or formatting, because all three are exactly what a copied
 block changes first.
 
-72 source files, roughly 6,000 lines, one type each. Five directories group
-the modules that answer one question between them: `src/near_duplicate/`,
-which only `duplicate_group` reaches; `src/suppression/`, the two ways duplication is
-kept out of a report; `src/cli/`, one file per command, with `checking/` under
-it; `src/output/`, the reporters; and `src/rust/`, the only `LanguageAnalyzer`
-there is.
+79 source files, roughly 6,800 lines, one object each and records where
+`record-home` puts them. Five directories group the modules that answer one
+question between them: `src/near_duplicate/`, which only `duplicate_group`
+reaches; `src/suppression/`, the two ways duplication is kept out of a report;
+`src/cli/`, one file per command, with `checking/` and `output/` -- the
+reporters, which only the command line uses -- under it; `src/node/`, the
+normalised tree, the kinds its nodes are named by, and the encoder and the
+placeholder collector that read it; and `src/rust/`, the only
+`LanguageAnalyzer` there is.
 
-Both limits the house rules impose are now met exactly: twenty files at the
-top of `src/` and five directories under it. The next module to be added
-forces a grouping decision rather than another loose file, which is what the
+The house rules allow twenty files at the top of `src/` and five directories
+under it. The node kinds, which the library's public API names, each needed a
+file of their own; `src/node/` took the fifth directory slot, freed by moving
+`output/` under `cli/`, and the top holds eighteen files. The next directory
+forces a grouping decision rather than another loose one, which is what the
 limits are for.
 
 ## Pipeline
@@ -74,10 +79,11 @@ bodies as further units, which then travel the same path.
 | `rust::normalizer` | The normalisation rules, and the normalised function they return. |
 | `rust::normalizer::normalization_context` | `NormalizationContext`: every normalisation rule, a method per syntax category, and the placeholder counters they share, so the context that numbers the placeholders is `self` rather than a `&mut` threaded through every call. Two identifiers map to the same placeholder only within one context. |
 | `rust::normalizer::normalized_fn` | `NormalizedFn`, a normalised function's signature and body, named and kept apart. |
-| `node` | `NormalizedNode` and `NodeKind` -- the normalised tree, with `NormalizedNode::count_nodes` and `NormalizedNode::reindex_placeholders`. |
-| `placeholder_order_collector` | The placeholders of a tree in first-occurrence order, which is what `reindex_placeholders` renumbers by. |
+| `node::normalized_node` | `NormalizedNode`, the normalised tree, with `NormalizedNode::count_nodes` and `NormalizedNode::reindex_placeholders`. |
+| `node::node_kind` and its kinds | `NodeKind`, and `LiteralKind`, `PlaceholderKind`, `BinOpKind` and `UnOpKind` in `node::literal_kind`, `node::placeholder_kind`, `node::bin_op_kind` and `node::un_op_kind` -- the vocabulary a node is named in. |
+| `node::placeholder_order_collector` | The placeholders of a tree in first-occurrence order, which is what `reindex_placeholders` renumbers by. |
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
-| `node_encoder` | The byte format a fingerprint is computed over -- variants by name, children counted. |
+| `node::node_encoder` | The byte format a fingerprint is computed over -- variants by name, children counted. |
 | `stable_hasher` | FNV-1a 64, defined here so a fingerprint survives a toolchain upgrade. |
 | `sub_unit` / `sub_unit_extractor` | Compound structures inside a body, as further comparable units. |
 | `duplicate_group` | `DuplicateGroup`, exact grouping, and the statistics computed over the groups. |
@@ -107,13 +113,13 @@ bodies as further units, which then travel the same path.
 | `cli::*_command` | One struct per subcommand, each with a single `run`. |
 | `cli::checking` | `Ceiling`, `CheckThresholds`, `StaleReport` -- what `check` and `cleanup` measure with. |
 | `command_dispatcher` | Routes a parsed `Command` to the type that serves it. |
-| `output::reporter` | `Reporter`: five section methods, plus `report` and `report_check` for a whole document. |
-| `output::report` | What a full report shows, handed over in one piece. |
-| `output::check_breach` | One exceeded ceiling and the groups behind it. |
-| `output::group_section` | One headed section of a text report, and how its groups read. |
-| `output::display_path` | `DisplayPath::of`, a file as a reporter shows it: relative to the base when it lies under one. |
-| `output::duplication_stats` | `DuplicationStats`, the counts and percentages a report states. |
-| `output` | `text_reporter` and `json_reporter`, the implementations of `Reporter`. |
+| `cli::output::reporter` | `Reporter`: five section methods, plus `report` and `report_check` for a whole document. |
+| `cli::output::report` | What a full report shows, handed over in one piece. |
+| `cli::output::check_breach` | One exceeded ceiling and the groups behind it. |
+| `cli::output::group_section` | One headed section of a text report, and how its groups read. |
+| `cli::output::display_path` | `DisplayPath::of`, a file as a reporter shows it: relative to the base when it lies under one. |
+| `duplication_stats` | `DuplicationStats`, the counts and percentages a report states. |
+| `cli::output` | `text_reporter` and `json_reporter`, the implementations of `Reporter`. |
 
 ## Data model
 

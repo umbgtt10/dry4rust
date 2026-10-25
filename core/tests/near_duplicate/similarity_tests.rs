@@ -4,11 +4,11 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::near_duplicate::similarity::*;
-use dry4rust::node::BinOpKind;
-use dry4rust::node::LiteralKind;
-use dry4rust::node::NodeKind;
-use dry4rust::node::NormalizedNode;
-use dry4rust::node::PlaceholderKind;
+use dry4rust::node::bin_op_kind::BinOpKind;
+use dry4rust::node::literal_kind::LiteralKind;
+use dry4rust::node::node_kind::NodeKind;
+use dry4rust::node::normalized_node::NormalizedNode;
+use dry4rust::node::placeholder_kind::PlaceholderKind;
 
 fn block_of(kinds: &[NodeKind]) -> NormalizedNode {
     NormalizedNode::with_children(
