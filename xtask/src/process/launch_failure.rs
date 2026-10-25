@@ -9,25 +9,8 @@ use std::fmt;
 // always reported it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LaunchFailure {
-    program: String,
-    reason: String,
-}
-
-impl LaunchFailure {
-    #[must_use]
-    pub const fn new(program: String, reason: String) -> Self {
-        Self { program, reason }
-    }
-
-    #[must_use]
-    pub fn program(&self) -> &str {
-        &self.program
-    }
-
-    #[must_use]
-    pub fn reason(&self) -> &str {
-        &self.reason
-    }
+    pub program: String,
+    pub reason: String,
 }
 
 impl fmt::Display for LaunchFailure {

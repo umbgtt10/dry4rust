@@ -10,25 +10,8 @@ use crate::gates::gate_failure::GateFailure;
 // The gate that stopped stage 2, by its label, and why it failed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StageFailure {
-    label: String,
-    failure: GateFailure,
-}
-
-impl StageFailure {
-    #[must_use]
-    pub const fn new(label: String, failure: GateFailure) -> Self {
-        Self { label, failure }
-    }
-
-    #[must_use]
-    pub const fn failure(&self) -> &GateFailure {
-        &self.failure
-    }
-
-    #[must_use]
-    pub fn label(&self) -> &str {
-        &self.label
-    }
+    pub label: String,
+    pub failure: GateFailure,
 }
 
 impl fmt::Display for StageFailure {
