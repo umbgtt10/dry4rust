@@ -705,7 +705,7 @@ impl NormalizationContext {
         let mut ctx = Self::new();
         let signature = ctx.normalize_signature(sig);
         let body = ctx.normalize_block(block);
-        NormalizedFn::new(signature, body)
+        NormalizedFn { signature, body }
     }
 }
 

@@ -4,4 +4,3 @@
 // SPDX-License-Identifier: MIT
 
 pub mod normalization_context_tests;
-pub mod normalized_fn_tests;

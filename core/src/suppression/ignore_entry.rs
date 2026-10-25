@@ -14,37 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct IgnoreEntry {
     /// The fingerprint of the duplicated code.
-    fingerprint: String,
+    pub fingerprint: String,
     /// Optional reason for ignoring.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    reason: Option<String>,
+    pub reason: Option<String>,
     /// Names of the code units in the group (for documentation).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    members: Vec<String>,
-}
-
-impl IgnoreEntry {
-    #[must_use]
-    pub const fn new(fingerprint: String, reason: Option<String>, members: Vec<String>) -> Self {
-        Self {
-            fingerprint,
-            reason,
-            members,
-        }
-    }
-
-    #[must_use]
-    pub fn fingerprint(&self) -> &str {
-        &self.fingerprint
-    }
-
-    #[must_use]
-    pub fn members(&self) -> &[String] {
-        &self.members
-    }
-
-    #[must_use]
-    pub fn reason(&self) -> Option<&str> {
-        self.reason.as_deref()
-    }
+    pub members: Vec<String>,
 }

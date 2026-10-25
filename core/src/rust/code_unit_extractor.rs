@@ -77,19 +77,19 @@ impl CodeUnitExtractor {
             return;
         }
         let fingerprint = Fingerprint::from_sig_and_body(&sig, &body);
-        self.units.push(
-            CodeUnit::default()
-                .with_kind(kind)
-                .with_name(name)
-                .with_file(self.file.clone())
-                .with_line_start(line_start)
-                .with_line_end(line_end)
-                .with_signature(sig)
-                .with_body(body)
-                .with_fingerprint(fingerprint)
-                .with_node_count(node_count)
-                .with_is_test(is_test),
-        );
+        self.units.push(CodeUnit {
+            kind,
+            name,
+            file: self.file.clone(),
+            line_start,
+            line_end,
+            signature: sig,
+            body,
+            fingerprint,
+            node_count,
+            parent_name: None,
+            is_test,
+        });
     }
 
     /// Get a simple string representation of a type for naming.
@@ -116,8 +116,8 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         let line_start = node.sig.ident.span().start().line;
         let line_end = node.block.brace_token.span.close().end().line;
         let normalized = NormalizationContext::normalize_item_fn(node);
-        let sig = normalized.signature().clone();
-        let body = normalized.body().clone();
+        let sig = normalized.signature;
+        let body = normalized.body;
         self.add_unit(
             CodeUnitKind::Function,
             name,
@@ -188,9 +188,9 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
 
                 let normalized = NormalizationContext::normalize_impl_item_fn(method);
 
-                let sig = normalized.signature().clone();
+                let sig = normalized.signature;
 
-                let body = normalized.body().clone();
+                let body = normalized.body;
                 let kind = if is_trait_impl {
                     CodeUnitKind::TraitImplBlock
                 } else {
@@ -232,19 +232,19 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         {
             let name = format!("closure at {}:{}", self.file.display(), line_start);
             let fingerprint = Fingerprint::from_node(&normalized);
-            self.units.push(
-                CodeUnit::default()
-                    .with_kind(CodeUnitKind::Closure)
-                    .with_name(name)
-                    .with_file(self.file.clone())
-                    .with_line_start(line_start)
-                    .with_line_end(line_end)
-                    .with_signature(NormalizedNode::leaf(crate::node::NodeKind::Opaque))
-                    .with_body(normalized)
-                    .with_fingerprint(fingerprint)
-                    .with_node_count(node_count)
-                    .with_is_test(self.in_test_context),
-            );
+            self.units.push(CodeUnit {
+                kind: CodeUnitKind::Closure,
+                name,
+                file: self.file.clone(),
+                line_start,
+                line_end,
+                signature: NormalizedNode::leaf(crate::node::NodeKind::Opaque),
+                body: normalized,
+                fingerprint,
+                node_count,
+                parent_name: None,
+                is_test: self.in_test_context,
+            });
         }
 
         // Continue visiting nested closures

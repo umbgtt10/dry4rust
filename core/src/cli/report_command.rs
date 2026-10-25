@@ -32,13 +32,13 @@ impl<'a> ReportCommand<'a> {
     ///
     /// Returns [`crate::cli::cli_error::CliError::Io`] if the reporter fails.
     pub fn run(&self) -> CliResult<CommandOutcome> {
-        let text = self.reporter.report(&Report::new(
-            self.result.stats(),
-            self.result.exact_groups(),
-            self.result.near_groups(),
-            self.result.sub_exact_groups(),
-            self.result.sub_near_groups(),
-        ))?;
+        let text = self.reporter.report(&Report {
+            stats: self.result.stats(),
+            exact: self.result.exact_groups(),
+            near: self.result.near_groups(),
+            sub_exact: self.result.sub_exact_groups(),
+            sub_near: self.result.sub_near_groups(),
+        })?;
         Ok(CommandOutcome::succeeded(text))
     }
 }

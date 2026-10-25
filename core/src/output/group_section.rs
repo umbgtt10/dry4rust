@@ -102,19 +102,20 @@ impl GroupSection {
     fn member_line(&self, member: &CodeUnit, base: Option<&Path>) -> String {
         format!(
             "  - {} ({}){} at {}:{}-{}",
-            member.name(),
-            member.kind(),
+            member.name,
+            member.kind,
             self.parent_of(member),
-            DisplayPath::of(base, member.file()),
-            member.line_start(),
-            member.line_end(),
+            DisplayPath::of(base, &member.file),
+            member.line_start,
+            member.line_end,
         )
     }
 
     fn parent_of(&self, member: &CodeUnit) -> String {
         if self.show_parent {
             member
-                .parent_name()
+                .parent_name
+                .as_deref()
                 .map_or_else(String::new, |parent| format!(" in {parent}"))
         } else {
             String::new()

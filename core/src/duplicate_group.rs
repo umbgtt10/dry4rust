@@ -30,7 +30,7 @@ impl DuplicateGroup {
 
         for unit in units {
             groups
-                .entry(unit.fingerprint())
+                .entry(unit.fingerprint)
                 .or_default()
                 .push(unit.clone());
         }
@@ -84,7 +84,7 @@ impl DuplicateGroup {
     ) -> DuplicationStats {
         let total_lines: usize = units
             .iter()
-            .map(|u| u.line_end().saturating_sub(u.line_start()) + 1)
+            .map(|u| u.line_end.saturating_sub(u.line_start) + 1)
             .sum();
 
         DuplicationStats::default()
@@ -134,7 +134,7 @@ impl DuplicateGroup {
         group
             .members
             .iter()
-            .map(|m| m.line_end().saturating_sub(m.line_start()) + 1)
+            .map(|m| m.line_end.saturating_sub(m.line_start) + 1)
             .sum()
     }
 }

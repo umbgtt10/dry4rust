@@ -137,11 +137,11 @@ fn complex_function_normalization() {
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
     let normalized_body1 = NormalizationContext::normalize_item_fn(&f1);
-    let sig1 = normalized_body1.signature().clone();
-    let body1 = normalized_body1.body().clone();
+    let sig1 = normalized_body1.signature;
+    let body1 = normalized_body1.body;
     let normalized_body2 = NormalizationContext::normalize_item_fn(&f2);
-    let sig2 = normalized_body2.signature().clone();
-    let body2 = normalized_body2.body().clone();
+    let sig2 = normalized_body2.signature;
+    let body2 = normalized_body2.body;
 
     // Assert
     assert_eq!(sig1, sig2);
@@ -163,7 +163,7 @@ fn empty_block_normalized() {
     // Arrange & Act
     let code = "fn foo() {}";
     let f = parse_fn(code);
-    let body = NormalizationContext::normalize_item_fn(&f).body().clone();
+    let body = NormalizationContext::normalize_item_fn(&f).body;
 
     // Assert
     assert_eq!(*body.kind(), NodeKind::Block);
@@ -346,8 +346,8 @@ fn node_counting_works() {
     let code = "fn foo(x: i32) -> i32 { x + 1 }";
     let f = parse_fn(code);
     let normalized_body = NormalizationContext::normalize_item_fn(&f);
-    let sig = normalized_body.signature().clone();
-    let body = normalized_body.body().clone();
+    let sig = normalized_body.signature;
+    let body = normalized_body.body;
     let sig_count = NormalizedNode::count_nodes(&sig);
     let body_count = NormalizedNode::count_nodes(&body);
 
@@ -438,8 +438,8 @@ fn normalize_impl_item_fn_splits_a_method_into_signature_and_body() {
 
     // Act
     let normalized_body = NormalizationContext::normalize_impl_item_fn(&method);
-    let sig = normalized_body.signature().clone();
-    let body = normalized_body.body().clone();
+    let sig = normalized_body.signature;
+    let body = normalized_body.body;
 
     // Assert
     assert_ne!(sig, body);
@@ -797,7 +797,7 @@ fn pat_macro_normalized() {
 
     // Assert
     if let Ok(f) = parse_str::<ItemFn>(code) {
-        let body = NormalizationContext::normalize_item_fn(&f).body().clone();
+        let body = NormalizationContext::normalize_item_fn(&f).body;
 
         assert!(NormalizedNode::count_nodes(&body) > 0);
     }
@@ -874,8 +874,8 @@ fn reindex_from_real_function_subtrees() {
     let f2 = parse_fn(
         "fn bar(unused: i32, a: i32, b: i32) -> i32 { if a > 0 { let c = b + 1; c } else { a } }",
     );
-    let body1 = NormalizationContext::normalize_item_fn(&f1).body().clone();
-    let body2 = NormalizationContext::normalize_item_fn(&f2).body().clone();
+    let body1 = NormalizationContext::normalize_item_fn(&f1).body;
+    let body2 = NormalizationContext::normalize_item_fn(&f2).body;
 
     // Extract the then_branch from each: Block -> stmts[0] -> If -> children[1]
     let then1 = match &body1.kind() {
@@ -909,11 +909,11 @@ fn renamed_variables_produce_identical_trees() {
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
     let normalized_body1 = NormalizationContext::normalize_item_fn(&f1);
-    let sig1 = normalized_body1.signature().clone();
-    let body1 = normalized_body1.body().clone();
+    let sig1 = normalized_body1.signature;
+    let body1 = normalized_body1.body;
     let normalized_body2 = NormalizationContext::normalize_item_fn(&f2);
-    let sig2 = normalized_body2.signature().clone();
-    let body2 = normalized_body2.body().clone();
+    let sig2 = normalized_body2.signature;
+    let body2 = normalized_body2.body;
 
     // Assert
     assert_eq!(sig1, sig2);
@@ -983,8 +983,8 @@ fn structural_changes_produce_different_trees() {
     let code2 = "fn foo(x: i32) -> i32 { x * 1 }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let body1 = NormalizationContext::normalize_item_fn(&f1).body().clone();
-    let body2 = NormalizationContext::normalize_item_fn(&f2).body().clone();
+    let body1 = NormalizationContext::normalize_item_fn(&f1).body;
+    let body2 = NormalizationContext::normalize_item_fn(&f2).body;
 
     // Assert
     assert_ne!(body1, body2);
@@ -1016,8 +1016,8 @@ fn tuple_pattern_normalized() {
     let code2 = "fn bar() { let (x, y) = (1, 2); }";
     let f1 = parse_fn(code1);
     let f2 = parse_fn(code2);
-    let body1 = NormalizationContext::normalize_item_fn(&f1).body().clone();
-    let body2 = NormalizationContext::normalize_item_fn(&f2).body().clone();
+    let body1 = NormalizationContext::normalize_item_fn(&f1).body;
+    let body2 = NormalizationContext::normalize_item_fn(&f2).body;
 
     // Assert
     assert_eq!(body1, body2);
@@ -1030,9 +1030,7 @@ fn type_position_macro_normalized() {
 
     // Assert
     if let Ok(f) = parse_str::<ItemFn>(code) {
-        let sig = NormalizationContext::normalize_item_fn(&f)
-            .signature()
-            .clone();
+        let sig = NormalizationContext::normalize_item_fn(&f).signature;
 
         assert!(NormalizedNode::count_nodes(&sig) > 0);
     }

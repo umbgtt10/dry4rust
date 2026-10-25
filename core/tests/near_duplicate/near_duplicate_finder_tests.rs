@@ -40,16 +40,18 @@ fn beta(values: &[i32]) -> i32 {
 fn sized_unit(name: &str, node_count: usize) -> CodeUnit {
     let children = vec![NormalizedNode::leaf(NodeKind::Block); node_count - 1];
     let body = NormalizedNode::with_children(NodeKind::Block, children);
-    CodeUnit::default()
-        .with_kind(CodeUnitKind::Function)
-        .with_name(name.to_string())
-        .with_file(PathBuf::from("sized.rs"))
-        .with_line_start(1)
-        .with_line_end(2)
-        .with_signature(NormalizedNode::leaf(NodeKind::Block))
-        .with_body(body)
-        .with_fingerprint(Fingerprint::new(node_count as u64))
-        .with_node_count(node_count)
+    CodeUnit {
+        kind: CodeUnitKind::Function,
+        name: name.to_string(),
+        file: PathBuf::from("sized.rs"),
+        line_start: 1,
+        line_end: 2,
+        signature: NormalizedNode::leaf(NodeKind::Block),
+        body,
+        fingerprint: Fingerprint::new(node_count as u64),
+        node_count,
+        ..Default::default()
+    }
 }
 
 fn units_from(code: &str) -> Vec<CodeUnit> {
@@ -63,10 +65,7 @@ fn units_from(code: &str) -> Vec<CodeUnit> {
 fn find_excluding_every_fingerprint_returns_nothing() {
     // Arrange
     let units = units_from(NEAR_PAIR);
-    let all: Vec<Fingerprint> = units
-        .iter()
-        .map(dry4rust::code_unit::CodeUnit::fingerprint)
-        .collect();
+    let all: Vec<Fingerprint> = units.iter().map(|unit| unit.fingerprint).collect();
 
     // Act
     let groups = NearDuplicateFinder::new(0.5).find(&units, &all);

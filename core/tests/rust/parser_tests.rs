@@ -43,17 +43,17 @@ fn cfg_test_impl_blocks_tagged_as_test() {
     let units = write_and_parse(code, 1);
     let prod: Vec<_> = units
         .iter()
-        .filter(|u| u.name().contains("production"))
+        .filter(|u| u.name.contains("production"))
         .collect();
     let helper: Vec<_> = units
         .iter()
-        .filter(|u| u.name().contains("test_helper"))
+        .filter(|u| u.name.contains("test_helper"))
         .collect();
 
     assert_eq!(prod.len(), 1);
-    assert!(!prod[0].is_test());
+    assert!(!prod[0].is_test);
     assert_eq!(helper.len(), 1);
-    assert!(helper[0].is_test());
+    assert!(helper[0].is_test);
 }
 
 #[test]
@@ -75,14 +75,14 @@ fn cfg_test_module_functions_tagged_as_test() {
     ";
 
     let units = write_and_parse(code, 1);
-    let prod: Vec<_> = units.iter().filter(|u| u.name() == "production").collect();
-    let helper: Vec<_> = units.iter().filter(|u| u.name() == "helper").collect();
+    let prod: Vec<_> = units.iter().filter(|u| u.name == "production").collect();
+    let helper: Vec<_> = units.iter().filter(|u| u.name == "helper").collect();
 
     // Assert
     assert_eq!(prod.len(), 1);
-    assert!(!prod[0].is_test());
+    assert!(!prod[0].is_test);
     assert_eq!(helper.len(), 1);
-    assert!(helper[0].is_test());
+    assert!(helper[0].is_test);
 }
 
 #[test]
@@ -104,8 +104,8 @@ let y = 2;
     // Assert
     assert!(units.len() >= 2);
     // First function starts at line 2
-    assert!(units[0].line_start() > 0);
-    assert!(units[0].line_end() >= units[0].line_start());
+    assert!(units[0].line_start > 0);
+    assert!(units[0].line_end >= units[0].line_start);
 }
 
 #[test]
@@ -132,13 +132,13 @@ fn different_functions_different_fingerprint() {
     );
     let fns: Vec<_> = units
         .iter()
-        .filter(|u| *u.kind() == CodeUnitKind::Function)
+        .filter(|u| u.kind == CodeUnitKind::Function)
         .collect();
 
     // Assert
 
     assert_eq!(fns.len(), 2);
-    assert_ne!(fns[0].fingerprint(), fns[1].fingerprint());
+    assert_ne!(fns[0].fingerprint, fns[1].fingerprint);
 }
 
 #[test]
@@ -159,13 +159,13 @@ fn duplicate_functions_same_fingerprint() {
     );
     let fns: Vec<_> = units
         .iter()
-        .filter(|u| *u.kind() == CodeUnitKind::Function)
+        .filter(|u| u.kind == CodeUnitKind::Function)
         .collect();
 
     // Assert
 
     assert_eq!(fns.len(), 2);
-    assert_eq!(fns[0].fingerprint(), fns[1].fingerprint());
+    assert_eq!(fns[0].fingerprint, fns[1].fingerprint);
 }
 
 #[test]
@@ -187,14 +187,14 @@ fn extracts_methods_from_impl() {
     );
     let methods: Vec<_> = units
         .iter()
-        .filter(|u| *u.kind() == CodeUnitKind::Method)
+        .filter(|u| u.kind == CodeUnitKind::Method)
         .collect();
 
     // Assert
 
     assert_eq!(methods.len(), 2);
-    assert!(methods[0].name().contains("Foo::bar"));
-    assert!(methods[1].name().contains("Foo::baz"));
+    assert!(methods[0].name.contains("Foo::bar"));
+    assert!(methods[1].name.contains("Foo::baz"));
 }
 
 #[test]
@@ -214,14 +214,14 @@ fn extracts_top_level_functions() {
     );
     let fns: Vec<_> = units
         .iter()
-        .filter(|u| *u.kind() == CodeUnitKind::Function)
+        .filter(|u| u.kind == CodeUnitKind::Function)
         .collect();
 
     // Assert
 
     assert_eq!(fns.len(), 2);
-    assert_eq!(fns[0].name(), "foo");
-    assert_eq!(fns[1].name(), "bar");
+    assert_eq!(fns[0].name, "foo");
+    assert_eq!(fns[1].name, "bar");
 }
 
 #[test]
@@ -244,14 +244,14 @@ fn extracts_trait_impl_methods() {
     );
     let trait_impls: Vec<_> = units
         .iter()
-        .filter(|u| *u.kind() == CodeUnitKind::TraitImplBlock)
+        .filter(|u| u.kind == CodeUnitKind::TraitImplBlock)
         .collect();
 
     // Assert
     assert_eq!(trait_impls.len(), 1);
-    assert!(trait_impls[0].name().contains("Foo"));
-    assert!(trait_impls[0].name().contains("MyTrait"));
-    assert!(trait_impls[0].name().contains("do_thing"));
+    assert!(trait_impls[0].name.contains("Foo"));
+    assert!(trait_impls[0].name.contains("MyTrait"));
+    assert!(trait_impls[0].name.contains("do_thing"));
 }
 
 #[test]
@@ -298,8 +298,8 @@ a + b + c + d
     let units_filtered = parse_file(&file, 1, 5).unwrap();
     assert!(units_filtered.len() < units_all.len());
     for unit in &units_filtered {
-        let lines = unit.line_end().saturating_sub(unit.line_start()) + 1;
-        assert!(lines >= 5, "unit {} has only {lines} lines", unit.name());
+        let lines = unit.line_end.saturating_sub(unit.line_start) + 1;
+        assert!(lines >= 5, "unit {} has only {lines} lines", unit.name);
     }
 }
 
@@ -320,12 +320,12 @@ fn non_test_code_not_tagged() {
     ";
 
     let units = write_and_parse(code, 1);
-    let non_test: Vec<_> = units.iter().filter(|u| !u.is_test()).collect();
+    let non_test: Vec<_> = units.iter().filter(|u| !u.is_test).collect();
 
     // Assert
 
     assert!(!non_test.is_empty());
-    assert!(non_test.iter().all(|u| u.name() != "my_test"));
+    assert!(non_test.iter().all(|u| u.name != "my_test"));
 }
 
 #[test]
@@ -373,7 +373,7 @@ fn parse_source_extracts_closures_as_their_own_units() {
     );
     let closures = units
         .iter()
-        .filter(|u| *u.kind() == CodeUnitKind::Closure)
+        .filter(|u| u.kind == CodeUnitKind::Closure)
         .count();
 
     // Assert
@@ -391,7 +391,7 @@ fn parse_source_works() {
     // Assert
 
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].name(), "foo");
+    assert_eq!(units[0].name, "foo");
 }
 
 #[test]
@@ -442,15 +442,15 @@ fn test_functions_tagged_as_test() {
     ";
 
     let units = write_and_parse(code, 1);
-    let prod: Vec<_> = units.iter().filter(|u| u.name() == "production").collect();
-    let test: Vec<_> = units.iter().filter(|u| u.name() == "my_test").collect();
+    let prod: Vec<_> = units.iter().filter(|u| u.name == "production").collect();
+    let test: Vec<_> = units.iter().filter(|u| u.name == "my_test").collect();
 
     // Assert
 
     assert_eq!(prod.len(), 1);
-    assert!(!prod[0].is_test());
+    assert!(!prod[0].is_test);
     assert_eq!(test.len(), 1);
-    assert!(test[0].is_test());
+    assert!(test[0].is_test);
 }
 
 #[test]

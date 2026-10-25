@@ -172,9 +172,9 @@ fn save_then_load_returns_what_was_recorded() {
 
     // Assert
     assert_eq!(loaded.ignore().len(), 1);
-    assert_eq!(loaded.ignore()[0].fingerprint(), fp.to_hex());
-    assert_eq!(loaded.ignore()[0].reason(), Some("test reason"));
-    assert_eq!(loaded.ignore()[0].members(), vec!["foo", "bar"]);
+    assert_eq!(loaded.ignore()[0].fingerprint, fp.to_hex());
+    assert_eq!(loaded.ignore()[0].reason.as_deref(), Some("test reason"));
+    assert_eq!(loaded.ignore()[0].members, vec!["foo", "bar"]);
 }
 
 #[test]
@@ -192,7 +192,7 @@ fn stale_separates_the_entries_that_no_longer_match_anything() {
 
     // Assert
     assert_eq!(stale.len(), 1);
-    assert_eq!(stale[0].reason(), Some("stale"));
+    assert_eq!(stale[0].reason.as_deref(), Some("stale"));
 }
 
 #[test]
@@ -249,7 +249,7 @@ fn without_stale_keeps_the_live_entries_and_hands_back_the_rest() {
 
     // Assert
     assert_eq!(taken.len(), 1);
-    assert_eq!(taken[0].reason(), Some("stale"));
+    assert_eq!(taken[0].reason.as_deref(), Some("stale"));
     assert_eq!(kept.ignore().len(), 1);
-    assert_eq!(kept.ignore()[0].reason(), Some("live"));
+    assert_eq!(kept.ignore()[0].reason.as_deref(), Some("live"));
 }

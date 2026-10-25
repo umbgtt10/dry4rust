@@ -12,36 +12,10 @@ use crate::duplicate_group::DuplicateGroup;
 /// so two exact ceilings breached at once list the exact groups once rather
 /// than twice.
 pub struct CheckBreach<'a> {
-    message: String,
-    groups: &'a [DuplicateGroup],
-    of_exact: bool,
-}
-
-impl<'a> CheckBreach<'a> {
-    #[must_use]
-    pub const fn new(message: String, groups: &'a [DuplicateGroup], of_exact: bool) -> Self {
-        Self {
-            message,
-            groups,
-            of_exact,
-        }
-    }
-
-    /// The groups behind it.
-    #[must_use]
-    pub const fn groups(&self) -> &'a [DuplicateGroup] {
-        self.groups
-    }
-
-    /// Whether those groups are exact duplicates rather than near ones.
-    #[must_use]
-    pub const fn is_of_exact(&self) -> bool {
-        self.of_exact
-    }
-
     /// What to say about it: the count, the subject and the limit.
-    #[must_use]
-    pub fn message(&self) -> &str {
-        &self.message
-    }
+    pub message: String,
+    /// The groups behind it.
+    pub groups: &'a [DuplicateGroup],
+    /// Whether those groups are exact duplicates rather than near ones.
+    pub of_exact: bool,
 }

@@ -39,11 +39,7 @@ impl BaselineEntry {
             kind,
             fingerprint: group.fingerprint().to_hex(),
             members: group.members().len(),
-            names: group
-                .members()
-                .iter()
-                .map(|m| m.name().to_string())
-                .collect(),
+            names: group.members().iter().map(|m| m.name.clone()).collect(),
         }
     }
 

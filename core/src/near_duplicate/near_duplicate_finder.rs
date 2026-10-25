@@ -77,7 +77,7 @@ impl NearDuplicateFinder {
         let exact: HashSet<Fingerprint> = exact_fingerprints.iter().copied().collect();
         units
             .iter()
-            .filter(|unit| !exact.contains(&unit.fingerprint()))
+            .filter(|unit| !exact.contains(&unit.fingerprint))
             .collect()
     }
 
@@ -93,10 +93,8 @@ impl NearDuplicateFinder {
             .iter()
             .map(|&i| candidates[i].clone())
             .collect();
-        let member_fingerprints: Vec<Fingerprint> = members
-            .iter()
-            .map(super::super::code_unit::CodeUnit::fingerprint)
-            .collect();
+        let member_fingerprints: Vec<Fingerprint> =
+            members.iter().map(|unit| unit.fingerprint).collect();
         DuplicateGroup::new(
             Fingerprint::from_fingerprints(&member_fingerprints),
             members,

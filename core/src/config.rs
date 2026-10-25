@@ -110,7 +110,10 @@ impl Config {
     /// Extract the parsing-relevant subset of the configuration.
     #[must_use]
     pub const fn analysis_config(&self) -> AnalysisConfig {
-        AnalysisConfig::new(self.min_nodes, self.min_lines)
+        AnalysisConfig {
+            min_nodes: self.min_nodes,
+            min_lines: self.min_lines,
+        }
     }
 
     #[must_use]

@@ -15,16 +15,18 @@ use std::path::PathBuf;
 
 fn sized_unit(kind: CodeUnitKind, node_count: usize) -> CodeUnit {
     let children = vec![NormalizedNode::leaf(NodeKind::Block); node_count - 1];
-    CodeUnit::default()
-        .with_kind(kind)
-        .with_name(format!("unit_of_{node_count}"))
-        .with_file(PathBuf::from("sized.rs"))
-        .with_line_start(1)
-        .with_line_end(2)
-        .with_signature(NormalizedNode::leaf(NodeKind::Block))
-        .with_body(NormalizedNode::with_children(NodeKind::Block, children))
-        .with_fingerprint(Fingerprint::new(node_count as u64))
-        .with_node_count(node_count)
+    CodeUnit {
+        kind,
+        name: format!("unit_of_{node_count}"),
+        file: PathBuf::from("sized.rs"),
+        line_start: 1,
+        line_end: 2,
+        signature: NormalizedNode::leaf(NodeKind::Block),
+        body: NormalizedNode::with_children(NodeKind::Block, children),
+        fingerprint: Fingerprint::new(node_count as u64),
+        node_count,
+        ..Default::default()
+    }
 }
 
 #[test]

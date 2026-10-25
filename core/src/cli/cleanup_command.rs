@@ -62,7 +62,7 @@ impl<'a> CleanupCommand<'a> {
 
         let _ = writeln!(out, "{}", report.heading());
         for entry in report.entries() {
-            let _ = writeln!(out, "{}", IgnoreEntryLine::new(entry));
+            let _ = writeln!(out, "{}", IgnoreEntryLine { entry });
         }
         let _ = writeln!(out, "{}", report.summary());
         Ok(CommandOutcome::succeeded(out))

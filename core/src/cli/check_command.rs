@@ -68,9 +68,11 @@ impl<'a> CheckCommand<'a> {
         self.ceilings()
             .into_iter()
             .filter_map(|(ceiling, of_exact)| {
-                ceiling
-                    .breach()
-                    .map(|message| CheckBreach::new(message, self.offenders(of_exact), of_exact))
+                ceiling.breach().map(|message| CheckBreach {
+                    message,
+                    groups: self.offenders(of_exact),
+                    of_exact,
+                })
             })
             .collect()
     }

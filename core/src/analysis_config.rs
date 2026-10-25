@@ -11,27 +11,7 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnalysisConfig {
     /// Minimum number of AST nodes for a code unit to be analyzed.
-    min_nodes: usize,
+    pub min_nodes: usize,
     /// Minimum number of source lines for a code unit to be analyzed.
-    min_lines: usize,
-}
-
-impl AnalysisConfig {
-    #[must_use]
-    pub const fn new(min_nodes: usize, min_lines: usize) -> Self {
-        Self {
-            min_nodes,
-            min_lines,
-        }
-    }
-
-    #[must_use]
-    pub const fn min_lines(&self) -> usize {
-        self.min_lines
-    }
-
-    #[must_use]
-    pub const fn min_nodes(&self) -> usize {
-        self.min_nodes
-    }
+    pub min_lines: usize,
 }

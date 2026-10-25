@@ -17,7 +17,7 @@ fn of_a_fingerprint_gives_it_to_the_group_and_to_every_member() {
         group
             .members()
             .iter()
-            .all(|member| member.fingerprint() == group.fingerprint())
+            .all(|member| member.fingerprint == group.fingerprint())
     );
 }
 
@@ -36,6 +36,10 @@ fn of_names_holds_one_member_per_name_in_the_order_given() {
     let group = DuplicateGroupFixture::of(1, &["first", "second", "third"]);
 
     // Assert
-    let names: Vec<&str> = group.members().iter().map(|member| member.name()).collect();
+    let names: Vec<&str> = group
+        .members()
+        .iter()
+        .map(|member| member.name.as_str())
+        .collect();
     assert_eq!(names, ["first", "second", "third"]);
 }

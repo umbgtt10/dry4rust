@@ -19,18 +19,18 @@ use serde_json::from_str;
 use std::path::PathBuf;
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
-    CodeUnit::default()
-        .with_kind(CodeUnitKind::Function)
-        .with_name(name.to_string())
-        .with_file(PathBuf::from(file))
-        .with_line_start(line_start)
-        .with_line_end(line_end)
-        .with_signature(NormalizedNode::leaf(NodeKind::Opaque))
-        .with_body(NormalizedNode::with_children(NodeKind::Block, vec![]))
-        .with_fingerprint(Fingerprint::from_node(&NormalizedNode::leaf(
-            NodeKind::Opaque,
-        )))
-        .with_node_count(10)
+    CodeUnit {
+        kind: CodeUnitKind::Function,
+        name: name.to_string(),
+        file: PathBuf::from(file),
+        line_start,
+        line_end,
+        signature: NormalizedNode::leaf(NodeKind::Opaque),
+        body: NormalizedNode::with_children(NodeKind::Block, vec![]),
+        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        node_count: 10,
+        ..Default::default()
+    }
 }
 
 #[test]
@@ -73,16 +73,16 @@ fn json_report_check_gathers_the_groups_rather_than_repeating_them() {
     let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let groups = vec![group(0x11, &["process", "compute"])];
     let breaches = vec![
-        CheckBreach::new(
-            String::from("1 exact duplicate groups (max: 0)"),
-            &groups,
-            true,
-        ),
-        CheckBreach::new(
-            String::from("42.9% exact duplicate lines (max: 0.0%)"),
-            &groups,
-            true,
-        ),
+        CheckBreach {
+            message: String::from("1 exact duplicate groups (max: 0)"),
+            groups: &groups,
+            of_exact: true,
+        },
+        CheckBreach {
+            message: String::from("42.9% exact duplicate lines (max: 0.0%)"),
+            groups: &groups,
+            of_exact: true,
+        },
     ];
 
     // Act

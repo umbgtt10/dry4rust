@@ -10,23 +10,6 @@ use crate::node::NormalizedNode;
 /// `NormalizedNode` and only position told them apart in a pair.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NormalizedFn {
-    signature: NormalizedNode,
-    body: NormalizedNode,
-}
-
-impl NormalizedFn {
-    #[must_use]
-    pub const fn new(signature: NormalizedNode, body: NormalizedNode) -> Self {
-        Self { signature, body }
-    }
-
-    #[must_use]
-    pub const fn body(&self) -> &NormalizedNode {
-        &self.body
-    }
-
-    #[must_use]
-    pub const fn signature(&self) -> &NormalizedNode {
-        &self.signature
-    }
+    pub signature: NormalizedNode,
+    pub body: NormalizedNode,
 }

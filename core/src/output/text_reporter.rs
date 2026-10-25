@@ -44,17 +44,17 @@ impl TextReporter {
 
 impl Reporter for TextReporter {
     fn report(&self, report: &Report<'_>) -> io::Result<String> {
-        let mut out = self.report_stats(report.stats())?;
+        let mut out = self.report_stats(report.stats)?;
         let _ = writeln!(out);
-        out.push_str(&self.report_exact(report.exact())?);
-        if !report.near().is_empty() {
-            out.push_str(&self.report_near(report.near())?);
+        out.push_str(&self.report_exact(report.exact)?);
+        if !report.near.is_empty() {
+            out.push_str(&self.report_near(report.near)?);
         }
-        if !report.sub_exact().is_empty() {
-            out.push_str(&self.report_sub_exact(report.sub_exact())?);
+        if !report.sub_exact.is_empty() {
+            out.push_str(&self.report_sub_exact(report.sub_exact)?);
         }
-        if !report.sub_near().is_empty() {
-            out.push_str(&self.report_sub_near(report.sub_near())?);
+        if !report.sub_near.is_empty() {
+            out.push_str(&self.report_sub_near(report.sub_near)?);
         }
         Ok(out)
     }
@@ -66,11 +66,11 @@ impl Reporter for TextReporter {
     ) -> io::Result<String> {
         let mut out = self.report_stats(stats)?;
         for breach in breaches {
-            let _ = writeln!(out, "\nCheck FAILED: {}", breach.message());
-            if breach.is_of_exact() {
-                out.push_str(&self.report_exact(breach.groups())?);
+            let _ = writeln!(out, "\nCheck FAILED: {}", breach.message);
+            if breach.of_exact {
+                out.push_str(&self.report_exact(breach.groups)?);
             } else {
-                out.push_str(&self.report_near(breach.groups())?);
+                out.push_str(&self.report_near(breach.groups)?);
             }
         }
         if breaches.is_empty() {

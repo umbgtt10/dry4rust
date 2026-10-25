@@ -8,11 +8,11 @@ use toml::from_str;
 use toml::to_string_pretty;
 
 fn entry(reason: Option<&str>, members: &[&str]) -> IgnoreEntry {
-    IgnoreEntry::new(
-        String::from("deadbeef12345678"),
-        reason.map(ToOwned::to_owned),
-        members.iter().map(|m| (*m).to_owned()).collect(),
-    )
+    IgnoreEntry {
+        fingerprint: String::from("deadbeef12345678"),
+        reason: reason.map(ToOwned::to_owned),
+        members: members.iter().map(|m| (*m).to_owned()).collect(),
+    }
 }
 
 #[test]
@@ -24,8 +24,8 @@ fn deserialize_defaults_the_two_optional_fields_when_the_file_omits_them() {
     let read: IgnoreEntry = from_str(written).expect("a bare fingerprint is a whole entry");
 
     // Assert
-    assert_eq!(read.reason(), None);
-    assert!(read.members().is_empty());
+    assert_eq!(read.reason, None);
+    assert!(read.members.is_empty());
 }
 
 #[test]

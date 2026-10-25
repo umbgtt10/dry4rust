@@ -22,7 +22,13 @@ fn report_in_json_is_one_document_with_the_sections_named() {
     let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let exact = vec![group(0x11, &["a", "b"])];
     let sub_near = vec![group(0x22, &["c", "d"])];
-    let report = Report::new(&stats, &exact, &[], &[], &sub_near);
+    let report = Report {
+        stats: &stats,
+        exact: &exact,
+        near: &[],
+        sub_exact: &[],
+        sub_near: &sub_near,
+    };
 
     // Act
     let output = rendered(&JsonReporter::new(None), &report);
@@ -46,7 +52,13 @@ fn report_in_json_is_one_document_with_the_sections_named() {
 fn report_in_json_keeps_exact_and_near_even_when_empty() {
     // Arrange
     let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
-    let report = Report::new(&stats, &[], &[], &[], &[]);
+    let report = Report {
+        stats: &stats,
+        exact: &[],
+        near: &[],
+        sub_exact: &[],
+        sub_near: &[],
+    };
 
     // Act
     let output = rendered(&JsonReporter::new(None), &report);
@@ -65,7 +77,13 @@ fn report_in_text_leaves_out_the_sections_with_nothing_in_them() {
     // Arrange
     let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let exact: Vec<DuplicateGroup> = vec![group(0x11, &["a", "b"])];
-    let report = Report::new(&stats, &exact, &[], &[], &[]);
+    let report = Report {
+        stats: &stats,
+        exact: &exact,
+        near: &[],
+        sub_exact: &[],
+        sub_near: &[],
+    };
 
     // Act
     let output = rendered(&TextReporter::new(None), &report);
@@ -82,7 +100,13 @@ fn report_in_text_writes_every_section_that_has_something_in_it() {
     // Arrange
     let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let groups = vec![group(0x11, &["a", "b"])];
-    let report = Report::new(&stats, &groups, &groups, &groups, &groups);
+    let report = Report {
+        stats: &stats,
+        exact: &groups,
+        near: &groups,
+        sub_exact: &groups,
+        sub_near: &groups,
+    };
 
     // Act
     let output = rendered(&TextReporter::new(None), &report);

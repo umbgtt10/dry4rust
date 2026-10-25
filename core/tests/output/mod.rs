@@ -3,7 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod check_breach_tests;
 pub mod display_path_tests;
 pub mod duplication_stats_tests;
 pub mod group_section_tests;

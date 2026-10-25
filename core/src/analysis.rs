@@ -98,20 +98,19 @@ impl Analysis {
             let sub_units: Vec<CodeUnit> = units
                 .iter()
                 .flat_map(|unit| {
-                    let sub_units = SubUnit::extract_sub_units(unit.body(), config.min_sub_nodes());
-                    sub_units.into_iter().map(|su| {
-                        CodeUnit::default()
-                            .with_kind(su.kind().clone())
-                            .with_name(su.description().to_string())
-                            .with_file(unit.file().to_path_buf())
-                            .with_line_start(unit.line_start())
-                            .with_line_end(unit.line_end())
-                            .with_signature(NormalizedNode::leaf(crate::node::NodeKind::Opaque))
-                            .with_body(su.node().clone())
-                            .with_fingerprint(Fingerprint::from_node(su.node()))
-                            .with_node_count(su.node_count())
-                            .with_parent_name(Some(unit.name().to_string()))
-                            .with_is_test(unit.is_test())
+                    let sub_units = SubUnit::extract_sub_units(&unit.body, config.min_sub_nodes());
+                    sub_units.into_iter().map(|su| CodeUnit {
+                        kind: su.kind().clone(),
+                        name: su.description().to_string(),
+                        file: unit.file.clone(),
+                        line_start: unit.line_start,
+                        line_end: unit.line_end,
+                        signature: NormalizedNode::leaf(crate::node::NodeKind::Opaque),
+                        body: su.node().clone(),
+                        fingerprint: Fingerprint::from_node(su.node()),
+                        node_count: su.node_count(),
+                        parent_name: Some(unit.name.clone()),
+                        is_test: unit.is_test,
                     })
                 })
                 .collect();

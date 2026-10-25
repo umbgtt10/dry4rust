@@ -32,39 +32,39 @@ impl JsonReporter {
 
 #[derive(serde::Serialize)]
 struct JsonStats {
-    total_code_units: usize,
-    total_lines: usize,
-    exact_duplicate_groups: usize,
-    exact_duplicate_units: usize,
-    near_duplicate_groups: usize,
-    near_duplicate_units: usize,
-    exact_duplicate_lines: usize,
-    near_duplicate_lines: usize,
-    exact_duplicate_percent: f64,
-    near_duplicate_percent: f64,
+    pub total_code_units: usize,
+    pub total_lines: usize,
+    pub exact_duplicate_groups: usize,
+    pub exact_duplicate_units: usize,
+    pub near_duplicate_groups: usize,
+    pub near_duplicate_units: usize,
+    pub exact_duplicate_lines: usize,
+    pub near_duplicate_lines: usize,
+    pub exact_duplicate_percent: f64,
+    pub near_duplicate_percent: f64,
     #[serde(skip_serializing_if = "JsonReporter::is_zero")]
-    sub_exact_groups: usize,
+    pub sub_exact_groups: usize,
     #[serde(skip_serializing_if = "JsonReporter::is_zero")]
-    sub_exact_units: usize,
+    pub sub_exact_units: usize,
     #[serde(skip_serializing_if = "JsonReporter::is_zero")]
-    sub_near_groups: usize,
+    pub sub_near_groups: usize,
     #[serde(skip_serializing_if = "JsonReporter::is_zero")]
-    sub_near_units: usize,
+    pub sub_near_units: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
-    baseline_suppressed: Option<usize>,
+    pub baseline_suppressed: Option<usize>,
 }
 
 /// A full report as one document, so a reader can parse it in one call and
 /// reach a section by name.
 #[derive(serde::Serialize)]
 struct JsonReport {
-    stats: JsonStats,
-    exact: Vec<JsonGroup>,
-    near: Vec<JsonGroup>,
+    pub stats: JsonStats,
+    pub exact: Vec<JsonGroup>,
+    pub near: Vec<JsonGroup>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    sub_exact: Vec<JsonGroup>,
+    pub sub_exact: Vec<JsonGroup>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    sub_near: Vec<JsonGroup>,
+    pub sub_near: Vec<JsonGroup>,
 }
 
 /// A check verdict as one document. The breach sentences are inside it rather
@@ -72,39 +72,39 @@ struct JsonReport {
 /// being JSON at all.
 #[derive(serde::Serialize)]
 struct JsonCheck {
-    stats: JsonStats,
-    passed: bool,
-    breaches: Vec<String>,
+    pub stats: JsonStats,
+    pub passed: bool,
+    pub breaches: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    exact: Vec<JsonGroup>,
+    pub exact: Vec<JsonGroup>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    near: Vec<JsonGroup>,
+    pub near: Vec<JsonGroup>,
 }
 
 #[derive(serde::Serialize)]
 struct JsonGroup {
-    fingerprint: String,
-    similarity: f64,
-    members: Vec<JsonMember>,
+    pub fingerprint: String,
+    pub similarity: f64,
+    pub members: Vec<JsonMember>,
 }
 
 #[derive(serde::Serialize)]
 struct JsonMember {
-    name: String,
-    kind: String,
-    file: String,
-    line_start: usize,
-    line_end: usize,
+    pub name: String,
+    pub kind: String,
+    pub file: String,
+    pub line_start: usize,
+    pub line_end: usize,
 }
 
 impl Reporter for JsonReporter {
     fn report(&self, report: &Report<'_>) -> io::Result<String> {
         let document = JsonReport {
-            stats: Self::to_json_stats(report.stats()),
-            exact: self.to_json_groups(report.exact()),
-            near: self.to_json_groups(report.near()),
-            sub_exact: self.to_json_groups(report.sub_exact()),
-            sub_near: self.to_json_groups(report.sub_near()),
+            stats: Self::to_json_stats(report.stats),
+            exact: self.to_json_groups(report.exact),
+            near: self.to_json_groups(report.near),
+            sub_exact: self.to_json_groups(report.sub_exact),
+            sub_near: self.to_json_groups(report.sub_near),
         };
         Self::write_document(&document)
     }
@@ -117,15 +117,15 @@ impl Reporter for JsonReporter {
         let groups_of = |exact: bool| {
             breaches
                 .iter()
-                .find(|breach| breach.is_of_exact() == exact)
-                .map_or_else(Vec::new, |breach| self.to_json_groups(breach.groups()))
+                .find(|breach| breach.of_exact == exact)
+                .map_or_else(Vec::new, |breach| self.to_json_groups(breach.groups))
         };
         let document = JsonCheck {
             stats: Self::to_json_stats(stats),
             passed: breaches.is_empty(),
             breaches: breaches
                 .iter()
-                .map(|breach| breach.message().to_owned())
+                .map(|breach| breach.message.clone())
                 .collect(),
             exact: groups_of(true),
             near: groups_of(false),
@@ -163,11 +163,11 @@ impl JsonReporter {
                 .members()
                 .iter()
                 .map(|m| JsonMember {
-                    name: m.name().to_string(),
-                    kind: m.kind().to_string(),
-                    file: DisplayPath::of(self.base_path.as_deref(), m.file()).into_owned(),
-                    line_start: m.line_start(),
-                    line_end: m.line_end(),
+                    name: m.name.clone(),
+                    kind: m.kind.to_string(),
+                    file: DisplayPath::of(self.base_path.as_deref(), &m.file).into_owned(),
+                    line_start: m.line_start,
+                    line_end: m.line_end,
                 })
                 .collect(),
         }

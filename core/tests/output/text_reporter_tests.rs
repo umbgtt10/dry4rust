@@ -19,18 +19,18 @@ use std::path::Path;
 use std::path::PathBuf;
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
-    CodeUnit::default()
-        .with_kind(CodeUnitKind::Function)
-        .with_name(name.to_string())
-        .with_file(PathBuf::from(file))
-        .with_line_start(line_start)
-        .with_line_end(line_end)
-        .with_signature(NormalizedNode::leaf(NodeKind::Opaque))
-        .with_body(NormalizedNode::with_children(NodeKind::Block, vec![]))
-        .with_fingerprint(Fingerprint::from_node(&NormalizedNode::leaf(
-            NodeKind::Opaque,
-        )))
-        .with_node_count(10)
+    CodeUnit {
+        kind: CodeUnitKind::Function,
+        name: name.to_string(),
+        file: PathBuf::from(file),
+        line_start,
+        line_end,
+        signature: NormalizedNode::leaf(NodeKind::Opaque),
+        body: NormalizedNode::with_children(NodeKind::Block, vec![]),
+        fingerprint: Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
+        node_count: 10,
+        ..Default::default()
+    }
 }
 
 #[test]
@@ -52,11 +52,11 @@ fn text_report_check_puts_each_breach_before_the_groups_behind_it() {
     let reporter = TextReporter::new(None);
     let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
     let groups = vec![group(0x11, &["process", "compute"])];
-    let breaches = vec![CheckBreach::new(
-        String::from("1 exact duplicate groups (max: 0)"),
-        &groups,
-        true,
-    )];
+    let breaches = vec![CheckBreach {
+        message: String::from("1 exact duplicate groups (max: 0)"),
+        groups: &groups,
+        of_exact: true,
+    }];
 
     // Act
     let output = reporter
@@ -181,8 +181,10 @@ fn text_report_stats() {
 fn text_report_sub_exact_heads_its_own_section_and_names_the_parent() {
     // Arrange
     let reporter = TextReporter::new(None);
-    let member = make_unit("if-then branch", "/src/a.rs", 10, 25)
-        .with_parent_name(Some(String::from("handle_positive")));
+    let member = CodeUnit {
+        parent_name: Some(String::from("handle_positive")),
+        ..make_unit("if-then branch", "/src/a.rs", 10, 25)
+    };
     let group = DuplicateGroup::new(
         Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
         vec![member],
@@ -208,8 +210,10 @@ fn text_report_sub_exact_heads_its_own_section_and_names_the_parent() {
 fn text_report_sub_near_heads_its_own_section_and_states_the_similarity() {
     // Arrange
     let reporter = TextReporter::new(None);
-    let member = make_unit("for body", "/src/a.rs", 10, 25)
-        .with_parent_name(Some(String::from("total_rising")));
+    let member = CodeUnit {
+        parent_name: Some(String::from("total_rising")),
+        ..make_unit("for body", "/src/a.rs", 10, 25)
+    };
     let group = DuplicateGroup::new(
         Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
         vec![member],

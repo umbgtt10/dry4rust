@@ -14,24 +14,17 @@ use crate::suppression::ignore_entry::IgnoreEntry;
 /// helper: the line is then a value a test can compare against, without a
 /// buffer in between.
 pub struct IgnoreEntryLine<'a> {
-    entry: &'a IgnoreEntry,
-}
-
-impl<'a> IgnoreEntryLine<'a> {
-    #[must_use]
-    pub const fn new(entry: &'a IgnoreEntry) -> Self {
-        Self { entry }
-    }
+    pub entry: &'a IgnoreEntry,
 }
 
 impl fmt::Display for IgnoreEntryLine<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "  {}", self.entry.fingerprint())?;
-        if let Some(reason) = &self.entry.reason() {
+        write!(f, "  {}", self.entry.fingerprint)?;
+        if let Some(reason) = &self.entry.reason {
             write!(f, " (reason: {reason})")?;
         }
-        if !self.entry.members().is_empty() {
-            write!(f, " [{}]", self.entry.members().join(", "))?;
+        if !self.entry.members.is_empty() {
+            write!(f, " [{}]", self.entry.members.join(", "))?;
         }
         Ok(())
     }

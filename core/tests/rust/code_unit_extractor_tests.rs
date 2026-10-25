@@ -26,10 +26,10 @@ fn into_units_after_visiting_a_function_holds_it_with_its_file() {
 
     // Assert
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].name(), "alpha");
-    assert_eq!(*units[0].kind(), CodeUnitKind::Function);
-    assert_eq!(units[0].file(), PathBuf::from("src/alpha.rs"));
-    assert_eq!((units[0].line_start(), units[0].line_end()), (1, 4));
+    assert_eq!(units[0].name, "alpha");
+    assert_eq!(units[0].kind, CodeUnitKind::Function);
+    assert_eq!(units[0].file, PathBuf::from("src/alpha.rs"));
+    assert_eq!((units[0].line_start, units[0].line_end), (1, 4));
 }
 
 #[test]
@@ -42,7 +42,7 @@ fn into_units_keeps_a_constructor_that_converts_its_parameters() {
 
     // Assert
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].name(), "Named::new");
+    assert_eq!(units[0].name, "Named::new");
 }
 
 #[test]
@@ -76,7 +76,7 @@ fn into_units_leaves_out_a_plain_constructor() {
 
     // Assert
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0].name(), "Point::sum");
+    assert_eq!(units[0].name, "Point::sum");
 }
 
 #[test]

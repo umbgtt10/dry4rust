@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
+use dry4rust::code_unit::CodeUnit;
 use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::output::group_section::GroupSection;
 use std::path::Path;
@@ -11,9 +12,10 @@ use std::path::PathBuf;
 
 fn parented(name: &str, parent: &str) -> DuplicateGroup {
     let base = group(0x11, &[name]);
-    let member = base.members()[0]
-        .clone()
-        .with_parent_name(Some(parent.to_owned()));
+    let member = CodeUnit {
+        parent_name: Some(parent.to_owned()),
+        ..base.members()[0].clone()
+    };
     DuplicateGroup::new(base.fingerprint(), vec![member], base.similarity())
 }
 
@@ -92,9 +94,10 @@ fn write_over_an_empty_sub_section_says_nothing_at_all() {
 fn write_shows_a_member_path_relative_to_the_base_it_is_given() {
     // Arrange
     let base = group(0x11, &["a"]);
-    let member = base.members()[0]
-        .clone()
-        .with_file(PathBuf::from("/project/src/lib.rs"));
+    let member = CodeUnit {
+        file: PathBuf::from("/project/src/lib.rs"),
+        ..base.members()[0].clone()
+    };
     let groups = vec![DuplicateGroup::new(
         base.fingerprint(),
         vec![member],

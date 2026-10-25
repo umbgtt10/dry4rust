@@ -42,9 +42,9 @@ fn run_records_the_fingerprint_with_the_reason_it_was_given() {
     // Assert
     let ignore_file = IgnoreFile::load(tmp.path());
     assert_eq!(ignore_file.ignore().len(), 1);
-    assert_eq!(ignore_file.ignore()[0].fingerprint(), "deadbeef12345678");
+    assert_eq!(ignore_file.ignore()[0].fingerprint, "deadbeef12345678");
     assert_eq!(
-        ignore_file.ignore()[0].reason(),
+        ignore_file.ignore()[0].reason.as_deref(),
         Some("trait impls are meant to look alike")
     );
 }

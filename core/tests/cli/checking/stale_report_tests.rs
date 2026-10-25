@@ -7,7 +7,11 @@ use dry4rust::cli::checking::stale_report::StaleReport;
 use dry4rust::suppression::ignore_entry::IgnoreEntry;
 
 fn entry(fingerprint: &str) -> IgnoreEntry {
-    IgnoreEntry::new(fingerprint.to_string(), None, Vec::new())
+    IgnoreEntry {
+        fingerprint: fingerprint.to_string(),
+        reason: None,
+        members: Vec::new(),
+    }
 }
 
 #[test]
@@ -17,7 +21,11 @@ fn entries_come_back_in_the_order_they_were_given() {
     let report = StaleReport::dry_run(held.iter().collect());
 
     // Act
-    let fingerprints: Vec<&str> = report.entries().iter().map(|e| e.fingerprint()).collect();
+    let fingerprints: Vec<&str> = report
+        .entries()
+        .iter()
+        .map(|e| e.fingerprint.as_str())
+        .collect();
 
     // Assert
     assert_eq!(fingerprints, ["aaaa", "bbbb"]);

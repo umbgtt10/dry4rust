@@ -37,7 +37,7 @@ impl<'a> IgnoredCommand<'a> {
         }
         let _ = writeln!(out, "Ignored fingerprints:");
         for entry in ignore_file.ignore() {
-            let _ = writeln!(out, "{}", IgnoreEntryLine::new(entry));
+            let _ = writeln!(out, "{}", IgnoreEntryLine { entry });
         }
         Ok(CommandOutcome::succeeded(out))
     }

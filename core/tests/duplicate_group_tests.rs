@@ -75,10 +75,7 @@ fn find_near_duplicates_groups_two_similar_but_not_identical_functions() {
 fn find_near_duplicates_skips_units_already_matched_exactly() {
     // Arrange
     let units = units_from("fn a(x: i32) -> i32 { x + 1 }\nfn b(y: i32) -> i32 { y + 1 }\n");
-    let exact: Vec<_> = units
-        .iter()
-        .map(dry4rust::code_unit::CodeUnit::fingerprint)
-        .collect();
+    let exact: Vec<_> = units.iter().map(|unit| unit.fingerprint).collect();
 
     // Act
     let groups = DuplicateGroup::find_near_duplicates(&units, 0.5, &exact);

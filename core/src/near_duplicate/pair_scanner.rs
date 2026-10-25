@@ -61,12 +61,12 @@ impl PairScanner {
         for (offset, &left) in ordered.iter().enumerate() {
             for &right in ordered.iter().skip(offset + 1) {
                 if !self.could_reach_threshold(
-                    candidates[left].node_count(),
-                    candidates[right].node_count(),
+                    candidates[left].node_count,
+                    candidates[right].node_count,
                 ) {
                     break;
                 }
-                let score = similarity_score(candidates[left].body(), candidates[right].body());
+                let score = similarity_score(&candidates[left].body, &candidates[right].body);
                 if score >= self.threshold {
                     pairs.push(SimilarityPair::new(left, right, score));
                 }
@@ -83,7 +83,7 @@ impl PairScanner {
     /// comparison.
     fn by_size(candidates: &[&CodeUnit]) -> Vec<usize> {
         let mut ordered: Vec<usize> = (0..candidates.len()).collect();
-        ordered.sort_by_key(|&index| candidates[index].node_count());
+        ordered.sort_by_key(|&index| candidates[index].node_count);
         ordered
     }
 }
