@@ -107,12 +107,13 @@ constructors, the four `Reporter` section methods every format must write --
 and at the default of 10 they form fifteen exact groups whose sameness is a
 signature's, not a copy. At 25 there were four groups when the gate arrived.
 Two were shared away: `TextReporter::section` now sits behind the four section
-methods, and `Threshold::share_of` behind `fraction` and `percent`. The
-baseline records the two that remain, neither of which sharing would improve:
-the four-field constructors of `CommandDispatcher`, `CheckCommand` and
-`BaselineCommand`, which store what they are given; and `NodeEncoder`'s
-`placeholder_name` and `un_op_name`, two lookup tables over different enums
-whose strings every fingerprint is computed from.
+methods, and `Threshold::share_of` behind `fraction` and `percent`. The other
+two, neither of which sharing would improve, were recorded. One was the
+four-field constructors of `CommandDispatcher`, `CheckCommand` and
+`BaselineCommand`, which store what they are given; it left with plain
+constructors, which are no longer code units. The baseline holds the other:
+`NodeEncoder`'s `placeholder_name` and `un_op_name`, two lookup tables over
+different enums whose strings every fingerprint is computed from.
 
 Re-record the baseline only to drop groups that are gone, never to admit new
 ones, and at the same floor -- a baseline matches only at the floor it was
@@ -220,7 +221,7 @@ is worth a test; if it is not, deleting it is the honest answer.
 
 ## User coding standards
 
-- one struct per file
+- one object per file; records where record-home puts them
 - do not use fully qualified paths; use `use` imports instead
 - unit tests are not allowed. Only integration tests are, under `core/tests/`
   for a single source file, or `validation/tests/` when the subject is the

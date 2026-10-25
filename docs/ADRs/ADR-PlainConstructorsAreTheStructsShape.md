@@ -55,3 +55,11 @@ A codebase adopting private fields keeps a gate it can meet without exceptions. 
 still compared, so the duplication worth finding -- the same conversion written twice -- is still found. A baseline
 recorded before this change may hold a group a plain constructor belonged to; `check` admits the shrink, and a
 re-record drops it.
+
+## Amendment (2026-10-25)
+
+Before it was released, stern4rust's `private-fields` rule became `records-and-objects` (R035 v2). A struct with no
+behaviour -- a record -- keeps its fields `pub`, has no getter and no plain constructor, and is built by literal; only
+an object, which has behaviour, keeps its fields private behind getters and the constructors it needs. The plain
+constructors this decision answers are therefore every object's rather than every struct's -- fewer of them, and the
+same shape -- and the decision stands for them unchanged. The history above is left as it was decided.

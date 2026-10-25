@@ -71,8 +71,9 @@ bodies as further units, which then travel the same path.
 | `analyzer` | `LanguageAnalyzer`, the trait every backend implements. One implementation today. |
 | `rust::parser` | `syn` -> `CodeUnit`, one per function, method and closure. |
 | `rust::code_unit_extractor` | `CodeUnitExtractor`, the visitor that walks a parsed file and keeps each unit over the floors. |
-| `rust::normalizer` | The normalisation rules, split by syntax category: `expr`, `pat`, `helpers`, `normalize`. Each is an `impl NormalizationContext` block, so the context that numbers the placeholders is `self` rather than a `&mut` threaded through every call. |
-| `rust::normalizer::normalization_context` | The placeholder counters. Two identifiers map to the same placeholder only within one context. |
+| `rust::normalizer` | The normalisation rules, and the normalised function they return. |
+| `rust::normalizer::normalization_context` | `NormalizationContext`: every normalisation rule, a method per syntax category, and the placeholder counters they share, so the context that numbers the placeholders is `self` rather than a `&mut` threaded through every call. Two identifiers map to the same placeholder only within one context. |
+| `rust::normalizer::normalized_fn` | `NormalizedFn`, a normalised function's signature and body, named and kept apart. |
 | `node` | `NormalizedNode` and `NodeKind` -- the normalised tree, with `NormalizedNode::count_nodes` and `NormalizedNode::reindex_placeholders`. |
 | `placeholder_order_collector` | The placeholders of a tree in first-occurrence order, which is what `reindex_placeholders` renumbers by. |
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
@@ -102,7 +103,7 @@ bodies as further units, which then travel the same path.
 | `cli::entry_point` | The command line and what it means: which root, which command, which overrides. |
 | `cli::cli_overrides` | What the command line said, applied over what the files said. |
 | `cli::output_format` | Text or JSON, and the reporter each builds. |
-| `cli::analysis_output` | One run's config, result and reporter, produced together. |
+| `cli::analysis_output` | One run's config and result, produced together. |
 | `cli::*_command` | One struct per subcommand, each with a single `run`. |
 | `cli::checking` | `Ceiling`, `CheckThresholds`, `StaleReport` -- what `check` and `cleanup` measure with. |
 | `command_dispatcher` | Routes a parsed `Command` to the type that serves it. |
@@ -163,9 +164,12 @@ extracted fragment can be compared against another extracted fragment.
 
 `main` is eleven lines: it hands `argv` to `EntryPoint::run` and returns the
 `ExitCode` that comes back. The mapping from arguments to a run lives in the
-library, so a test can call it, and everything after it is there too: `CommandDispatcher` splits the two commands that
-touch only the ignore file from the five that need an analysis first, runs the
-analysis once, and hands the result to the command struct that serves it.
+library, so a test can call it, and everything after it is there too:
+`EntryPoint` composes the run -- the analyzer, the root, and the reporter
+`--format` names -- and `CommandDispatcher` splits the two commands that touch
+only the ignore file from the five that need an analysis first, runs the
+analysis once, and hands the result and that reporter to the command struct
+that serves it.
 
 Each command is a type with a constructor and a single `run`, returning a
 `CommandOutcome` -- the text it means to print and the verdict that sets the

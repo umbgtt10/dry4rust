@@ -7,8 +7,8 @@ their own heading, because the engine they built is the engine this tool runs.
 
 A plain constructor is no longer a code unit: a method in an inherent impl whose
 whole body builds its own type from its parameters fingerprints as the struct's
-field count, and stern4rust's coming `private-fields` rule gives every struct
-one (`PlainConstructor`, ADR-PlainConstructorsAreTheStructsShape).
+field count, and stern4rust's coming `records-and-objects` rule gives every
+object one (`PlainConstructor`, ADR-PlainConstructorsAreTheStructsShape).
 
 `validation` pairs its scenario files with source instead of baselining
 `paired-test-file`. The harness its tests shared moved out of

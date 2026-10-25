@@ -9,16 +9,6 @@
         "NodeEncoder::placeholder_name",
         "NodeEncoder::un_op_name"
       ]
-    },
-    {
-      "kind": "near",
-      "fingerprint": "5c5067df7c39753b",
-      "members": 3,
-      "names": [
-        "CommandDispatcher::new",
-        "CheckCommand::new",
-        "BaselineCommand::new"
-      ]
     }
   ]
 }

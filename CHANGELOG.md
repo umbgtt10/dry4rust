@@ -14,14 +14,16 @@ inherent impl whose whole body builds its own type from its parameters -- is no
 longer a code unit, so it is neither reported nor counted against a ceiling.
 Its command line, exit codes and file formats are 0.4.0's. The library changes
 more: seven `core/` modules are renamed, split or moved, and two types renamed,
-so each file is named after its subject.
+so each file is named after its subject; the types with behaviour keep their
+fields behind getters, two that have none lose theirs, and the reporter is built
+where a run is composed rather than by the analysis.
 
 ### Changed
 - **A plain constructor is not a code unit.** `Self { x, y }`, `Self { start:
   first }` and `Self(left, right)`, the whole body of a method in an inherent
   impl, built from that method's parameters alone, fingerprint as the struct's
-  field count: stern4rust's coming `private-fields` rule makes every struct
-  have one, and two with as many fields formed an exact-duplicate group over no
+  field count: stern4rust's coming `records-and-objects` rule makes every
+  object have one, and two with as many fields formed an exact-duplicate group over no
   copied logic. `PlainConstructor::is_plain` decides and `CodeUnitExtractor`
   skips them; a constructor that converts, defaults or computes a field is
   analyzed as before. Trait impls' functions are unaffected
@@ -90,6 +92,33 @@ so each file is named after its subject.
   signature -- and `rust::parser::parse_source` and `parse_file` do too. Two
   variants are new, `Read` and `Parse`, each naming the file and why, worded
   as the warnings were.
+- **Objects keep their fields private behind getters**: they have behaviour,
+  and stern4rust's coming `records-and-objects` rule asks an object to hide its
+  fields. `Analysis`, `AnalysisOutput`, `BaselineEntry`, `BaselineFile`,
+  `CheckThresholds`, `CliOverrides`, `CommandOutcome`, `Config`,
+  `DuplicateGroup`, `DuplicationStats`, `IgnoreFile`, `NormalizedNode`,
+  `Scanner`, `SimilarityPair` and `SubUnit`, whose fields were `pub` in 0.4.0,
+  are read through a getter named after each field and built through a
+  constructor -- `Config`, `CliOverrides` and `DuplicationStats`, the widest,
+  from `Default` with a `with_<field>` step per field. `JsonReporter`'s and
+  `TextReporter`'s `base_path` and `Scanner`'s exclude patterns are read only
+  inside their own types and have no getter. `CommandOutcome::into_parts` hands
+  its verdict and its text away together. `CodeUnit`, `CodeUnitKind`
+  (`Function`), `Fingerprint`, `NodeKind` (`None`), `NormalizedNode` and
+  `DuplicationStats` derive `Default`.
+- `output::check_breach::CheckBreach` and `cli::ignore_entry_line::IgnoreEntryLine`
+  are records: their fields are `pub` and their getters and constructors are
+  gone, for stern4rust's coming `records-and-objects` rule. Build them by
+  literal, `CheckBreach { message, groups, of_exact }` and
+  `IgnoreEntryLine { entry }`, and read the `message`, `groups` and `of_exact`
+  fields where `message()`, `groups()` and `is_of_exact()` were.
+- `AnalysisOutput` no longer carries a reporter, for stern4rust's coming
+  `injected-dependencies` rule -- a field declared as a trait holds only what
+  the caller passed in. Its `reporter` field is gone, and `produce` and
+  `produce_ignoring_baseline` no longer take an `OutputFormat`.
+  `CommandDispatcher::new` takes the `&dyn Reporter` to write through in place
+  of the format, and `EntryPoint` builds that reporter from `--format`. What
+  is printed is unchanged.
 
 ## [0.4.0] - 2026-10-10
 
