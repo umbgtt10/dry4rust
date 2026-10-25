@@ -5,7 +5,6 @@
 
 use dry4rust::cli::analysis_output::AnalysisOutput;
 use dry4rust::cli::cli_overrides::CliOverrides;
-use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use std::path::Path;
 
@@ -14,7 +13,7 @@ pub struct PipelineScenario;
 impl PipelineScenario {
     #[must_use]
     pub fn produced(root: &Path, overrides: &CliOverrides) -> AnalysisOutput {
-        AnalysisOutput::produce(&RustAnalyzer::new(), root, OutputFormat::Text, overrides)
+        AnalysisOutput::produce(&RustAnalyzer::new(), root, overrides)
             .expect("the fixture analyses cleanly")
     }
 }

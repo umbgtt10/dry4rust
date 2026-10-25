@@ -139,7 +139,9 @@ impl EntryPoint {
     fn execute(self) -> ExitCode {
         let analyzer = RustAnalyzer::new();
         let root = self.root();
-        let dispatcher = CommandDispatcher::new(&analyzer, &root, self.format, self.overrides());
+        let reporter = self.format.reporter(Some(&root));
+        let dispatcher =
+            CommandDispatcher::new(&analyzer, &root, reporter.as_ref(), self.overrides());
         match dispatcher.dispatch(&self.command()) {
             Ok(outcome) => {
                 let stdout = io::stdout();

@@ -5,7 +5,6 @@
 
 use dry4rust::cli::analysis_output::AnalysisOutput;
 use dry4rust::cli::cli_overrides::CliOverrides;
-use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::suppression::baseline_file::BaselineFile;
@@ -62,22 +61,13 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
         CliOverrides::default().with_baseline(Some(PathBuf::from("dry4rust-baseline.json")));
 
     // Act
-    let recording = AnalysisOutput::produce_ignoring_baseline(
-        &RustAnalyzer::new(),
-        tmp.path(),
-        OutputFormat::Text,
-        &overrides,
-    )
-    .expect("the fixture analyses cleanly");
+    let recording =
+        AnalysisOutput::produce_ignoring_baseline(&RustAnalyzer::new(), tmp.path(), &overrides)
+            .expect("the fixture analyses cleanly");
 
     // Assert
-    let judging = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        tmp.path(),
-        OutputFormat::Text,
-        &overrides,
-    )
-    .expect("the fixture analyses cleanly");
+    let judging = AnalysisOutput::produce(&RustAnalyzer::new(), tmp.path(), &overrides)
+        .expect("the fixture analyses cleanly");
     assert_eq!(
         judging.result().exact_groups().len(),
         0,

@@ -11,35 +11,18 @@ use crate::analyzer::LanguageAnalyzer;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::cli_overrides::CliOverrides;
-use crate::cli::output_format::OutputFormat;
 use crate::config::Config;
-use crate::output::reporter::Reporter;
 use crate::scanner::Scanner;
 
-/// Everything one analysis run produces: the configuration it ran under, what
-/// it found, and the reporter that can write it out.
+/// Everything one analysis run produces: the configuration it ran under and
+/// what it found.
 pub struct AnalysisOutput {
     config: Config,
     result: Analysis,
-    reporter: Box<dyn Reporter>,
 }
 
 impl AnalysisOutput {
-    #[must_use]
-    pub fn new(config: Config, result: Analysis, reporter: Box<dyn Reporter>) -> Self {
-        Self {
-            config,
-            result,
-            reporter,
-        }
-    }
-
-    fn from_config(
-        analyzer: &dyn LanguageAnalyzer,
-        root: &Path,
-        format: OutputFormat,
-        config: Config,
-    ) -> CliResult<Self> {
+    fn from_config(analyzer: &dyn LanguageAnalyzer, config: Config) -> CliResult<Self> {
         let scanner = Scanner::new(config.root().to_path_buf())
             .with_excludes(config.exclude().to_vec())
             .with_extensions(
@@ -56,13 +39,13 @@ impl AnalysisOutput {
         }
 
         let result = Analysis::analyze(analyzer, &files, &config)?;
-        let reporter = format.reporter(Some(root));
 
-        Ok(Self {
-            config,
-            result,
-            reporter,
-        })
+        Ok(Self { config, result })
+    }
+
+    #[must_use]
+    pub const fn new(config: Config, result: Analysis) -> Self {
+        Self { config, result }
     }
 
     /// Scan files, run the analysis pipeline, and return the output.
@@ -79,10 +62,9 @@ impl AnalysisOutput {
     pub fn produce(
         analyzer: &dyn LanguageAnalyzer,
         root: &Path,
-        format: OutputFormat,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
-        Self::from_config(analyzer, root, format, Self::configure(root, overrides)?)
+        Self::from_config(analyzer, Self::configure(root, overrides)?)
     }
 
     /// The same run, with the baseline left out of it.
@@ -97,12 +79,11 @@ impl AnalysisOutput {
     pub fn produce_ignoring_baseline(
         analyzer: &dyn LanguageAnalyzer,
         root: &Path,
-        format: OutputFormat,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
         let config = Self::configure(root, overrides)?;
         let named = config.baseline().map(Path::to_path_buf);
-        let output = Self::from_config(analyzer, root, format, config.with_baseline(None))?;
+        let output = Self::from_config(analyzer, config.with_baseline(None))?;
         Ok(Self {
             config: output.config.with_baseline(named),
             ..output
@@ -112,11 +93,6 @@ impl AnalysisOutput {
     #[must_use]
     pub const fn config(&self) -> &Config {
         &self.config
-    }
-
-    #[must_use]
-    pub fn reporter(&self) -> &dyn Reporter {
-        self.reporter.as_ref()
     }
 
     #[must_use]

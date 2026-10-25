@@ -6,11 +6,8 @@
 use dry4rust::cli::analysis_output::AnalysisOutput;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_overrides::CliOverrides;
-use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::suppression::baseline_file::BaselineFile;
-use serde_json::Value;
-use serde_json::from_str;
 use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -37,42 +34,14 @@ pub fn compute_total(values: Vec<i32>) -> i32 {
 ";
 
 #[test]
-fn produce_hands_out_the_reporter_of_the_format_it_was_given() {
-    // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    fs::create_dir_all(tmp.path().join("src")).expect("src");
-    fs::write(tmp.path().join("src/lib.rs"), DUPLICATED).expect("write");
-
-    // Act
-    let output = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        tmp.path(),
-        OutputFormat::Json,
-        &CliOverrides::default(),
-    )
-    .expect("it analyses cleanly");
-
-    // Assert
-    let stats = output
-        .reporter()
-        .report_stats(output.result().stats())
-        .expect("the statistics are reported");
-    assert!(from_str::<Value>(&stats).is_ok(), "{stats}");
-}
-
-#[test]
 fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     fs::create_dir_all(tmp.path().join("src")).expect("src");
     fs::write(tmp.path().join("src/lib.rs"), DUPLICATED).expect("write");
-    let judged = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        tmp.path(),
-        OutputFormat::Text,
-        &CliOverrides::default(),
-    )
-    .expect("it analyses cleanly");
+    let judged =
+        AnalysisOutput::produce(&RustAnalyzer::new(), tmp.path(), &CliOverrides::default())
+            .expect("it analyses cleanly");
     BaselineFile::record(judged.result())
         .save(&tmp.path().join("dry4rust-baseline.json"))
         .expect("the baseline is written");
@@ -80,22 +49,13 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
         CliOverrides::default().with_baseline(Some(PathBuf::from("dry4rust-baseline.json")));
 
     // Act
-    let recording = AnalysisOutput::produce_ignoring_baseline(
-        &RustAnalyzer::new(),
-        tmp.path(),
-        OutputFormat::Text,
-        &overrides,
-    )
-    .expect("it analyses cleanly");
+    let recording =
+        AnalysisOutput::produce_ignoring_baseline(&RustAnalyzer::new(), tmp.path(), &overrides)
+            .expect("it analyses cleanly");
 
     // Assert
-    let judging = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        tmp.path(),
-        OutputFormat::Text,
-        &overrides,
-    )
-    .expect("it analyses cleanly");
+    let judging = AnalysisOutput::produce(&RustAnalyzer::new(), tmp.path(), &overrides)
+        .expect("it analyses cleanly");
     assert_eq!(
         judging.result().exact_groups().len(),
         0,
@@ -117,13 +77,8 @@ fn produce_keeps_the_configuration_its_overrides_set() {
     let overrides = CliOverrides::default().with_min_nodes(Some(12));
 
     // Act
-    let output = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        tmp.path(),
-        OutputFormat::Text,
-        &overrides,
-    )
-    .expect("it analyses cleanly");
+    let output = AnalysisOutput::produce(&RustAnalyzer::new(), tmp.path(), &overrides)
+        .expect("it analyses cleanly");
 
     // Assert
     assert_eq!(output.config().min_nodes(), 12);
@@ -135,12 +90,8 @@ fn produce_over_a_root_with_no_source_files_names_the_root_it_looked_in() {
     let empty = TempDir::new().expect("temp dir");
 
     // Act
-    let outcome = AnalysisOutput::produce(
-        &RustAnalyzer::new(),
-        empty.path(),
-        OutputFormat::Text,
-        &CliOverrides::default(),
-    );
+    let outcome =
+        AnalysisOutput::produce(&RustAnalyzer::new(), empty.path(), &CliOverrides::default());
 
     // Assert
     let Err(CliError::NoSourceFiles(path)) = outcome else {

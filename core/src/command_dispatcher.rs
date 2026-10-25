@@ -18,7 +18,6 @@ use crate::cli::command::Command;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_command::IgnoreCommand;
 use crate::cli::ignored_command::IgnoredCommand;
-use crate::cli::output_format::OutputFormat;
 use crate::cli::report_command::ReportCommand;
 use crate::cli::stats_command::StatsCommand;
 use crate::output::reporter::Reporter;
@@ -32,7 +31,7 @@ use crate::output::reporter::Reporter;
 pub struct CommandDispatcher<'a> {
     analyzer: &'a dyn LanguageAnalyzer,
     root: &'a Path,
-    format: OutputFormat,
+    reporter: &'a dyn Reporter,
     overrides: CliOverrides,
 }
 
@@ -41,13 +40,13 @@ impl<'a> CommandDispatcher<'a> {
     pub const fn new(
         analyzer: &'a dyn LanguageAnalyzer,
         root: &'a Path,
-        format: OutputFormat,
+        reporter: &'a dyn Reporter,
         overrides: CliOverrides,
     ) -> Self {
         Self {
             analyzer,
             root,
-            format,
+            reporter,
             overrides,
         }
     }
@@ -72,21 +71,16 @@ impl<'a> CommandDispatcher<'a> {
 
     fn dispatch_analysed(&self, command: &Command) -> CliResult<CommandOutcome> {
         let output = if matches!(command, Command::Baseline { .. }) {
-            AnalysisOutput::produce_ignoring_baseline(
-                self.analyzer,
-                self.root,
-                self.format,
-                &self.overrides,
-            )?
+            AnalysisOutput::produce_ignoring_baseline(self.analyzer, self.root, &self.overrides)?
         } else {
-            AnalysisOutput::produce(self.analyzer, self.root, self.format, &self.overrides)?
+            AnalysisOutput::produce(self.analyzer, self.root, &self.overrides)?
         };
         Self::report_warnings(&output);
         self.render(command, &output)
     }
 
     fn render(&self, command: &Command, output: &AnalysisOutput) -> CliResult<CommandOutcome> {
-        let reporter: &dyn Reporter = output.reporter();
+        let reporter = self.reporter;
         match command {
             Command::Stats => StatsCommand::new(output.result(), reporter).run(),
             Command::Report => ReportCommand::new(output.result(), reporter).run(),

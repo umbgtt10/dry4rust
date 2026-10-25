@@ -9,13 +9,38 @@ use dry4rust::cli::command::Command;
 use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
+use serde_json::Value;
+use serde_json::from_str;
+use std::fs;
 use std::path::Path;
 use tempfile::TempDir;
 
+const DUPLICATED: &str = r"pub fn process_data(input: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for item in input.iter() {
+        if *item > 0 {
+            sum += *item;
+        }
+    }
+    sum
+}
+
+pub fn compute_total(values: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for value in values.iter() {
+        if *value > 0 {
+            sum += *value;
+        }
+    }
+    sum
+}
+";
+
 fn dispatch_in(root: &Path, command: &Command) -> (Result<(), CliError>, String) {
     let analyzer = RustAnalyzer::new();
+    let reporter = OutputFormat::Text.reporter(Some(root));
     let dispatcher =
-        CommandDispatcher::new(&analyzer, root, OutputFormat::Text, CliOverrides::default());
+        CommandDispatcher::new(&analyzer, root, reporter.as_ref(), CliOverrides::default());
     match dispatcher.dispatch(command) {
         Ok(outcome) => outcome.into_parts(),
         Err(error) => (Err(error), String::new()),
@@ -62,4 +87,29 @@ fn dispatch_with_ignored_lists_what_ignore_recorded() {
         text.contains("cafebabe00000002"),
         "the listing names the fingerprint just recorded, got: {text}"
     );
+}
+
+#[test]
+fn dispatch_with_stats_writes_through_the_reporter_it_was_given() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    fs::create_dir_all(tmp.path().join("src")).expect("src");
+    fs::write(tmp.path().join("src/lib.rs"), DUPLICATED).expect("write");
+    let analyzer = RustAnalyzer::new();
+    let reporter = OutputFormat::Json.reporter(Some(tmp.path()));
+    let dispatcher = CommandDispatcher::new(
+        &analyzer,
+        tmp.path(),
+        reporter.as_ref(),
+        CliOverrides::default(),
+    );
+
+    // Act
+    let (_, stats) = dispatcher
+        .dispatch(&Command::Stats)
+        .expect("it analyses cleanly")
+        .into_parts();
+
+    // Assert
+    assert!(from_str::<Value>(&stats).is_ok(), "{stats}");
 }

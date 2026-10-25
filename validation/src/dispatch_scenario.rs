@@ -26,8 +26,9 @@ impl DispatchScenario {
 
     pub fn dispatch_in(root: &Path, command: &Command) -> (Result<(), CliError>, String) {
         let analyzer = RustAnalyzer::new();
+        let reporter = OutputFormat::Text.reporter(Some(root));
         let dispatcher =
-            CommandDispatcher::new(&analyzer, root, OutputFormat::Text, CliOverrides::default());
+            CommandDispatcher::new(&analyzer, root, reporter.as_ref(), CliOverrides::default());
         match dispatcher.dispatch(command) {
             Ok(outcome) => outcome.into_parts(),
             Err(error) => (Err(error), String::new()),
