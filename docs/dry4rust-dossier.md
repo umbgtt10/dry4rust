@@ -342,8 +342,8 @@ A tool aimed there would:
 This is coherent with your broader thesis about agentic overproduction: the
 bottleneck in agent-driven development is redundant regeneration under limited
 context, and the tool that prevents it — rather than merely auditing for it after
-the fact — is the one worth building. It is also a natural RTAS-adjacent or blog-
-adjacent artifact, and it is genuinely novel: nobody has a production Rust
+the fact — is the one worth building. It is also a natural research or blog
+artifact, and it is genuinely novel: nobody has a production Rust
 semantic-redundancy tool wired into the agent loop.
 
 **Caveat, stated plainly:** this is materially harder than a `syn` fingerprint
