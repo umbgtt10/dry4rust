@@ -16,11 +16,11 @@ use crate::cli::command::Command;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_command::IgnoreCommand;
 use crate::cli::ignored_command::IgnoredCommand;
-use crate::cli::output::reporter::Reporter;
 use crate::cli::ports::Ports;
 use crate::cli::report_command::ReportCommand;
 use crate::cli::stats_command::StatsCommand;
 use crate::source_path::SourcePath;
+use crate::traits::reporter::Reporter;
 
 /// Routes a parsed [`Command`] to the type that serves it.
 ///
@@ -54,13 +54,17 @@ impl<'a> CommandDispatcher<'a> {
         }
     }
 
-    /// Run `command` and return the text it produced and its verdict.
+    /// Run `command` and return the text it produced, its verdict and the
+    /// warnings the analysis raised.
     ///
     /// # Errors
     ///
-    /// Returns whatever the command returns before it can produce text: a
-    /// failed analysis, an I/O failure, or an invalid fingerprint. A breached
-    /// `check` ceiling is carried in the outcome rather than returned here.
+    /// Returns whatever stops a command before an analysis has run: a
+    /// configuration out of range, no sources, a baseline that cannot be read,
+    /// an ignore file that cannot be written, or an invalid fingerprint. Once
+    /// an analysis has run, its warnings and any failure -- a breached `check`
+    /// ceiling included -- are carried in the outcome rather than returned
+    /// here, so the warnings still reach stderr ahead of the error.
     pub fn dispatch(&self, command: &Command) -> CliResult<CommandOutcome> {
         match command {
             Command::Ignore {
@@ -84,8 +88,10 @@ impl<'a> CommandDispatcher<'a> {
         } else {
             AnalysisOutput::produce(self.analyzer, &self.ports, self.root, &self.overrides)?
         };
-        Self::report_warnings(&output);
-        self.render(command, &output)
+        let outcome = self
+            .render(command, &output)
+            .unwrap_or_else(|error| CommandOutcome::new(String::new(), Err(error)));
+        Ok(outcome.with_warnings(output.result().warnings().to_vec()))
     }
 
     fn render(&self, command: &Command, output: &AnalysisOutput) -> CliResult<CommandOutcome> {
@@ -120,12 +126,6 @@ impl<'a> CommandDispatcher<'a> {
             )
             .run(),
             Command::Ignore { .. } | Command::Ignored => unreachable!(),
-        }
-    }
-
-    fn report_warnings(output: &AnalysisOutput) {
-        for warning in output.result().warnings() {
-            eprintln!("Warning: {warning}");
         }
     }
 }

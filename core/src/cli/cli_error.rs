@@ -3,10 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::error::Error;
-use std::fmt;
-use std::io;
+use core::error::Error;
+use core::fmt;
 
+use crate::cli::output::render_failure::RenderFailure;
 use crate::error::Error as AnalysisError;
 use crate::source_path::SourcePath;
 use crate::storage_failure::StorageFailure;
@@ -28,6 +28,8 @@ pub enum CliError {
     InvalidFingerprint(String),
     /// Configuration outside the range its field allows (exit code 2).
     InvalidConfig(String),
+    /// A reporter could not write its document (exit code 2).
+    Render(RenderFailure),
     /// Check thresholds exceeded (exit code 1).
     CheckFailed,
 }
@@ -44,7 +46,8 @@ impl CliError {
             | Self::AmbiguousLanguage(_)
             | Self::Analysis(_)
             | Self::InvalidFingerprint(_)
-            | Self::InvalidConfig(_) => 2,
+            | Self::InvalidConfig(_)
+            | Self::Render(_) => 2,
         }
     }
 }
@@ -72,6 +75,7 @@ impl fmt::Display for CliError {
             Self::Analysis(e) => write!(f, "{e}"),
             Self::InvalidFingerprint(fp) => write!(f, "Invalid fingerprint: {fp}"),
             Self::InvalidConfig(message) => write!(f, "{message}"),
+            Self::Render(e) => write!(f, "{e}"),
             Self::CheckFailed => write!(f, "Check failed"),
         }
     }
@@ -82,16 +86,9 @@ impl Error for CliError {
         match self {
             Self::Io(e) => Some(e),
             Self::Analysis(e) => Some(e),
+            Self::Render(e) => Some(e),
             _ => None,
         }
-    }
-}
-
-// The reporters' I/O errors, in the words they were given, until the reporters
-// fail with a type of the core's own.
-impl From<io::Error> for CliError {
-    fn from(e: io::Error) -> Self {
-        Self::Io(StorageFailure::Failed(e.to_string()))
     }
 }
 
@@ -104,6 +101,12 @@ impl From<StorageFailure> for CliError {
 impl From<AnalysisError> for CliError {
     fn from(e: AnalysisError) -> Self {
         Self::Analysis(e)
+    }
+}
+
+impl From<RenderFailure> for CliError {
+    fn from(e: RenderFailure) -> Self {
+        Self::Render(e)
     }
 }
 

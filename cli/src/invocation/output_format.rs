@@ -3,10 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::cli::output::json_reporter::JsonReporter;
-use dry4rust::cli::output::reporter::Reporter;
 use dry4rust::cli::output::text_reporter::TextReporter;
 use dry4rust::source_path::SourcePath;
+use dry4rust::traits::reporter::Reporter;
+
+use crate::system::json_reporter::JsonReporter;
 
 /// Output format for CLI reports.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, clap::ValueEnum)]

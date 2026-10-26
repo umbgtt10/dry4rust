@@ -10,6 +10,7 @@ use std::process::ExitCode;
 use clap::Error as ClapError;
 use clap::Parser;
 use dry4rust::cli::cli_error::CliError;
+use dry4rust::cli::command_outcome::CommandOutcome;
 use dry4rust::cli::ports::Ports;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
@@ -23,9 +24,9 @@ use crate::system::toml_ignore_store::TomlIgnoreStore;
 use crate::system::walkdir_source_tree::WalkdirSourceTree;
 
 /// The composition root: the command line in, the report out on stdout and
-/// the errors on stderr, an exit code back. The one place the file system and
-/// the formats the files are written in are chosen; everything it composes is
-/// the core's, tested without them.
+/// the warnings and errors on stderr, an exit code back. The one place the
+/// file system, the formats the files are written in and the streams are
+/// chosen; everything it composes is the core's, tested without them.
 pub struct EntryPoint;
 
 impl EntryPoint {
@@ -58,20 +59,7 @@ impl EntryPoint {
         let dispatcher =
             CommandDispatcher::new(&analyzer, &root, reporter.as_ref(), args.overrides(), ports);
         match dispatcher.dispatch(&args.command()) {
-            Ok(outcome) => {
-                let stdout = io::stdout();
-                let mut writer = stdout.lock();
-                match writer
-                    .write_all(outcome.text().as_bytes())
-                    .and_then(|()| writer.flush())
-                {
-                    Ok(()) => match outcome.result() {
-                        Ok(()) => ExitCode::SUCCESS,
-                        Err(e) => Self::reported(e),
-                    },
-                    Err(e) => Self::reported(&CliError::Io(StorageFailure::Failed(e.to_string()))),
-                }
-            }
+            Ok(outcome) => Self::printed(&outcome),
             Err(e) => Self::reported(&e),
         }
     }
@@ -84,6 +72,24 @@ impl EntryPoint {
             ExitCode::from(2)
         } else {
             ExitCode::SUCCESS
+        }
+    }
+
+    fn printed(outcome: &CommandOutcome) -> ExitCode {
+        for warning in outcome.warnings() {
+            eprintln!("Warning: {warning}");
+        }
+        let stdout = io::stdout();
+        let mut writer = stdout.lock();
+        match writer
+            .write_all(outcome.text().as_bytes())
+            .and_then(|()| writer.flush())
+        {
+            Ok(()) => match outcome.result() {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(e) => Self::reported(e),
+            },
+            Err(e) => Self::reported(&CliError::Io(StorageFailure::Failed(e.to_string()))),
         }
     }
 

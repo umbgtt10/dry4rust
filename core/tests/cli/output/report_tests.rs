@@ -4,72 +4,13 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
-use dry4rust::cli::output::json_reporter::JsonReporter;
 use dry4rust::cli::output::report::Report;
-use dry4rust::cli::output::reporter::Reporter;
 use dry4rust::cli::output::text_reporter::TextReporter;
 use dry4rust::duplicate_group::DuplicateGroup;
-use serde_json::Value;
-use serde_json::from_str;
+use dry4rust::traits::reporter::Reporter;
 
 fn rendered(reporter: &dyn Reporter, report: &Report<'_>) -> String {
     reporter.report(report).expect("reporting succeeds")
-}
-
-#[test]
-fn report_in_json_is_one_document_with_the_sections_named() {
-    // Arrange
-    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
-    let exact = vec![group(0x11, &["a", "b"])];
-    let sub_near = vec![group(0x22, &["c", "d"])];
-    let report = Report {
-        stats: &stats,
-        exact: &exact,
-        near: &[],
-        sub_exact: &[],
-        sub_near: &sub_near,
-    };
-
-    // Act
-    let output = rendered(&JsonReporter::new(None), &report);
-
-    // Assert
-    let document: Value =
-        from_str(&output).expect("one parse reads the whole thing, which is the point");
-    assert!(document["stats"].is_object());
-    assert_eq!(document["exact"].as_array().expect("exact").len(), 1);
-    assert_eq!(document["near"].as_array().expect("near").len(), 0);
-    assert_eq!(document["sub_near"].as_array().expect("sub_near").len(), 1);
-    assert!(
-        document.get("sub_exact").is_none(),
-        "an empty sub-function section is absent rather than an empty array, \
-         because sub-function analysis is opt-in and `[]` would read as \
-         having looked, got: {output}"
-    );
-}
-
-#[test]
-fn report_in_json_keeps_exact_and_near_even_when_empty() {
-    // Arrange
-    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
-    let report = Report {
-        stats: &stats,
-        exact: &[],
-        near: &[],
-        sub_exact: &[],
-        sub_near: &[],
-    };
-
-    // Act
-    let output = rendered(&JsonReporter::new(None), &report);
-
-    // Assert
-    let document: Value = from_str(&output).expect("valid json");
-    assert!(
-        document["exact"].is_array() && document["near"].is_array(),
-        "these two are always analysed, so a reader can always index them, \
-         got: {output}"
-    );
 }
 
 #[test]

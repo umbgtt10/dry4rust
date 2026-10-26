@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 /// Statistics about duplication in the analyzed codebase.
-#[derive(Debug, Clone, serde::Serialize, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct DuplicationStats {
     total_code_units: usize,
     total_lines: usize,

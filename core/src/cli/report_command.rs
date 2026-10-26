@@ -7,7 +7,7 @@ use crate::analysis::Analysis;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::output::report::Report;
-use crate::cli::output::reporter::Reporter;
+use crate::traits::reporter::Reporter;
 
 /// `report`: the summary followed by every group that survived filtering.
 ///
@@ -30,7 +30,7 @@ impl<'a> ReportCommand<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`crate::cli::cli_error::CliError::Io`] if the reporter fails.
+    /// Returns [`crate::cli::cli_error::CliError::Render`] if the reporter fails.
     pub fn run(&self) -> CliResult<CommandOutcome> {
         let text = self.reporter.report(&Report {
             stats: self.result.stats(),

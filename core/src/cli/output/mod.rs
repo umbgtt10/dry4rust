@@ -6,7 +6,6 @@
 pub mod check_breach;
 pub mod display_path;
 pub mod group_section;
-pub mod json_reporter;
+pub mod render_failure;
 pub mod report;
-pub mod reporter;
 pub mod text_reporter;

@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::cli::cli_error::CliError;
+use dry4rust::cli::output::render_failure::RenderFailure;
 use dry4rust::error::Error as AnalysisError;
 use dry4rust::source_path::SourcePath;
 use dry4rust::storage_failure::StorageFailure;
@@ -92,6 +93,23 @@ fn fmt_of_no_source_files_names_the_path_it_looked_in() {
         message.contains("/some/root"),
         "a reader needs the path to know where to look, got: {message}"
     );
+}
+
+#[test]
+fn from_a_render_failure_keeps_it_as_the_source() {
+    // Arrange
+    let failure = RenderFailure {
+        reason: String::from("key must be a string"),
+    };
+
+    // Act
+    let error = CliError::from(failure);
+
+    // Assert
+    assert!(matches!(error, CliError::Render(_)));
+    assert!(error.source().is_some());
+    assert_eq!(error.to_string(), "key must be a string");
+    assert_eq!(error.exit_code(), 2);
 }
 
 #[test]

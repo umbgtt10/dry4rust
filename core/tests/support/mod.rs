@@ -8,3 +8,4 @@ pub mod in_memory_baseline_store;
 pub mod in_memory_config_source;
 pub mod in_memory_ignore_store;
 pub mod in_memory_source_tree;
+pub mod summary_reporter;

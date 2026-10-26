@@ -38,3 +38,17 @@ fn succeeded_carries_the_text_with_an_ok_result() {
     assert_eq!(outcome.text(), "done");
     assert!(outcome.result().is_ok());
 }
+
+#[test]
+fn with_warnings_carries_them_beside_the_text_and_the_verdict() {
+    // Arrange
+    let outcome = CommandOutcome::succeeded(String::from("report\n"));
+
+    // Act
+    let outcome = outcome.with_warnings(vec![String::from("Failed to parse src/a.rs: x")]);
+
+    // Assert
+    assert_eq!(outcome.warnings(), ["Failed to parse src/a.rs: x"]);
+    assert_eq!(outcome.text(), "report\n");
+    assert!(outcome.result().is_ok());
+}

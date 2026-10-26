@@ -6,4 +6,5 @@
 pub mod baseline_store;
 pub mod config_source;
 pub mod ignore_store;
+pub mod reporter;
 pub mod source_tree;

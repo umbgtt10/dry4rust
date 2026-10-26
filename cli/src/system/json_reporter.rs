@@ -3,15 +3,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io;
-
-use crate::cli::output::check_breach::CheckBreach;
-use crate::cli::output::display_path::DisplayPath;
-use crate::cli::output::report::Report;
-use crate::cli::output::reporter::Reporter;
-use crate::duplicate_group::DuplicateGroup;
-use crate::duplication_stats::DuplicationStats;
-use crate::source_path::SourcePath;
+use dry4rust::cli::output::check_breach::CheckBreach;
+use dry4rust::cli::output::display_path::DisplayPath;
+use dry4rust::cli::output::render_failure::RenderFailure;
+use dry4rust::cli::output::report::Report;
+use dry4rust::duplicate_group::DuplicateGroup;
+use dry4rust::duplication_stats::DuplicationStats;
+use dry4rust::source_path::SourcePath;
+use dry4rust::traits::reporter::Reporter;
 use serde_json::to_string_pretty;
 
 pub struct JsonReporter {
@@ -98,7 +97,7 @@ struct JsonMember {
 }
 
 impl Reporter for JsonReporter {
-    fn report(&self, report: &Report<'_>) -> io::Result<String> {
+    fn report(&self, report: &Report<'_>) -> Result<String, RenderFailure> {
         let document = JsonReport {
             stats: Self::to_json_stats(report.stats),
             exact: self.to_json_groups(report.exact),
@@ -113,7 +112,7 @@ impl Reporter for JsonReporter {
         &self,
         stats: &DuplicationStats,
         breaches: &[CheckBreach<'_>],
-    ) -> io::Result<String> {
+    ) -> Result<String, RenderFailure> {
         let groups_of = |exact: bool| {
             breaches
                 .iter()
@@ -133,23 +132,23 @@ impl Reporter for JsonReporter {
         Self::write_document(&document)
     }
 
-    fn report_stats(&self, stats: &DuplicationStats) -> io::Result<String> {
+    fn report_stats(&self, stats: &DuplicationStats) -> Result<String, RenderFailure> {
         Self::write_document(&Self::to_json_stats(stats))
     }
 
-    fn report_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn report_exact(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         self.write_groups(groups)
     }
 
-    fn report_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn report_near(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         self.write_groups(groups)
     }
 
-    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         self.write_groups(groups)
     }
 
-    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         self.write_groups(groups)
     }
 }
@@ -197,12 +196,14 @@ impl JsonReporter {
         }
     }
 
-    fn write_document<T: serde::Serialize>(document: &T) -> io::Result<String> {
-        let json = to_string_pretty(document).map_err(io::Error::other)?;
+    fn write_document<T: serde::Serialize>(document: &T) -> Result<String, RenderFailure> {
+        let json = to_string_pretty(document).map_err(|error| RenderFailure {
+            reason: error.to_string(),
+        })?;
         Ok(format!("{json}\n"))
     }
 
-    fn write_groups(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn write_groups(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         Self::write_document(&self.to_json_groups(groups))
     }
 }

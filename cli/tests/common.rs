@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::analysis::Analysis;
+use dry4rust::cli::ports::Ports;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
 use dry4rust::duplicate_group::DuplicateGroup;
@@ -11,8 +12,24 @@ use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::source_path::SourcePath;
+use dry4rust_cli::system::json_baseline_store::JsonBaselineStore;
+use dry4rust_cli::system::toml_config_source::TomlConfigSource;
+use dry4rust_cli::system::toml_ignore_store::TomlIgnoreStore;
+use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
 use std::collections::HashSet;
 use std::path::Path;
+
+/// The adapters `EntryPoint` composes, for tests that run the core against the
+/// real file system.
+#[must_use]
+pub const fn disk_ports() -> Ports<'static> {
+    Ports {
+        sources: &WalkdirSourceTree,
+        config: &TomlConfigSource,
+        ignore: &TomlIgnoreStore,
+        baseline: &JsonBaselineStore,
+    }
+}
 
 /// A duplicate group with a stated fingerprint and members, for tests that
 /// care about grouping rather than about the code behind it.

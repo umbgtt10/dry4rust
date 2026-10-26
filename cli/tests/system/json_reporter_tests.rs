@@ -3,20 +3,51 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::disk_ports;
 use crate::common::group;
+use crate::common::source_path;
+use dry4rust::cli::cli_overrides::CliOverrides;
+use dry4rust::cli::command::Command;
 use dry4rust::cli::output::check_breach::CheckBreach;
-use dry4rust::cli::output::json_reporter::*;
-use dry4rust::cli::output::reporter::Reporter;
+use dry4rust::cli::output::report::Report;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
+use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::duplication_stats::DuplicationStats;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
+use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::source_path::SourcePath;
+use dry4rust::traits::reporter::Reporter;
+use dry4rust_cli::invocation::output_format::OutputFormat;
+use dry4rust_cli::system::json_reporter::*;
 use serde_json::Value;
 use serde_json::from_str;
+use std::fs;
+use tempfile::TempDir;
+
+const DUPLICATED: &str = r"pub fn process_data(input: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for item in input.iter() {
+        if *item > 0 {
+            sum += *item;
+        }
+    }
+    sum
+}
+
+pub fn compute_total(values: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for value in values.iter() {
+        if *value > 0 {
+            sum += *value;
+        }
+    }
+    sum
+}
+";
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
     CodeUnit {
@@ -31,6 +62,37 @@ fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> Code
         node_count: 10,
         ..Default::default()
     }
+}
+
+fn rendered(reporter: &dyn Reporter, report: &Report<'_>) -> String {
+    reporter.report(report).expect("reporting succeeds")
+}
+
+#[test]
+fn dispatch_with_stats_writes_through_the_reporter_it_was_given() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    fs::create_dir_all(tmp.path().join("src")).expect("src");
+    fs::write(tmp.path().join("src/lib.rs"), DUPLICATED).expect("write");
+    let analyzer = RustAnalyzer::new();
+    let root = source_path(tmp.path());
+    let reporter = OutputFormat::Json.reporter(Some(&root));
+    let dispatcher = CommandDispatcher::new(
+        &analyzer,
+        &root,
+        reporter.as_ref(),
+        CliOverrides::default(),
+        disk_ports(),
+    );
+
+    // Act
+    let (_, stats) = dispatcher
+        .dispatch(&Command::Stats)
+        .expect("it analyses cleanly")
+        .into_parts();
+
+    // Assert
+    assert!(from_str::<Value>(&stats).is_ok(), "{stats}");
 }
 
 #[test]
@@ -217,4 +279,60 @@ fn json_report_sub_near_with_groups() {
     assert_eq!(groups.len(), 1);
     assert_eq!(groups[0]["fingerprint"].as_str().unwrap(), fp.to_hex());
     assert_eq!(groups[0]["similarity"], 0.95);
+}
+
+#[test]
+fn report_in_json_is_one_document_with_the_sections_named() {
+    // Arrange
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let exact = vec![group(0x11, &["a", "b"])];
+    let sub_near = vec![group(0x22, &["c", "d"])];
+    let report = Report {
+        stats: &stats,
+        exact: &exact,
+        near: &[],
+        sub_exact: &[],
+        sub_near: &sub_near,
+    };
+
+    // Act
+    let output = rendered(&JsonReporter::new(None), &report);
+
+    // Assert
+    let document: Value =
+        from_str(&output).expect("one parse reads the whole thing, which is the point");
+    assert!(document["stats"].is_object());
+    assert_eq!(document["exact"].as_array().expect("exact").len(), 1);
+    assert_eq!(document["near"].as_array().expect("near").len(), 0);
+    assert_eq!(document["sub_near"].as_array().expect("sub_near").len(), 1);
+    assert!(
+        document.get("sub_exact").is_none(),
+        "an empty sub-function section is absent rather than an empty array, \
+         because sub-function analysis is opt-in and `[]` would read as \
+         having looked, got: {output}"
+    );
+}
+
+#[test]
+fn report_in_json_keeps_exact_and_near_even_when_empty() {
+    // Arrange
+    let stats = DuplicateGroup::compute_stats_with_sub(&[], &[], &[], &[], &[]);
+    let report = Report {
+        stats: &stats,
+        exact: &[],
+        near: &[],
+        sub_exact: &[],
+        sub_near: &[],
+    };
+
+    // Act
+    let output = rendered(&JsonReporter::new(None), &report);
+
+    // Assert
+    let document: Value = from_str(&output).expect("valid json");
+    assert!(
+        document["exact"].is_array() && document["near"].is_array(),
+        "these two are always analysed, so a reader can always index them, \
+         got: {output}"
+    );
 }

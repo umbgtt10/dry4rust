@@ -10,10 +10,12 @@ use crate::cli::cli_error::CliResult;
 ///
 /// Keeping the two together lets `check` write its report and still fail: the
 /// text and the [`crate::cli::cli_error::CliError::CheckFailed`] both travel up
-/// to the one place that prints and then exits.
+/// to the one place that prints and then exits. The warnings the analysis
+/// raised travel with them, for that place to write to stderr first.
 pub struct CommandOutcome {
     text: String,
     result: CliResult,
+    warnings: Vec<String>,
 }
 
 impl CommandOutcome {
@@ -22,12 +24,17 @@ impl CommandOutcome {
         Self {
             text,
             result: Ok(()),
+            warnings: Vec::new(),
         }
     }
 
     #[must_use]
     pub const fn new(text: String, result: CliResult) -> Self {
-        Self { text, result }
+        Self {
+            text,
+            result,
+            warnings: Vec::new(),
+        }
     }
 
     pub fn into_parts(self) -> (CliResult, String) {
@@ -42,5 +49,15 @@ impl CommandOutcome {
     #[must_use]
     pub fn text(&self) -> &str {
         &self.text
+    }
+
+    #[must_use]
+    pub fn warnings(&self) -> &[String] {
+        &self.warnings
+    }
+
+    #[must_use]
+    pub fn with_warnings(self, warnings: Vec<String>) -> Self {
+        Self { warnings, ..self }
     }
 }

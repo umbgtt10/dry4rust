@@ -188,6 +188,19 @@ where a run is composed rather than by the analysis.
   that an unreadable ignore file suppresses nothing and an emptied one is
   removed, what a missing baseline says and which format it must be in. Core
   no longer depends on toml or, for its tests, on tempfile.
+- **The reports are a port, and the JSON one is cli's.**
+  `cli::output::reporter::Reporter` is `traits::reporter::Reporter`, and its
+  methods return `Result<String, cli::output::render_failure::RenderFailure>`
+  rather than `io::Result`; `CliError::Render` carries that failure.
+  `cli::output::json_reporter::JsonReporter` is
+  `dry4rust_cli::system::json_reporter::JsonReporter`; `TextReporter` stays.
+  `CommandDispatcher::dispatch` no longer writes the analysis's warnings to
+  stderr: `CommandOutcome::warnings` carries them, `with_warnings` sets them, and
+  once an analysis has run a failure -- an out-of-range `check` ceiling
+  included -- travels in the outcome beside them, so `EntryPoint` writes the
+  warnings before the error exactly as before. `CodeUnitKind` and
+  `DuplicationStats` no longer derive `Serialize`. Core no longer depends on
+  serde or serde_json.
 
 ## [0.4.0] - 2026-10-10
 

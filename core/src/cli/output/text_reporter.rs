@@ -3,16 +3,16 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fmt::Write as _;
-use std::io;
+use core::fmt::Write as _;
 
 use crate::cli::output::check_breach::CheckBreach;
 use crate::cli::output::group_section::GroupSection;
+use crate::cli::output::render_failure::RenderFailure;
 use crate::cli::output::report::Report;
-use crate::cli::output::reporter::Reporter;
 use crate::duplicate_group::DuplicateGroup;
 use crate::duplication_stats::DuplicationStats;
 use crate::source_path::SourcePath;
+use crate::traits::reporter::Reporter;
 
 pub struct TextReporter {
     /// Base path for displaying relative paths.
@@ -43,7 +43,7 @@ impl TextReporter {
 }
 
 impl Reporter for TextReporter {
-    fn report(&self, report: &Report<'_>) -> io::Result<String> {
+    fn report(&self, report: &Report<'_>) -> Result<String, RenderFailure> {
         let mut out = self.report_stats(report.stats)?;
         let _ = writeln!(out);
         out.push_str(&self.report_exact(report.exact)?);
@@ -63,7 +63,7 @@ impl Reporter for TextReporter {
         &self,
         stats: &DuplicationStats,
         breaches: &[CheckBreach<'_>],
-    ) -> io::Result<String> {
+    ) -> Result<String, RenderFailure> {
         let mut out = self.report_stats(stats)?;
         for breach in breaches {
             let _ = writeln!(out, "\nCheck FAILED: {}", breach.message);
@@ -79,7 +79,7 @@ impl Reporter for TextReporter {
         Ok(out)
     }
 
-    fn report_stats(&self, stats: &DuplicationStats) -> io::Result<String> {
+    fn report_stats(&self, stats: &DuplicationStats) -> Result<String, RenderFailure> {
         let mut out = String::new();
         let _ = writeln!(out, "Duplication Statistics");
         let _ = writeln!(out, "=====================");
@@ -140,19 +140,19 @@ impl Reporter for TextReporter {
         Ok(out)
     }
 
-    fn report_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn report_exact(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         Ok(self.section(&GroupSection::exact(), groups))
     }
 
-    fn report_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn report_near(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         Ok(self.section(&GroupSection::near(), groups))
     }
 
-    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         Ok(self.section(&GroupSection::sub_exact(), groups))
     }
 
-    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> io::Result<String> {
+    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure> {
         Ok(self.section(&GroupSection::sub_near(), groups))
     }
 }

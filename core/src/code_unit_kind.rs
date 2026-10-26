@@ -3,10 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fmt;
+use core::fmt;
 
 /// The kind of code unit extracted from source.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, serde::Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub enum CodeUnitKind {
     #[default]
     Function,

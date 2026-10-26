@@ -6,7 +6,7 @@
 use crate::analysis::Analysis;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
-use crate::cli::output::reporter::Reporter;
+use crate::traits::reporter::Reporter;
 
 /// `stats`: the summary and nothing else.
 pub struct StatsCommand<'a> {
@@ -24,7 +24,7 @@ impl<'a> StatsCommand<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`crate::cli::cli_error::CliError::Io`] if the reporter fails.
+    /// Returns [`crate::cli::cli_error::CliError::Render`] if the reporter fails.
     pub fn run(&self) -> CliResult<CommandOutcome> {
         let text = self.reporter.report_stats(self.result.stats())?;
         Ok(CommandOutcome::succeeded(text))

@@ -3,9 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io;
-
 use crate::cli::output::check_breach::CheckBreach;
+use crate::cli::output::render_failure::RenderFailure;
 use crate::cli::output::report::Report;
 use crate::duplicate_group::DuplicateGroup;
 use crate::duplication_stats::DuplicationStats;
@@ -19,18 +18,18 @@ use crate::duplication_stats::DuplicationStats;
 /// concatenated.
 pub trait Reporter {
     /// Build a full report as one document.
-    fn report(&self, report: &Report<'_>) -> io::Result<String>;
+    fn report(&self, report: &Report<'_>) -> Result<String, RenderFailure>;
 
     /// Build a check verdict as one document. No breaches means it passed.
     fn report_check(
         &self,
         stats: &DuplicationStats,
         breaches: &[CheckBreach<'_>],
-    ) -> io::Result<String>;
+    ) -> Result<String, RenderFailure>;
 
-    fn report_stats(&self, stats: &DuplicationStats) -> io::Result<String>;
-    fn report_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String>;
-    fn report_near(&self, groups: &[DuplicateGroup]) -> io::Result<String>;
-    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> io::Result<String>;
-    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> io::Result<String>;
+    fn report_stats(&self, stats: &DuplicationStats) -> Result<String, RenderFailure>;
+    fn report_exact(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure>;
+    fn report_near(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure>;
+    fn report_sub_exact(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure>;
+    fn report_sub_near(&self, groups: &[DuplicateGroup]) -> Result<String, RenderFailure>;
 }

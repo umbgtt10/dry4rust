@@ -10,6 +10,7 @@ pub mod disk_file;
 pub mod ignore_document;
 pub mod ignore_entry_record;
 pub mod json_baseline_store;
+pub mod json_reporter;
 pub mod portable_path;
 pub mod toml_config_source;
 pub mod toml_ignore_store;

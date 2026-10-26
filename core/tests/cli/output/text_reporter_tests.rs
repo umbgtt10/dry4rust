@@ -6,7 +6,6 @@
 use crate::common::group;
 use dry4rust::cli::output::check_breach::CheckBreach;
 use dry4rust::cli::output::display_path::DisplayPath;
-use dry4rust::cli::output::reporter::Reporter;
 use dry4rust::cli::output::text_reporter::*;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
@@ -16,6 +15,7 @@ use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::source_path::SourcePath;
+use dry4rust::traits::reporter::Reporter;
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
     CodeUnit {

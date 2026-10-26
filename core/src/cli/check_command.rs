@@ -10,9 +10,9 @@ use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::output::check_breach::CheckBreach;
-use crate::cli::output::reporter::Reporter;
 use crate::config::Config;
 use crate::duplicate_group::DuplicateGroup;
+use crate::traits::reporter::Reporter;
 
 /// `check`: the summary, then a non-zero exit if any ceiling is breached.
 ///
@@ -50,7 +50,7 @@ impl<'a> CheckCommand<'a> {
     ///
     /// # Errors
     ///
-    /// Returns [`CliError::Io`] if the reporter fails. A breached ceiling is
+    /// Returns [`CliError::Render`] if the reporter fails. A breached ceiling is
     /// carried in the outcome's result as [`CliError::CheckFailed`], not
     /// returned from here.
     pub fn run(&self) -> CliResult<CommandOutcome> {
