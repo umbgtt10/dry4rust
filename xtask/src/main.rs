@@ -24,7 +24,12 @@ const XTASK_PACKAGE: &str = "xtask";
 const CRAP_THRESHOLD: &str = "15";
 const ICEBERG_THRESHOLD: &str = "10";
 const DRY_BINARY: &str = "cargo-dry4rust";
-const DRY_PATH: &str = "core/src";
+const DRY_EXCLUDES: [&[&str]; 4] = [
+    &["core", "tests"],
+    &["fixture"],
+    &["validation"],
+    &["xtask"],
+];
 const DRY_BASELINE: &str = "dry4rust-baseline.json";
 const DRY_MIN_NODES: &str = "25";
 
@@ -58,9 +63,11 @@ fn run_stage2() -> ExitCode {
     // Third, for the same reason stern4rust is first: removing a duplicate
     // moves code between files, which changes what the three behind it measure.
     // This checkout's own dry4rust, built from source -- a tool that enforces a
-    // check it does not pass is not worth installing. The published crate's
-    // source only: tests repeat their arrangement by design, and the fixture
-    // corpus is duplicated on purpose. Against a baseline of what was already
+    // check it does not pass is not worth installing. One run from the
+    // repository root over the published crate's source: tests repeat their
+    // arrangement by design, the fixture corpus is duplicated on purpose, and
+    // validation and xtask are not published. Each tree it must not judge is
+    // excluded by its full path. Against a baseline of what was already
     // duplicated when the gate arrived, so it fails on what a change adds. The
     // floor leaves out units whose whole body is one call or one short struct
     // literal -- accessors, two-field constructors, the `Reporter` methods that
@@ -70,7 +77,11 @@ fn run_stage2() -> ExitCode {
     let dry = DrySelfGate::new(
         &runner,
         String::from(DRY_BINARY),
-        root.join(DRY_PATH).to_string_lossy().into_owned(),
+        root.to_string_lossy().into_owned(),
+        DRY_EXCLUDES
+            .iter()
+            .map(|exclude| below(&root, exclude).to_string_lossy().into_owned())
+            .collect(),
         root.join(DRY_BASELINE).to_string_lossy().into_owned(),
         String::from(DRY_MIN_NODES),
     );
@@ -124,6 +135,14 @@ fn workspace_manifest_path() -> String {
         .join("Cargo.toml")
         .to_string_lossy()
         .into_owned()
+}
+
+// Joined a component at a time, so the path carries the platform's separator
+// throughout -- dry4rust matches its exclusions as text.
+fn below(root: &Path, components: &[&str]) -> PathBuf {
+    components
+        .iter()
+        .fold(root.to_path_buf(), |path, component| path.join(component))
 }
 
 fn workspace_root() -> PathBuf {

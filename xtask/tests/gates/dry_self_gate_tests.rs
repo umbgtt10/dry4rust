@@ -12,6 +12,7 @@ fn gate(runner: &FakeCommandRunner) -> DrySelfGate<'_> {
         runner,
         String::from("cargo-dry4rust"),
         String::from("/repo/core/src"),
+        vec![],
         String::from("/repo/dry4rust-baseline.json"),
         String::from("25"),
     )
@@ -91,6 +92,42 @@ fn run_checks_the_path_above_the_floor_against_the_baseline_with_zero_ceilings()
             String::from("0"),
             String::from("--max-near"),
             String::from("0"),
+        ]
+    );
+}
+
+#[test]
+fn run_passes_each_exclusion_between_the_path_and_the_baseline() {
+    // Arrange
+    let runner = FakeCommandRunner::new();
+    let gate = DrySelfGate::new(
+        &runner,
+        String::from("cargo-dry4rust"),
+        String::from("/repo"),
+        vec![
+            String::from("/repo/xtask"),
+            String::from("/repo/core/tests"),
+        ],
+        String::from("/repo/dry4rust-baseline.json"),
+        String::from("25"),
+    );
+
+    // Act
+    let _ = gate.run();
+
+    // Assert
+    let (_, for_the_tool) = split_at_separator(&runner.calls()[0]);
+    assert_eq!(
+        for_the_tool[..8].to_vec(),
+        vec![
+            String::from("dry4rust"),
+            String::from("--path"),
+            String::from("/repo"),
+            String::from("--exclude"),
+            String::from("/repo/xtask"),
+            String::from("--exclude"),
+            String::from("/repo/core/tests"),
+            String::from("--baseline"),
         ]
     );
 }

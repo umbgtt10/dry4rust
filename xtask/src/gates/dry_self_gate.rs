@@ -13,6 +13,7 @@ pub struct DrySelfGate<'a> {
     runner: &'a dyn CommandRunner,
     binary: String,
     path: String,
+    excludes: Vec<String>,
     baseline: String,
     min_nodes: String,
 }
@@ -22,6 +23,7 @@ impl<'a> DrySelfGate<'a> {
         runner: &'a dyn CommandRunner,
         binary: String,
         path: String,
+        excludes: Vec<String>,
         baseline: String,
         min_nodes: String,
     ) -> Self {
@@ -29,6 +31,7 @@ impl<'a> DrySelfGate<'a> {
             runner,
             binary,
             path,
+            excludes,
             baseline,
             min_nodes,
         }
@@ -50,7 +53,10 @@ impl Gate for DrySelfGate<'_> {
         // Zero ceilings against the baseline: what the baseline records was here
         // before the gate was, and anything beyond it is what a change added. The
         // baseline was recorded at this floor and only matches at this floor.
-        let args = vec![
+        //
+        // One run from `path`; each exclusion is a path below it the gate does
+        // not judge.
+        let mut args = vec![
             String::from("run"),
             String::from("--quiet"),
             String::from("--bin"),
@@ -59,6 +65,12 @@ impl Gate for DrySelfGate<'_> {
             String::from("dry4rust"),
             String::from("--path"),
             self.path.clone(),
+        ];
+        for exclude in &self.excludes {
+            args.push(String::from("--exclude"));
+            args.push(exclude.clone());
+        }
+        args.extend([
             String::from("--baseline"),
             self.baseline.clone(),
             String::from("--min-nodes"),
@@ -68,7 +80,7 @@ impl Gate for DrySelfGate<'_> {
             String::from("0"),
             String::from("--max-near"),
             String::from("0"),
-        ];
+        ]);
 
         // 1 is the tool's own "a ceiling was exceeded"; 2 is a configuration or a
         // baseline it refused, and a build that failed is cargo's 101 -- neither
