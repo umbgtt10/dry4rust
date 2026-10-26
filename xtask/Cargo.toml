@@ -24,6 +24,10 @@ path = "tests/all_tests.rs"
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
+syn = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
 
 # No `unsafe` in any target, tests included.
 [lints.rust]

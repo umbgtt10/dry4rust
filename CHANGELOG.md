@@ -209,6 +209,11 @@ where a run is composed rather than by the analysis.
   argument of `Analysis::new`, and `PairKey` and `PlaceholderKind` derive
   `PartialOrd` and `Ord`. `error::Error` has no `Io` variant: nothing in the
   core reads or writes, and nothing built one.
+- Stage 2 opens with a technology-free gate, "Technology-free core": core's
+  manifest may name only proc-macro2, syn and thiserror in any section, its
+  crate root must carry `#![no_std]` and `#![forbid(unsafe_code)]`, and no file
+  under `core/src` or `core/tests` may reach `std::{env, fs, io, net, os,
+  process}`, a printing macro, a file-system method or `extern crate std`.
 
 ## [0.4.0] - 2026-10-10
 

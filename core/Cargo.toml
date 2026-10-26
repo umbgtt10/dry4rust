@@ -23,7 +23,7 @@ name = "dry4rust"
 path = "src/lib.rs"
 
 # The technology-free analysis: no file system, process, clap, serde or
-# walkdir.
+# walkdir. xtask's boundary gate holds this list to an allow-list.
 [dependencies]
 proc-macro2 = { workspace = true }
 syn = { workspace = true }

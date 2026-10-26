@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod boundary_gate;
 pub mod crap_gate;
 pub mod dry_self_gate;
 pub mod gate;
