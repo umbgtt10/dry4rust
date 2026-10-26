@@ -7,7 +7,11 @@ use dry4rust::analysis::Analysis;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::scanner::Scanner;
+use dry4rust::source_path::SourcePath;
+use dry4rust_cli::system::portable_path::PortablePath;
+use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 use tempfile::TempDir;
 
@@ -50,13 +54,21 @@ impl Fixture {
             .join(name)
     }
 
+    /// A path on disk as the core holds it.
+    #[must_use]
+    pub fn root_of(path: &Path) -> SourcePath {
+        PortablePath::lossy(path)
+    }
+
     fn analysed_under(name: &str, sub_function: bool) -> (Config, Analysis) {
-        let root = Self::path(name);
+        let root = Self::root_of(&Self::path(name));
         let config = Config::load(&root)
             .expect("the fixture configuration is in range")
             .with_sub_function(sub_function);
-        let files = Scanner::new(root).scan_files();
-        let result = Analysis::analyze(&RustAnalyzer::new(), &files, &config)
+        let files = Scanner::new(root)
+            .scan_files(&WalkdirSourceTree)
+            .expect("the fixture lists");
+        let result = Analysis::analyze(&RustAnalyzer::new(), &WalkdirSourceTree, &files, &config)
             .expect("the fixture analyses cleanly");
         (config, result)
     }

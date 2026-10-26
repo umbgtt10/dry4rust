@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use std::fmt::Write as _;
-use std::path::Path;
 
 use crate::analysis::Analysis;
 use crate::cli::checking::stale_report::StaleReport;
@@ -12,20 +11,21 @@ use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_entry_line::IgnoreEntryLine;
 use crate::cli::suppression::ignore_file::IgnoreFile;
+use crate::source_path::SourcePath;
 
 /// `cleanup`: drop ignore entries whose fingerprint no longer matches anything.
 ///
 /// In dry run the file is read and reported on but never written, so the
 /// command can be pointed at a repository whose ignore file is under review.
 pub struct CleanupCommand<'a> {
-    root: &'a Path,
+    root: &'a SourcePath,
     result: &'a Analysis,
     dry_run: bool,
 }
 
 impl<'a> CleanupCommand<'a> {
     #[must_use]
-    pub const fn new(root: &'a Path, result: &'a Analysis, dry_run: bool) -> Self {
+    pub const fn new(root: &'a SourcePath, result: &'a Analysis, dry_run: bool) -> Self {
         Self {
             root,
             result,

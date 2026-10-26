@@ -14,15 +14,15 @@ use dry4rust::duplication_stats::DuplicationStats;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
+use dry4rust::source_path::SourcePath;
 use serde_json::Value;
 use serde_json::from_str;
-use std::path::PathBuf;
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
     CodeUnit {
         kind: CodeUnitKind::Function,
         name: name.to_string(),
-        file: PathBuf::from(file),
+        file: SourcePath::new(String::from(file)),
         line_start,
         line_end,
         signature: NormalizedNode::leaf(NodeKind::Opaque),
@@ -36,7 +36,7 @@ fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> Code
 #[test]
 fn json_is_valid() {
     // Arrange & Act
-    let reporter = JsonReporter::new(Some(PathBuf::from("/project")));
+    let reporter = JsonReporter::new(Some(SourcePath::new(String::from("/project"))));
     let group = DuplicateGroup::new(
         Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
         vec![make_unit("foo", "/project/src/a.rs", 10, 20)],
@@ -52,7 +52,7 @@ fn json_is_valid() {
 #[test]
 fn json_relative_paths() {
     // Arrange & Act
-    let reporter = JsonReporter::new(Some(PathBuf::from("/home/user/project")));
+    let reporter = JsonReporter::new(Some(SourcePath::new(String::from("/home/user/project"))));
     let fp = Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]));
     let group = DuplicateGroup::new(
         fp,
@@ -115,7 +115,7 @@ fn json_report_exact_empty() {
 #[test]
 fn json_report_exact_with_groups() {
     // Arrange & Act
-    let reporter = JsonReporter::new(Some(PathBuf::from("/project")));
+    let reporter = JsonReporter::new(Some(SourcePath::new(String::from("/project"))));
     let group = DuplicateGroup::new(
         Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
         vec![

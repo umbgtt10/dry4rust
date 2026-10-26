@@ -4,21 +4,21 @@
 // SPDX-License-Identifier: MIT
 
 use std::fmt::Write as _;
-use std::path::Path;
 
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_entry_line::IgnoreEntryLine;
 use crate::cli::suppression::ignore_file::IgnoreFile;
+use crate::source_path::SourcePath;
 
 /// `ignored`: list what the ignore file holds.
 pub struct IgnoredCommand<'a> {
-    root: &'a Path,
+    root: &'a SourcePath,
 }
 
 impl<'a> IgnoredCommand<'a> {
     #[must_use]
-    pub const fn new(root: &'a Path) -> Self {
+    pub const fn new(root: &'a SourcePath) -> Self {
         Self { root }
     }
 

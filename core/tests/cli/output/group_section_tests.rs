@@ -7,8 +7,7 @@ use crate::common::group;
 use dry4rust::cli::output::group_section::GroupSection;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::duplicate_group::DuplicateGroup;
-use std::path::Path;
-use std::path::PathBuf;
+use dry4rust::source_path::SourcePath;
 
 fn parented(name: &str, parent: &str) -> DuplicateGroup {
     let base = group(0x11, &[name]);
@@ -19,7 +18,7 @@ fn parented(name: &str, parent: &str) -> DuplicateGroup {
     DuplicateGroup::new(base.fingerprint(), vec![member], base.similarity())
 }
 
-fn written(section: &GroupSection, groups: &[DuplicateGroup], base: Option<&Path>) -> String {
+fn written(section: &GroupSection, groups: &[DuplicateGroup], base: Option<&SourcePath>) -> String {
     section.write(groups, base)
 }
 
@@ -95,7 +94,7 @@ fn write_shows_a_member_path_relative_to_the_base_it_is_given() {
     // Arrange
     let base = group(0x11, &["a"]);
     let member = CodeUnit {
-        file: PathBuf::from("/project/src/lib.rs"),
+        file: SourcePath::new(String::from("/project/src/lib.rs")),
         ..base.members()[0].clone()
     };
     let groups = vec![DuplicateGroup::new(
@@ -105,7 +104,11 @@ fn write_shows_a_member_path_relative_to_the_base_it_is_given() {
     )];
 
     // Act
-    let output = written(&GroupSection::exact(), &groups, Some(Path::new("/project")));
+    let output = written(
+        &GroupSection::exact(),
+        &groups,
+        Some(&SourcePath::new(String::from("/project"))),
+    );
 
     // Assert
     assert!(output.contains("at src/lib.rs:1-9"), "{output}");

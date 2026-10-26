@@ -5,6 +5,7 @@
 
 use crate::common::group;
 use crate::common::result_with;
+use crate::common::source_path;
 use dry4rust::cli::baseline_command::BaselineCommand;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::suppression::baseline_file::BaselineFile;
@@ -20,9 +21,9 @@ fn recorded(dry_run: bool) -> (TempDir, String) {
         vec![],
         vec![],
     );
-    let config = Config::default().with_root(tmp.path().to_path_buf());
+    let config = Config::default().with_root(source_path(tmp.path()));
 
-    let text = BaselineCommand::new(tmp.path(), &config, &result, dry_run)
+    let text = BaselineCommand::new(&source_path(tmp.path()), &config, &result, dry_run)
         .run()
         .expect("recording succeeds")
         .text()
@@ -49,7 +50,7 @@ fn run_outside_dry_run_writes_a_baseline_that_loads_back() {
 
     // Assert
     assert!(text.contains("Recorded 1 groups"), "{text}");
-    let written = BaselineFile::load(&tmp.path().join("dry4rust-baseline.json"))
+    let written = BaselineFile::load(&source_path(&tmp.path().join("dry4rust-baseline.json")))
         .expect("what was written is what this build reads");
     assert_eq!(written.len(), 1);
 }
@@ -59,10 +60,10 @@ fn run_over_a_clean_result_records_nothing_and_says_so() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let result = result_with(vec![], vec![], vec![], vec![]);
-    let config = Config::default().with_root(tmp.path().to_path_buf());
+    let config = Config::default().with_root(source_path(tmp.path()));
 
     // Act
-    let text = BaselineCommand::new(tmp.path(), &config, &result, false)
+    let text = BaselineCommand::new(&source_path(tmp.path()), &config, &result, false)
         .run()
         .expect("recording succeeds")
         .text()
@@ -90,11 +91,13 @@ fn run_with_an_unwritable_baseline_keeps_the_entries_it_listed_and_fails() {
         vec![],
     );
     let config = Config::default()
-        .with_root(tmp.path().to_path_buf())
-        .with_baseline(Some(tmp.path().join("blocker").join("baseline.json")));
+        .with_root(source_path(tmp.path()))
+        .with_baseline(Some(source_path(
+            &tmp.path().join("blocker").join("baseline.json"),
+        )));
 
     // Act
-    let outcome = BaselineCommand::new(tmp.path(), &config, &result, false)
+    let outcome = BaselineCommand::new(&source_path(tmp.path()), &config, &result, false)
         .run()
         .expect("the entries are produced before the write is attempted");
 

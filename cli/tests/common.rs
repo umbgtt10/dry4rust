@@ -5,7 +5,9 @@
 
 use dry4rust::analysis::Analysis;
 use dry4rust::duplicate_group::DuplicateGroup;
+use dry4rust::source_path::SourcePath;
 use std::collections::HashSet;
+use std::path::Path;
 
 /// An analysis result holding exactly these groups, for tests about what is
 /// done with groups rather than about how they were found.
@@ -24,5 +26,15 @@ pub fn result_with(
         sub_near,
         Vec::new(),
         HashSet::new(),
+    )
+}
+
+/// A path on disk as the core holds it.
+#[must_use]
+pub fn source_path(path: &Path) -> SourcePath {
+    SourcePath::new(
+        path.to_str()
+            .expect("a test path is UTF-8")
+            .replace('\\', "/"),
     )
 }

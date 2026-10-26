@@ -195,7 +195,7 @@ fn run_in_dry_run_names_what_it_would_record_without_writing_it() {
     let (config, result) = Fixture::analysed("exact_dupes");
 
     // Act
-    let text = BaselineCommand::new(tmp.path(), &config, &result, true)
+    let text = BaselineCommand::new(&Fixture::root_of(tmp.path()), &config, &result, true)
         .run()
         .expect("a dry run succeeds")
         .text()
@@ -214,7 +214,7 @@ fn run_outside_dry_run_writes_a_baseline_that_loads_back() {
     let (config, result) = Fixture::analysed("exact_dupes");
 
     // Act
-    let text = BaselineCommand::new(tmp.path(), &config, &result, false)
+    let text = BaselineCommand::new(&Fixture::root_of(tmp.path()), &config, &result, false)
         .run()
         .expect("recording succeeds")
         .text()
@@ -222,8 +222,10 @@ fn run_outside_dry_run_writes_a_baseline_that_loads_back() {
 
     // Assert
     assert!(text.contains("Recorded 1 groups"), "{text}");
-    let written = BaselineFile::load(&tmp.path().join("dry4rust-baseline.json"))
-        .expect("what was written is what this build reads");
+    let written = BaselineFile::load(&Fixture::root_of(
+        &tmp.path().join("dry4rust-baseline.json"),
+    ))
+    .expect("what was written is what this build reads");
     assert_eq!(written.len(), 1);
 }
 
@@ -232,10 +234,10 @@ fn run_over_a_clean_codebase_records_nothing_and_says_so() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (_, result) = Fixture::analysed("no_dupes");
-    let config = Config::default().with_root(tmp.path().to_path_buf());
+    let config = Config::default().with_root(Fixture::root_of(tmp.path()));
 
     // Act
-    let text = BaselineCommand::new(tmp.path(), &config, &result, false)
+    let text = BaselineCommand::new(&Fixture::root_of(tmp.path()), &config, &result, false)
         .run()
         .expect("recording succeeds")
         .text()
@@ -287,8 +289,10 @@ fn save_then_load_returns_what_was_recorded() {
     let path = tmp.path().join("nested").join("dry4rust-baseline.json");
 
     // Act
-    recorded.save(&path).expect("the baseline is written");
-    let read_back = BaselineFile::load(&path).expect("and read back");
+    recorded
+        .save(&Fixture::root_of(&path))
+        .expect("the baseline is written");
+    let read_back = BaselineFile::load(&Fixture::root_of(&path)).expect("and read back");
 
     // Assert
     assert_eq!(read_back.version(), recorded.version());

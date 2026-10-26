@@ -10,8 +10,9 @@ use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
+use dry4rust::source_path::SourcePath;
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::Path;
 
 /// A duplicate group with a stated fingerprint and members, for tests that
 /// care about grouping rather than about the code behind it.
@@ -25,7 +26,7 @@ pub fn group(fingerprint: u64, names: &[&str]) -> DuplicateGroup {
             .map(|name| CodeUnit {
                 kind: CodeUnitKind::Function,
                 name: (*name).to_owned(),
-                file: PathBuf::from("src/lib.rs"),
+                file: SourcePath::new(String::from("src/lib.rs")),
                 line_start: 1,
                 line_end: 9,
                 signature: NormalizedNode::leaf(NodeKind::Opaque),
@@ -56,5 +57,15 @@ pub fn result_with(
         sub_near,
         Vec::new(),
         HashSet::new(),
+    )
+}
+
+/// A path on disk as the core holds it.
+#[must_use]
+pub fn source_path(path: &Path) -> SourcePath {
+    SourcePath::new(
+        path.to_str()
+            .expect("a test path is UTF-8")
+            .replace('\\', "/"),
     )
 }

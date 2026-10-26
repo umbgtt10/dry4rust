@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use crate::rust::normalizer::normalization_context::NormalizationContext;
-use std::path::PathBuf;
 
 use syn::spanned::Spanned;
 use syn::visit::Visit;
@@ -17,6 +16,7 @@ use crate::node::normalized_node::NormalizedNode;
 use crate::rust::parser::has_cfg_test_attr;
 use crate::rust::parser::has_test_attr;
 use crate::rust::plain_constructor::PlainConstructor;
+use crate::source_path::SourcePath;
 use syn::ExprClosure;
 use syn::ItemFn;
 use syn::ItemImpl;
@@ -26,7 +26,7 @@ use syn::visit;
 
 /// Extracts code units from a syn file by visiting the AST.
 pub struct CodeUnitExtractor {
-    file: PathBuf,
+    file: SourcePath,
     min_node_count: usize,
     min_line_count: usize,
     units: Vec<CodeUnit>,
@@ -40,7 +40,7 @@ pub struct CodeUnitExtractor {
 
 impl CodeUnitExtractor {
     #[must_use]
-    pub const fn new(file: PathBuf, min_node_count: usize, min_line_count: usize) -> Self {
+    pub const fn new(file: SourcePath, min_node_count: usize, min_line_count: usize) -> Self {
         Self {
             file,
             min_node_count,
@@ -231,7 +231,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         if node_count >= self.min_node_count
             && (self.min_line_count == 0 || line_count >= self.min_line_count)
         {
-            let name = format!("closure at {}:{}", self.file.display(), line_start);
+            let name = format!("closure at {}:{}", self.file, line_start);
             let fingerprint = Fingerprint::from_node(&normalized);
             self.units.push(CodeUnit {
                 kind: CodeUnitKind::Closure,

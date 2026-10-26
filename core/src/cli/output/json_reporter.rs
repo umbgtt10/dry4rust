@@ -11,16 +11,16 @@ use crate::cli::output::report::Report;
 use crate::cli::output::reporter::Reporter;
 use crate::duplicate_group::DuplicateGroup;
 use crate::duplication_stats::DuplicationStats;
+use crate::source_path::SourcePath;
 use serde_json::to_string_pretty;
-use std::path::PathBuf;
 
 pub struct JsonReporter {
-    base_path: Option<PathBuf>,
+    base_path: Option<SourcePath>,
 }
 
 impl JsonReporter {
     #[must_use]
-    pub const fn new(base_path: Option<PathBuf>) -> Self {
+    pub const fn new(base_path: Option<SourcePath>) -> Self {
         Self { base_path }
     }
 
@@ -165,7 +165,7 @@ impl JsonReporter {
                 .map(|m| JsonMember {
                     name: m.name.clone(),
                     kind: m.kind.to_string(),
-                    file: DisplayPath::of(self.base_path.as_deref(), &m.file).into_owned(),
+                    file: DisplayPath::of(self.base_path.as_ref(), &m.file).to_owned(),
                     line_start: m.line_start,
                     line_end: m.line_end,
                 })

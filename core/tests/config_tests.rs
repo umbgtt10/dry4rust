@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::source_path;
 use dry4rust::config::Config;
 use dry4rust::threshold::Threshold;
 use std::fs;
@@ -19,7 +20,7 @@ fn config_with_exclude_tests() {
         ",
     )
     .unwrap();
-    let config = Config::load(tmp.path()).expect("every value is in range");
+    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
 
     // Assert
     assert!(config.exclude_tests());
@@ -36,7 +37,7 @@ fn config_with_min_lines() {
         ",
     )
     .unwrap();
-    let config = Config::load(tmp.path()).expect("every value is in range");
+    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
 
     // Assert
     assert_eq!(config.min_lines(), 5);
@@ -54,7 +55,7 @@ fn config_with_percentage_thresholds() {
         ",
     )
     .unwrap();
-    let config = Config::load(tmp.path()).expect("every value is in range");
+    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
 
     // Assert
     assert_eq!(
@@ -79,7 +80,7 @@ fn config_with_thresholds() {
         ",
     )
     .unwrap();
-    let config = Config::load(tmp.path()).expect("every value is in range");
+    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
 
     // Assert
     assert_eq!(config.max_exact_duplicates(), Some(0));
@@ -121,7 +122,7 @@ fn dry4rust_toml_overrides_cargo_toml() {
         ",
     )
     .unwrap();
-    let config = Config::load(tmp.path()).expect("every value is in range");
+    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
 
     // Assert
     assert_eq!(config.min_nodes(), 25);
@@ -145,7 +146,7 @@ fn load_from_cargo_toml_metadata() {
         "#,
     )
     .unwrap();
-    let config = Config::load(tmp.path()).expect("every value is in range");
+    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
 
     // Assert
     assert_eq!(config.min_nodes(), 15);
@@ -165,7 +166,7 @@ fn load_from_dry4rust_toml() {
         "#,
     )
     .unwrap();
-    let config = Config::load(tmp.path()).expect("every value is in range");
+    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
 
     // Assert
     assert_eq!(config.min_nodes(), 20);
@@ -177,7 +178,7 @@ fn load_from_dry4rust_toml() {
 fn load_no_config_files() {
     // Arrange & Act
     let tmp = TempDir::new().unwrap();
-    let config = Config::load(tmp.path()).expect("every value is in range");
+    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
 
     // Assert
     assert_eq!(config.min_nodes(), 10); // default
@@ -194,7 +195,7 @@ fn load_over_a_negative_percentage_ceiling_is_rejected() {
     .unwrap();
 
     // Act
-    let outcome = Config::load(tmp.path());
+    let outcome = Config::load(&source_path(tmp.path()));
 
     // Assert
     let message = outcome
@@ -217,7 +218,7 @@ fn load_over_a_similarity_threshold_above_one_names_the_field_and_the_value() {
     .unwrap();
 
     // Act
-    let outcome = Config::load(tmp.path());
+    let outcome = Config::load(&source_path(tmp.path()));
 
     // Assert
     let message = outcome
@@ -236,7 +237,8 @@ fn load_over_an_unparseable_file_falls_back_to_the_defaults() {
     fs::write(tmp.path().join("dry4rust.toml"), "this is not toml = = =\n").unwrap();
 
     // Act
-    let config = Config::load(tmp.path()).expect("an unreadable file is not a stated value");
+    let config =
+        Config::load(&source_path(tmp.path())).expect("an unreadable file is not a stated value");
 
     // Assert
     assert_eq!(

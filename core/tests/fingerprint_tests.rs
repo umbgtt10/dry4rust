@@ -5,9 +5,8 @@
 
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::fingerprint::*;
-use dry4rust::rust::parser::parse_file;
-use std::fs;
-use tempfile::TempDir;
+use dry4rust::rust::parser::parse_source;
+use dry4rust::source_path::SourcePath;
 
 /// Fingerprints are written into `.dry4rust-ignore.toml` and are expected to
 /// still match later. Any change to the normaliser, the encoder or the hasher
@@ -24,10 +23,8 @@ fn add_one(x: i32) -> i32 {
 ";
 
 fn only_unit(code: &str) -> CodeUnit {
-    let tmp = TempDir::new().expect("temp dir");
-    let file = tmp.path().join("golden.rs");
-    fs::write(&file, code).expect("write");
-    let mut units = parse_file(&file, 1, 0).expect("the sample parses");
+    let mut units = parse_source(&SourcePath::new(String::from("golden.rs")), code, 1, 0)
+        .expect("the sample parses");
     assert_eq!(units.len(), 1, "the sample holds exactly one unit");
     units.remove(0)
 }

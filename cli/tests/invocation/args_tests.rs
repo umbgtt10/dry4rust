@@ -5,6 +5,7 @@
 
 use clap::Parser;
 use dry4rust::cli::command::Command;
+use dry4rust::source_path::SourcePath;
 use dry4rust_cli::invocation::args::Args;
 use dry4rust_cli::invocation::output_format::OutputFormat;
 use std::path::Path;
@@ -83,7 +84,10 @@ fn overrides_carries_every_flag_that_was_passed() {
     assert_eq!(overrides.exclude_tests(), Some(true));
     assert_eq!(overrides.sub_function(), Some(true));
     assert_eq!(overrides.min_sub_nodes(), Some(3));
-    assert_eq!(overrides.baseline(), Some(Path::new("ci/recorded.json")));
+    assert_eq!(
+        overrides.baseline(),
+        Some(&SourcePath::new(String::from("ci/recorded.json")))
+    );
 }
 
 #[test]

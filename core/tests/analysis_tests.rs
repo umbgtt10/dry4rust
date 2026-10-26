@@ -7,6 +7,7 @@
 //! These tests exercise fingerprint, similarity, duplicate-group, and sub-unit functionality
 //! Every case is driven from syn-parsed Rust source.
 
+use crate::support::in_memory_source_tree::InMemorySourceTree;
 use dry4rust::analysis::Analysis;
 use dry4rust::config::Config;
 use dry4rust::duplicate_group::DuplicateGroup;
@@ -18,14 +19,13 @@ use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 use dry4rust::rust::parser::{self, CodeUnit, CodeUnitKind};
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
+use dry4rust::source_path::SourcePath;
 use dry4rust::sub_unit::SubUnit;
-use parser::parse_file;
+use parser::parse_source;
 use std::collections::HashSet;
-use std::fs;
 use syn::Expr;
 use syn::ItemFn;
 use syn::parse_str;
-use tempfile::TempDir;
 
 const DUPLICATED: &str = r"pub fn process_data(input: Vec<i32>) -> i32 {
     let mut sum = 0;
@@ -67,10 +67,7 @@ fn fn_body_similarity(code1: &str, code2: &str) -> f64 {
 }
 
 fn make_units(code: &str) -> Vec<CodeUnit> {
-    let tmp = TempDir::new().unwrap();
-    let file = tmp.path().join("test.rs");
-    fs::write(&file, code).unwrap();
-    parse_file(&file, 1, 0).unwrap()
+    parse_source(&SourcePath::new(String::from("test.rs")), code, 1, 0).unwrap()
 }
 
 fn parse_and_extract_body(code: &str) -> NormalizedNode {
@@ -91,14 +88,13 @@ fn parse_fn(code: &str) -> ItemFn {
 fn analyze_over_a_written_crate_reports_the_duplication_in_it() {
     // Arrange -- written here rather than read from fixture/, which core does
     // not ship and therefore cannot reach once packaged
-    let tmp = TempDir::new().expect("temp dir");
-    let file = tmp.path().join("lib.rs");
-    fs::write(&file, DUPLICATED).expect("write");
-    let config = Config::default().with_root(tmp.path().to_path_buf());
+    let file = SourcePath::new(String::from("/project/lib.rs"));
+    let sources = InMemorySourceTree::new().with_file("/project/lib.rs", DUPLICATED);
+    let config = Config::default().with_root(SourcePath::new(String::from("/project")));
 
     // Act
-    let result =
-        Analysis::analyze(&RustAnalyzer::new(), &[file], &config).expect("it analyses cleanly");
+    let result = Analysis::analyze(&RustAnalyzer::new(), &sources, &[file], &config)
+        .expect("it analyses cleanly");
 
     // Assert
     assert_eq!(result.stats().total_code_units(), 2);

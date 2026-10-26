@@ -8,7 +8,7 @@ use std::fs;
 use std::io;
 use std::io::Error as IoError;
 use std::io::ErrorKind;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 use toml::from_str;
@@ -17,6 +17,7 @@ use toml::to_string_pretty;
 use crate::cli::suppression::ignore_entry::IgnoreEntry;
 use crate::duplicate_group::DuplicateGroup;
 use crate::fingerprint::Fingerprint;
+use crate::source_path::SourcePath;
 
 const IGNORE_FILE_NAME: &str = ".dry4rust-ignore.toml";
 
@@ -38,12 +39,12 @@ impl IgnoreFile {
     /// projects suppress nothing, and that is indistinguishable from a project
     /// that has not started yet.
     #[must_use]
-    pub fn load(root: &Path) -> Self {
+    pub fn load(root: &SourcePath) -> Self {
         let path = Self::path_in(root);
-        if !path.exists() {
+        if !Path::new(path.as_str()).exists() {
             return Self::default();
         }
-        fs::read_to_string(&path).map_or_else(
+        fs::read_to_string(path.as_str()).map_or_else(
             |_| Self::default(),
             |content| from_str(&content).unwrap_or_default(),
         )
@@ -68,7 +69,7 @@ impl IgnoreFile {
 
     /// Where the ignore file lives for a project root.
     #[must_use]
-    pub fn path_in(root: &Path) -> PathBuf {
+    pub fn path_in(root: &SourcePath) -> SourcePath {
         root.join(IGNORE_FILE_NAME)
     }
 
@@ -77,8 +78,8 @@ impl IgnoreFile {
     /// # Errors
     ///
     /// Returns the I/O error if the file exists and cannot be removed.
-    pub fn remove_from(root: &Path) -> io::Result<()> {
-        match fs::remove_file(Self::path_in(root)) {
+    pub fn remove_from(root: &SourcePath) -> io::Result<()> {
+        match fs::remove_file(Self::path_in(root).as_str()) {
             Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
             outcome => outcome,
         }
@@ -105,13 +106,13 @@ impl IgnoreFile {
     ///
     /// Returns the I/O error if the file cannot be serialized, written or
     /// removed.
-    pub fn save(&self, root: &Path) -> io::Result<()> {
+    pub fn save(&self, root: &SourcePath) -> io::Result<()> {
         if self.ignore.is_empty() {
             return Self::remove_from(root);
         }
         let content = to_string_pretty(self)
             .map_err(|e| IoError::other(format!("Failed to serialize ignore file: {e}")))?;
-        fs::write(Self::path_in(root), content)
+        fs::write(Self::path_in(root).as_str(), content)
     }
 
     /// The entries whose fingerprint no longer matches anything live.

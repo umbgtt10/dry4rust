@@ -3,8 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::borrow::Cow;
-use std::path::Path;
+use crate::source_path::SourcePath;
 
 /// How a reporter shows a file: relative to a base when it lies under one.
 pub struct DisplayPath;
@@ -12,12 +11,12 @@ pub struct DisplayPath;
 impl DisplayPath {
     /// Compute a display path relative to an optional base, falling back to the absolute path.
     #[must_use]
-    pub fn of<'a>(base: Option<&Path>, path: &'a Path) -> Cow<'a, str> {
+    pub fn of<'a>(base: Option<&SourcePath>, path: &'a SourcePath) -> &'a str {
         if let Some(base) = base
-            && let Ok(rel) = path.strip_prefix(base)
+            && let Some(rel) = path.strip_prefix(base)
         {
-            return rel.to_string_lossy();
+            return rel;
         }
-        path.to_string_lossy()
+        path.as_str()
     }
 }

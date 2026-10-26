@@ -5,15 +5,12 @@
 
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::rust::parser::parse_file;
-use std::fs;
-use tempfile::TempDir;
+use dry4rust::rust::parser::parse_source;
+use dry4rust::source_path::SourcePath;
 
 fn units_from(code: &str) -> Vec<CodeUnit> {
-    let tmp = TempDir::new().expect("temp dir");
-    let file = tmp.path().join("sample.rs");
-    fs::write(&file, code).expect("write");
-    parse_file(&file, 1, 0).expect("the sample parses")
+    parse_source(&SourcePath::new(String::from("sample.rs")), code, 1, 0)
+        .expect("the sample parses")
 }
 
 #[test]

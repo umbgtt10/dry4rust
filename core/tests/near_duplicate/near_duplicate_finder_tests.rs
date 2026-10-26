@@ -10,10 +10,8 @@ use dry4rust::fingerprint::Fingerprint;
 use dry4rust::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
-use dry4rust::rust::parser::parse_file;
-use std::fs;
-use std::path::PathBuf;
-use tempfile::TempDir;
+use dry4rust::rust::parser::parse_source;
+use dry4rust::source_path::SourcePath;
 
 const NEAR_PAIR: &str = r"
 fn alpha(items: &[i32]) -> i32 {
@@ -43,7 +41,7 @@ fn sized_unit(name: &str, node_count: usize) -> CodeUnit {
     CodeUnit {
         kind: CodeUnitKind::Function,
         name: name.to_string(),
-        file: PathBuf::from("sized.rs"),
+        file: SourcePath::new(String::from("sized.rs")),
         line_start: 1,
         line_end: 2,
         signature: NormalizedNode::leaf(NodeKind::Block),
@@ -55,10 +53,8 @@ fn sized_unit(name: &str, node_count: usize) -> CodeUnit {
 }
 
 fn units_from(code: &str) -> Vec<CodeUnit> {
-    let tmp = TempDir::new().expect("temp dir");
-    let file = tmp.path().join("sample.rs");
-    fs::write(&file, code).expect("write");
-    parse_file(&file, 1, 0).expect("the sample parses")
+    parse_source(&SourcePath::new(String::from("sample.rs")), code, 1, 0)
+        .expect("the sample parses")
 }
 
 #[test]

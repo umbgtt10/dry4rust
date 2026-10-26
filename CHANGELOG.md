@@ -147,6 +147,27 @@ where a run is composed rather than by the analysis.
   commands that write them. `core/src` holds five subfolders, the most
   stern4rust's `directory-subfolder-count` allows, and the split needs room for
   a sixth, `traits/`.
+- **Paths are `SourcePath`s, and the source tree is a port.**
+  `source_path::SourcePath` -- a path held as text, `/` its only separator,
+  compared by component -- replaces `Path` and `PathBuf` in the library:
+  `CodeUnit::file`, `Config`'s root and baseline, `CliOverrides::baseline`,
+  `LanguageAnalyzer::parse_file`, `rust::parser::parse_source`,
+  `DisplayPath::of` (now returning `&str`), `TextReporter::new`,
+  `JsonReporter::new`, `GroupSection::write`, `Config::load`,
+  `BaselineFile::{load, save, baseline_path}`,
+  `IgnoreFile::{load, save, remove_from, path_in}`, the commands' roots, and the
+  paths in `Error` and `CliError::NoSourceFiles`. `traits::source_tree::SourceTree`
+  lists and reads the sources, failing with `storage_failure::StorageFailure`;
+  `Scanner` keeps the rules, `descends_into` and `admits`, and
+  `scan_files(&dyn SourceTree)` returns `Result<Vec<SourcePath>, StorageFailure>`.
+  `Analysis::analyze`, `AnalysisOutput::{produce, produce_ignoring_baseline}`,
+  `CommandDispatcher::new` and `rust::parser::{parse_file, parse_files}` take
+  the tree. The walk on disk is cli's
+  `system::walkdir_source_tree::WalkdirSourceTree`; core no longer depends on
+  walkdir. A `.rs` file the scanner keeps whose path is not UTF-8 fails the run
+  naming it, where it was analysed under a name it does not have; on Windows,
+  paths in the output show `/`, and an exclusion pattern matches with either
+  separator.
 
 ## [0.4.0] - 2026-10-10
 

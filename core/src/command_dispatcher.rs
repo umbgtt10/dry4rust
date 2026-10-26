@@ -3,8 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::analysis_output::AnalysisOutput;
 use crate::cli::baseline_command::BaselineCommand;
@@ -21,6 +19,8 @@ use crate::cli::ignored_command::IgnoredCommand;
 use crate::cli::output::reporter::Reporter;
 use crate::cli::report_command::ReportCommand;
 use crate::cli::stats_command::StatsCommand;
+use crate::source_path::SourcePath;
+use crate::traits::source_tree::SourceTree;
 
 /// Routes a parsed [`Command`] to the type that serves it.
 ///
@@ -30,24 +30,27 @@ use crate::cli::stats_command::StatsCommand;
 /// `main` puts it where a test can reach it.
 pub struct CommandDispatcher<'a> {
     analyzer: &'a dyn LanguageAnalyzer,
-    root: &'a Path,
+    root: &'a SourcePath,
     reporter: &'a dyn Reporter,
     overrides: CliOverrides,
+    sources: &'a dyn SourceTree,
 }
 
 impl<'a> CommandDispatcher<'a> {
     #[must_use]
     pub const fn new(
         analyzer: &'a dyn LanguageAnalyzer,
-        root: &'a Path,
+        root: &'a SourcePath,
         reporter: &'a dyn Reporter,
         overrides: CliOverrides,
+        sources: &'a dyn SourceTree,
     ) -> Self {
         Self {
             analyzer,
             root,
             reporter,
             overrides,
+            sources,
         }
     }
 
@@ -71,9 +74,14 @@ impl<'a> CommandDispatcher<'a> {
 
     fn dispatch_analysed(&self, command: &Command) -> CliResult<CommandOutcome> {
         let output = if matches!(command, Command::Baseline { .. }) {
-            AnalysisOutput::produce_ignoring_baseline(self.analyzer, self.root, &self.overrides)?
+            AnalysisOutput::produce_ignoring_baseline(
+                self.analyzer,
+                self.sources,
+                self.root,
+                &self.overrides,
+            )?
         } else {
-            AnalysisOutput::produce(self.analyzer, self.root, &self.overrides)?
+            AnalysisOutput::produce(self.analyzer, self.sources, self.root, &self.overrides)?
         };
         Self::report_warnings(&output);
         self.render(command, &output)

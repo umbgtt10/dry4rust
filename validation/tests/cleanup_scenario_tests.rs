@@ -126,7 +126,7 @@ fn run_in_dry_run_leaves_the_ignore_file_alone() {
     let (_, result) = Fixture::analysed("exact_dupes");
 
     // Act
-    CleanupCommand::new(tmp.path(), &result, true)
+    CleanupCommand::new(&Fixture::root_of(tmp.path()), &result, true)
         .run()
         .expect("dry run succeeds");
 
@@ -139,12 +139,12 @@ fn run_outside_dry_run_takes_away_a_file_it_emptied() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let (_, result) = Fixture::analysed("exact_dupes");
-    IgnoreCommand::new(tmp.path(), "deadbeef12345678", None)
+    IgnoreCommand::new(&Fixture::root_of(tmp.path()), "deadbeef12345678", None)
         .run()
         .expect("ignore accepted");
 
     // Act
-    let text = CleanupCommand::new(tmp.path(), &result, false)
+    let text = CleanupCommand::new(&Fixture::root_of(tmp.path()), &result, false)
         .run()
         .expect("cleanup succeeds")
         .text()
@@ -168,7 +168,7 @@ fn run_with_nothing_stale_says_so_and_writes_no_file() {
     let (_, result) = Fixture::analysed("exact_dupes");
 
     // Act
-    let text = CleanupCommand::new(tmp.path(), &result, false)
+    let text = CleanupCommand::new(&Fixture::root_of(tmp.path()), &result, false)
         .run()
         .expect("cleanup succeeds")
         .text()

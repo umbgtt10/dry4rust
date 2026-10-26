@@ -33,7 +33,7 @@ fn analysed_roots_its_configuration_at_the_fixture() {
     let (config, _) = Fixture::analysed("no_dupes");
 
     // Assert
-    assert_eq!(config.root(), Fixture::path("no_dupes"));
+    assert_eq!(config.root(), &Fixture::root_of(&Fixture::path("no_dupes")));
 }
 
 #[test]

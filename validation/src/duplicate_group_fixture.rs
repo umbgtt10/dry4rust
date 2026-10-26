@@ -9,7 +9,7 @@ use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
-use std::path::PathBuf;
+use dry4rust::source_path::SourcePath;
 
 pub struct DuplicateGroupFixture;
 
@@ -26,7 +26,7 @@ impl DuplicateGroupFixture {
                 .map(|name| CodeUnit {
                     kind: CodeUnitKind::Function,
                     name: (*name).to_owned(),
-                    file: PathBuf::from("src/lib.rs"),
+                    file: SourcePath::new(String::from("src/lib.rs")),
                     line_start: 1,
                     line_end: 9,
                     signature: NormalizedNode::leaf(NodeKind::Opaque),

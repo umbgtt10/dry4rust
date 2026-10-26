@@ -5,8 +5,8 @@
 
 use dry4rust::config::Config;
 use dry4rust::file_config::FileConfig;
+use dry4rust::source_path::SourcePath;
 use dry4rust::threshold::Threshold;
-use std::path::Path;
 use toml::from_str;
 
 fn stating(toml: &str) -> FileConfig {
@@ -51,7 +51,10 @@ fn apply_to_reads_a_baseline_path_as_written() {
         .expect("a path is always in range");
 
     // Assert
-    assert_eq!(config.baseline(), Some(Path::new("ci/recorded.json")));
+    assert_eq!(
+        config.baseline(),
+        Some(&SourcePath::new(String::from("ci/recorded.json")))
+    );
 }
 
 #[test]

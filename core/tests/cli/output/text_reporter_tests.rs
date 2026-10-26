@@ -15,14 +15,13 @@ use dry4rust::duplication_stats::DuplicationStats;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
-use std::path::Path;
-use std::path::PathBuf;
+use dry4rust::source_path::SourcePath;
 
 fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> CodeUnit {
     CodeUnit {
         kind: CodeUnitKind::Function,
         name: name.to_string(),
-        file: PathBuf::from(file),
+        file: SourcePath::new(String::from(file)),
         line_start,
         line_end,
         signature: NormalizedNode::leaf(NodeKind::Opaque),
@@ -36,11 +35,9 @@ fn make_unit(name: &str, file: &str, line_start: usize, line_end: usize) -> Code
 #[test]
 fn relative_path_stripping() {
     // Arrange & Act
-    let base = PathBuf::from("/home/user/project");
-    let result = DisplayPath::of(
-        Some(base.as_path()),
-        Path::new("/home/user/project/src/main.rs"),
-    );
+    let base = SourcePath::new(String::from("/home/user/project"));
+    let file = SourcePath::new(String::from("/home/user/project/src/main.rs"));
+    let result = DisplayPath::of(Some(&base), &file);
 
     // Assert
     assert_eq!(result, "src/main.rs");
@@ -104,7 +101,7 @@ fn text_report_exact_empty() {
 #[test]
 fn text_report_exact_with_groups() {
     // Arrange & Act
-    let reporter = TextReporter::new(Some(PathBuf::from("/project")));
+    let reporter = TextReporter::new(Some(SourcePath::new(String::from("/project"))));
     let group = DuplicateGroup::new(
         Fingerprint::from_node(&NormalizedNode::leaf(NodeKind::Opaque)),
         vec![

@@ -3,7 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
 use std::string::ToString;
 
 use crate::analysis::Analysis;
@@ -12,7 +11,10 @@ use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::cli_overrides::CliOverrides;
 use crate::config::Config;
+use crate::error::Error;
 use crate::scanner::Scanner;
+use crate::source_path::SourcePath;
+use crate::traits::source_tree::SourceTree;
 
 /// Everything one analysis run produces: the configuration it ran under and
 /// what it found.
@@ -22,8 +24,17 @@ pub struct AnalysisOutput {
 }
 
 impl AnalysisOutput {
-    fn from_config(analyzer: &dyn LanguageAnalyzer, config: Config) -> CliResult<Self> {
-        let scanner = Scanner::new(config.root().to_path_buf())
+    #[must_use]
+    pub const fn new(config: Config, result: Analysis) -> Self {
+        Self { config, result }
+    }
+
+    fn from_config(
+        analyzer: &dyn LanguageAnalyzer,
+        sources: &dyn SourceTree,
+        config: Config,
+    ) -> CliResult<Self> {
+        let scanner = Scanner::new(config.root().clone())
             .with_excludes(config.exclude().to_vec())
             .with_extensions(
                 analyzer
@@ -32,20 +43,18 @@ impl AnalysisOutput {
                     .map(ToString::to_string)
                     .collect(),
             );
-        let files = scanner.scan_files();
+        let files = scanner.scan_files(sources).map_err(|failure| Error::Read {
+            path: config.root().clone(),
+            reason: failure.to_string(),
+        })?;
 
         if files.is_empty() {
-            return Err(CliError::NoSourceFiles(config.root().to_path_buf()));
+            return Err(CliError::NoSourceFiles(config.root().clone()));
         }
 
-        let result = Analysis::analyze(analyzer, &files, &config)?;
+        let result = Analysis::analyze(analyzer, sources, &files, &config)?;
 
         Ok(Self { config, result })
-    }
-
-    #[must_use]
-    pub const fn new(config: Config, result: Analysis) -> Self {
-        Self { config, result }
     }
 
     /// Scan files, run the analysis pipeline, and return the output.
@@ -58,13 +67,14 @@ impl AnalysisOutput {
     /// Returns [`CliError::InvalidConfig`] when the configuration states a
     /// value the tool cannot run under, [`CliError::NoSourceFiles`] when the
     /// scan finds nothing to analyse, and [`CliError::Analysis`] when the
-    /// pipeline itself fails.
+    /// sources cannot be listed or the pipeline itself fails.
     pub fn produce(
         analyzer: &dyn LanguageAnalyzer,
-        root: &Path,
+        sources: &dyn SourceTree,
+        root: &SourcePath,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
-        Self::from_config(analyzer, Self::configure(root, overrides)?)
+        Self::from_config(analyzer, sources, Self::configure(root, overrides)?)
     }
 
     /// The same run, with the baseline left out of it.
@@ -78,12 +88,13 @@ impl AnalysisOutput {
     /// The same as [`AnalysisOutput::produce`], less the baseline.
     pub fn produce_ignoring_baseline(
         analyzer: &dyn LanguageAnalyzer,
-        root: &Path,
+        sources: &dyn SourceTree,
+        root: &SourcePath,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
         let config = Self::configure(root, overrides)?;
-        let named = config.baseline().map(Path::to_path_buf);
-        let output = Self::from_config(analyzer, config.with_baseline(None))?;
+        let named = config.baseline().cloned();
+        let output = Self::from_config(analyzer, sources, config.with_baseline(None))?;
         Ok(Self {
             config: output.config.with_baseline(named),
             ..output
@@ -100,7 +111,7 @@ impl AnalysisOutput {
         &self.result
     }
 
-    fn configure(root: &Path, overrides: &CliOverrides) -> CliResult<Config> {
+    fn configure(root: &SourcePath, overrides: &CliOverrides) -> CliResult<Config> {
         Config::load(root)
             .and_then(|config| overrides.apply_to(config))
             .map_err(|e| CliError::InvalidConfig(e.to_string()))

@@ -26,10 +26,12 @@ path = "src/lib.rs"
 name = "cargo-dry4rust"
 path = "src/main.rs"
 
-# The command line and the technology the core is kept free of.
+# The command line and the technology the core is kept free of: clap, and the
+# file system through walkdir.
 [dependencies]
 clap = { workspace = true }
 dry4rust-core = { workspace = true }
+walkdir = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }

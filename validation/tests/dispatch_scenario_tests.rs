@@ -9,6 +9,7 @@ use dry4rust::cli::command::Command;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust_cli::invocation::output_format::OutputFormat;
+use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
 use validation::dispatch_scenario::DispatchScenario;
 use validation::fixture::Fixture;
 
@@ -111,10 +112,16 @@ fn dispatch_with_stats_writes_a_summary() {
 fn new_stores_the_overrides_it_is_given_and_applies_them_to_the_analysis() {
     // Arrange
     let analyzer = RustAnalyzer::new();
-    let root = Fixture::path("exact_dupes");
+    let root = Fixture::root_of(&Fixture::path("exact_dupes"));
     let overrides = CliOverrides::default().with_min_nodes(Some(100_000));
     let reporter = OutputFormat::Text.reporter(Some(&root));
-    let dispatcher = CommandDispatcher::new(&analyzer, &root, reporter.as_ref(), overrides);
+    let dispatcher = CommandDispatcher::new(
+        &analyzer,
+        &root,
+        reporter.as_ref(),
+        overrides,
+        &WalkdirSourceTree,
+    );
 
     // Act
     let outcome = dispatcher.dispatch(&DispatchScenario::breaching_check());

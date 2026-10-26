@@ -3,11 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use dry4rust::cli::output::json_reporter::JsonReporter;
 use dry4rust::cli::output::reporter::Reporter;
 use dry4rust::cli::output::text_reporter::TextReporter;
+use dry4rust::source_path::SourcePath;
 
 /// Output format for CLI reports.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, clap::ValueEnum)]
@@ -23,10 +22,10 @@ impl OutputFormat {
     /// `root` is the base every reported path is shown relative to; `None`
     /// reports absolute paths.
     #[must_use]
-    pub fn reporter(self, root: Option<&Path>) -> Box<dyn Reporter> {
+    pub fn reporter(self, root: Option<&SourcePath>) -> Box<dyn Reporter> {
         match self {
-            Self::Text => Box::new(TextReporter::new(root.map(Path::to_path_buf))),
-            Self::Json => Box::new(JsonReporter::new(root.map(Path::to_path_buf))),
+            Self::Text => Box::new(TextReporter::new(root.cloned())),
+            Self::Json => Box::new(JsonReporter::new(root.cloned())),
         }
     }
 }

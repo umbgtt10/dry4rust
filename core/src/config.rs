@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use std::fs;
-use std::path::{Path, PathBuf};
 
 use toml::Value;
 use toml::from_str;
@@ -12,6 +11,7 @@ use toml::from_str;
 use crate::analysis_config::AnalysisConfig;
 use crate::error::Result;
 use crate::file_config::FileConfig;
+use crate::source_path::SourcePath;
 use crate::threshold::Threshold;
 
 /// Configuration for cargo-dry4rust analysis.
@@ -46,9 +46,9 @@ pub struct Config {
     /// Minimum number of AST nodes for a sub-function unit to be analyzed.
     min_sub_nodes: usize,
     /// Baseline of inherited duplication to judge against, if any.
-    baseline: Option<PathBuf>,
+    baseline: Option<SourcePath>,
     /// Root path to analyze.
-    root: PathBuf,
+    root: SourcePath,
 }
 
 impl Default for Config {
@@ -66,7 +66,7 @@ impl Default for Config {
             sub_function: false,
             min_sub_nodes: 5,
             baseline: None,
-            root: PathBuf::from("."),
+            root: SourcePath::new(String::from(".")),
         }
     }
 }
@@ -88,9 +88,9 @@ impl Config {
     ///
     /// Returns [`crate::error::Error::InvalidConfig`] naming the first field
     /// whose value falls outside the range it allows.
-    pub fn load(root: &Path) -> Result<Self> {
+    pub fn load(root: &SourcePath) -> Result<Self> {
         let mut config = Self {
-            root: root.to_path_buf(),
+            root: root.clone(),
             ..Default::default()
         };
 
@@ -117,8 +117,8 @@ impl Config {
     }
 
     #[must_use]
-    pub fn baseline(&self) -> Option<&Path> {
-        self.baseline.as_deref()
+    pub const fn baseline(&self) -> Option<&SourcePath> {
+        self.baseline.as_ref()
     }
 
     #[must_use]
@@ -167,7 +167,7 @@ impl Config {
     }
 
     #[must_use]
-    pub fn root(&self) -> &Path {
+    pub const fn root(&self) -> &SourcePath {
         &self.root
     }
 
@@ -182,7 +182,7 @@ impl Config {
     }
 
     #[must_use]
-    pub fn with_baseline(self, baseline: Option<PathBuf>) -> Self {
+    pub fn with_baseline(self, baseline: Option<SourcePath>) -> Self {
         Self { baseline, ..self }
     }
 
@@ -250,7 +250,7 @@ impl Config {
     }
 
     #[must_use]
-    pub fn with_root(self, root: PathBuf) -> Self {
+    pub fn with_root(self, root: SourcePath) -> Self {
         Self { root, ..self }
     }
 
@@ -270,8 +270,8 @@ impl Config {
         }
     }
 
-    fn from_cargo_metadata(root: &Path) -> Option<FileConfig> {
-        let content = fs::read_to_string(root.join("Cargo.toml")).ok()?;
+    fn from_cargo_metadata(root: &SourcePath) -> Option<FileConfig> {
+        let content = fs::read_to_string(root.join("Cargo.toml").as_str()).ok()?;
         from_str::<Value>(&content)
             .ok()?
             .get("package")?
@@ -282,8 +282,8 @@ impl Config {
             .ok()
     }
 
-    fn from_named_file(root: &Path) -> Option<FileConfig> {
-        let content = fs::read_to_string(root.join("dry4rust.toml")).ok()?;
+    fn from_named_file(root: &SourcePath) -> Option<FileConfig> {
+        let content = fs::read_to_string(root.join("dry4rust.toml").as_str()).ok()?;
         from_str(&content).ok()
     }
 }

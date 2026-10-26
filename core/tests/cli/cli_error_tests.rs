@@ -5,10 +5,10 @@
 
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::error::Error as AnalysisError;
+use dry4rust::source_path::SourcePath;
 use std::error::Error;
 use std::io::Error as IoError;
 use std::io::ErrorKind;
-use std::path::PathBuf;
 
 #[test]
 fn exit_code_distinguishes_a_failed_check_from_an_internal_error() {
@@ -83,7 +83,7 @@ fn fmt_of_no_recognized_files_says_which_flag_would_resolve_it() {
 #[test]
 fn fmt_of_no_source_files_names_the_path_it_looked_in() {
     // Arrange
-    let error = CliError::NoSourceFiles(PathBuf::from("/some/root"));
+    let error = CliError::NoSourceFiles(SourcePath::new(String::from("/some/root")));
 
     // Act
     let message = error.to_string();

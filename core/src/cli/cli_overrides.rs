@@ -3,11 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-use std::path::PathBuf;
-
 use crate::config::Config;
 use crate::error::Result;
+use crate::source_path::SourcePath;
 use crate::threshold::Threshold;
 
 /// Optional CLI overrides applied on top of file-based config.
@@ -20,7 +18,7 @@ pub struct CliOverrides {
     exclude_tests: Option<bool>,
     sub_function: Option<bool>,
     min_sub_nodes: Option<usize>,
-    baseline: Option<PathBuf>,
+    baseline: Option<SourcePath>,
 }
 
 impl CliOverrides {
@@ -67,8 +65,8 @@ impl CliOverrides {
     }
 
     #[must_use]
-    pub fn baseline(&self) -> Option<&Path> {
-        self.baseline.as_deref()
+    pub const fn baseline(&self) -> Option<&SourcePath> {
+        self.baseline.as_ref()
     }
 
     #[must_use]
@@ -107,7 +105,7 @@ impl CliOverrides {
     }
 
     #[must_use]
-    pub fn with_baseline(self, baseline: Option<PathBuf>) -> Self {
+    pub fn with_baseline(self, baseline: Option<SourcePath>) -> Self {
         Self { baseline, ..self }
     }
 

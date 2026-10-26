@@ -3,15 +3,17 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::source_path;
 use dry4rust::cli::suppression::ignore_file::IgnoreFile;
 use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::literal_kind::LiteralKind;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
+use dry4rust::source_path::SourcePath;
 use std::collections::HashSet;
 use std::iter::once;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tempfile::TempDir;
 
 const fn group_of(fingerprint: Fingerprint, similarity: f64) -> DuplicateGroup {
@@ -55,7 +57,7 @@ fn load_over_a_root_with_no_ignore_file_returns_an_empty_one() {
     let tmp = TempDir::new().unwrap();
 
     // Act
-    let ignore = IgnoreFile::load(tmp.path());
+    let ignore = IgnoreFile::load(&source_path(tmp.path()));
 
     // Assert
     assert!(
@@ -68,10 +70,13 @@ fn load_over_a_root_with_no_ignore_file_returns_an_empty_one() {
 #[test]
 fn path_in_names_the_file_beside_the_project_root() {
     // Arrange & Act
-    let path = IgnoreFile::path_in(Path::new("/project"));
+    let path = IgnoreFile::path_in(&SourcePath::new(String::from("/project")));
 
     // Assert
-    assert_eq!(path, PathBuf::from("/project/.dry4rust-ignore.toml"));
+    assert_eq!(
+        path,
+        SourcePath::new(String::from("/project/.dry4rust-ignore.toml"))
+    );
 }
 
 #[test]
@@ -80,7 +85,7 @@ fn remove_from_a_root_with_no_ignore_file_is_not_an_error() {
     let tmp = TempDir::new().unwrap();
 
     // Act
-    let outcome = IgnoreFile::remove_from(tmp.path());
+    let outcome = IgnoreFile::remove_from(&source_path(tmp.path()));
 
     // Assert
     assert!(
@@ -141,16 +146,18 @@ fn save_of_an_emptied_file_takes_it_away_rather_than_writing_an_empty_list() {
     let tmp = TempDir::new().unwrap();
     let fp = test_fingerprint();
     suppressing(&[(fp, None)])
-        .save(tmp.path())
+        .save(&source_path(tmp.path()))
         .expect("the first save writes it");
-    let (emptied, _) = IgnoreFile::load(tmp.path()).without(&fp.to_hex());
+    let (emptied, _) = IgnoreFile::load(&source_path(tmp.path())).without(&fp.to_hex());
 
     // Act
-    emptied.save(tmp.path()).expect("saving nothing succeeds");
+    emptied
+        .save(&source_path(tmp.path()))
+        .expect("saving nothing succeeds");
 
     // Assert
     assert!(
-        !IgnoreFile::path_in(tmp.path()).exists(),
+        !Path::new(IgnoreFile::path_in(&source_path(tmp.path())).as_str()).exists(),
         "an empty suppression list makes exactly the claim that no file makes,          and load cannot tell them apart"
     );
 }
@@ -167,8 +174,8 @@ fn save_then_load_returns_what_was_recorded() {
     );
 
     // Act
-    ignore.save(tmp.path()).unwrap();
-    let loaded = IgnoreFile::load(tmp.path());
+    ignore.save(&source_path(tmp.path())).unwrap();
+    let loaded = IgnoreFile::load(&source_path(tmp.path()));
 
     // Assert
     assert_eq!(loaded.ignore().len(), 1);

@@ -12,16 +12,16 @@ use crate::cli::output::report::Report;
 use crate::cli::output::reporter::Reporter;
 use crate::duplicate_group::DuplicateGroup;
 use crate::duplication_stats::DuplicationStats;
-use std::path::PathBuf;
+use crate::source_path::SourcePath;
 
 pub struct TextReporter {
     /// Base path for displaying relative paths.
-    base_path: Option<PathBuf>,
+    base_path: Option<SourcePath>,
 }
 
 impl TextReporter {
     #[must_use]
-    pub const fn new(base_path: Option<PathBuf>) -> Self {
+    pub const fn new(base_path: Option<SourcePath>) -> Self {
         Self { base_path }
     }
 
@@ -38,7 +38,7 @@ impl TextReporter {
     }
 
     fn section(&self, section: &GroupSection, groups: &[DuplicateGroup]) -> String {
-        section.write(groups, self.base_path.as_deref())
+        section.write(groups, self.base_path.as_ref())
     }
 }
 

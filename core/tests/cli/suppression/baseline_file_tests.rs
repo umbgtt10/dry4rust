@@ -5,39 +5,43 @@
 
 use crate::common::group;
 use crate::common::result_with;
+use crate::common::source_path;
 use dry4rust::cli::suppression::baseline_constants::DEFAULT_BASELINE_FILE;
 use dry4rust::cli::suppression::baseline_constants::FORMAT_VERSION;
 use dry4rust::cli::suppression::baseline_file::BaselineFile;
 use dry4rust::cli::suppression::baseline_kind::BaselineKind;
+use dry4rust::source_path::SourcePath;
 use std::fs;
-use std::path::Path;
-use std::path::PathBuf;
 use tempfile::TempDir;
+
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(String::from(text))
+}
 
 #[test]
 fn baseline_path_joins_a_relative_name_to_the_analysed_root() {
     // Arrange
-    let root = Path::new("/projects/thing");
+    let root = path("/projects/thing");
 
     // Act
-    let path = BaselineFile::baseline_path(root, Some(Path::new("ci/dry4rust-baseline.json")));
+    let path = BaselineFile::baseline_path(&root, Some(&path("ci/dry4rust-baseline.json")));
 
     // Assert
     assert_eq!(
         path,
-        PathBuf::from("/projects/thing/ci/dry4rust-baseline.json")
+        SourcePath::new(String::from("/projects/thing/ci/dry4rust-baseline.json"))
     );
 }
 
 #[test]
 fn baseline_path_leaves_an_absolute_name_alone() {
-    // Arrange -- absolute on every platform, which a leading slash is not:
-    // on Windows it has a root without a prefix, and `join` would take that
-    // branch too, so this test would pass without reaching the one it names
-    let named = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("recorded.json");
+    // Arrange -- a drive rather than a leading slash: `join` takes a name
+    // that starts at `/` as a whole path too, so a slash would pass this test
+    // without reaching the branch it names
+    let named = path("C:/projects/recorded.json");
 
     // Act
-    let path = BaselineFile::baseline_path(Path::new("/projects/thing"), Some(&named));
+    let path = BaselineFile::baseline_path(&path("/projects/thing"), Some(&named));
 
     // Assert
     assert!(named.is_absolute(), "the arrangement has to be absolute");
@@ -47,12 +51,12 @@ fn baseline_path_leaves_an_absolute_name_alone() {
 #[test]
 fn baseline_path_without_a_name_uses_the_family_default() {
     // Arrange & Act
-    let path = BaselineFile::baseline_path(Path::new("/projects/thing"), None);
+    let path = BaselineFile::baseline_path(&path("/projects/thing"), None);
 
     // Assert
     assert_eq!(
         path,
-        PathBuf::from("/projects/thing").join(DEFAULT_BASELINE_FILE)
+        SourcePath::new(String::from("/projects/thing")).join(DEFAULT_BASELINE_FILE)
     );
     assert_eq!(DEFAULT_BASELINE_FILE, "dry4rust-baseline.json");
 }
@@ -65,7 +69,7 @@ fn load_of_a_baseline_from_a_later_format_says_to_re_record_it() {
     fs::write(&path, "{\"version\": 99, \"entries\": []}").expect("write");
 
     // Act
-    let outcome = BaselineFile::load(&path);
+    let outcome = BaselineFile::load(&source_path(&path));
 
     // Assert
     let message = outcome
@@ -81,7 +85,7 @@ fn load_of_a_directory_reports_what_the_filesystem_said_rather_than_absence() {
     let tmp = TempDir::new().expect("temp dir");
 
     // Act
-    let outcome = BaselineFile::load(tmp.path());
+    let outcome = BaselineFile::load(&source_path(tmp.path()));
 
     // Assert
     let message = outcome
@@ -103,7 +107,7 @@ fn load_of_a_malformed_baseline_is_an_error_rather_than_an_empty_one() {
     fs::write(&path, "{ this is not json").expect("write");
 
     // Act
-    let outcome = BaselineFile::load(&path);
+    let outcome = BaselineFile::load(&source_path(&path));
 
     // Assert
     assert!(
@@ -120,7 +124,7 @@ fn load_of_a_missing_baseline_names_the_command_that_would_record_one() {
     let path = tmp.path().join("dry4rust-baseline.json");
 
     // Act
-    let outcome = BaselineFile::load(&path);
+    let outcome = BaselineFile::load(&source_path(&path));
 
     // Assert
     let message = outcome.expect_err("nothing is there to load").to_string();
@@ -168,7 +172,7 @@ fn save_where_the_parent_is_a_file_reports_the_failure() {
     let recorded = BaselineFile::new(FORMAT_VERSION, Vec::new());
 
     // Act
-    let outcome = recorded.save(&blocker.join("dry4rust-baseline.json"));
+    let outcome = recorded.save(&source_path(&blocker.join("dry4rust-baseline.json")));
 
     // Assert
     let message = outcome

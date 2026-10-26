@@ -7,7 +7,6 @@ use std::fs;
 use std::io::Error as IoError;
 use std::io::ErrorKind;
 use std::path::Path;
-use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 use serde_json::from_str;
@@ -21,6 +20,7 @@ use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::duplicate_group::DuplicateGroup;
 use crate::error::Error;
 use crate::error::Result;
+use crate::source_path::SourcePath;
 
 /// The duplication a codebase already had when the baseline was recorded.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,9 +40,9 @@ impl BaselineFile {
     /// malformed, or written in a format this build does not read. A baseline
     /// that cannot be applied is never treated as an empty one: that would
     /// quietly turn every inherited finding into a new one.
-    pub fn load(path: &Path) -> Result<Self> {
-        let content = fs::read_to_string(path).map_err(|e| Error::Baseline {
-            path: path.to_path_buf(),
+    pub fn load(path: &SourcePath) -> Result<Self> {
+        let content = fs::read_to_string(path.as_str()).map_err(|e| Error::Baseline {
+            path: path.clone(),
             problem: if e.kind() == ErrorKind::NotFound {
                 String::from("no such file; record one with `cargo dry4rust baseline`")
             } else {
@@ -50,14 +50,14 @@ impl BaselineFile {
             },
         })?;
         let file: Self = from_str(&content).map_err(|e| Error::Baseline {
-            path: path.to_path_buf(),
+            path: path.clone(),
             problem: e.to_string(),
         })?;
         if file.version == FORMAT_VERSION {
             Ok(file)
         } else {
             Err(Error::Baseline {
-                path: path.to_path_buf(),
+                path: path.clone(),
                 problem: format!(
                     "written in format {}, this build reads format {FORMAT_VERSION}; \
                      re-record it with `cargo dry4rust baseline`",
@@ -110,12 +110,11 @@ impl BaselineFile {
     /// A relative path is taken as relative to the analysed root, so a
     /// `dry4rust.toml` naming one means the same thing wherever it is run from.
     #[must_use]
-    pub fn baseline_path(root: &Path, configured: Option<&Path>) -> PathBuf {
-        let named = configured.unwrap_or_else(|| Path::new(DEFAULT_BASELINE_FILE));
-        if named.is_absolute() {
-            named.to_path_buf()
-        } else {
-            root.join(named)
+    pub fn baseline_path(root: &SourcePath, configured: Option<&SourcePath>) -> SourcePath {
+        match configured {
+            Some(named) if named.is_absolute() => named.clone(),
+            Some(named) => root.join(named.as_str()),
+            None => root.join(DEFAULT_BASELINE_FILE),
         }
     }
 
@@ -141,21 +140,21 @@ impl BaselineFile {
     /// # Errors
     ///
     /// Returns [`Error::Baseline`] if the file cannot be written.
-    pub fn save(&self, path: &Path) -> Result<()> {
+    pub fn save(&self, path: &SourcePath) -> Result<()> {
         let problem = |e: IoError| Error::Baseline {
-            path: path.to_path_buf(),
+            path: path.clone(),
             problem: e.to_string(),
         };
-        if let Some(parent) = path.parent()
+        if let Some(parent) = Path::new(path.as_str()).parent()
             && !parent.as_os_str().is_empty()
         {
             fs::create_dir_all(parent).map_err(problem)?;
         }
         let json = to_string_pretty(self).map_err(|e| Error::Baseline {
-            path: path.to_path_buf(),
+            path: path.clone(),
             problem: e.to_string(),
         })?;
-        fs::write(path, format!("{json}\n")).map_err(problem)
+        fs::write(path.as_str(), format!("{json}\n")).map_err(problem)
     }
 
     #[must_use]

@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::source_path;
 use dry4rust::cli::ignore_command::IgnoreCommand;
 use dry4rust::cli::ignored_command::IgnoredCommand;
 use tempfile::TempDir;
@@ -13,10 +14,14 @@ fn run_after_ignore_lists_what_was_added() {
     let tmp = TempDir::new().expect("temp dir");
 
     // Act
-    IgnoreCommand::new(tmp.path(), "deadbeef12345678", Some("known duplicate"))
-        .run()
-        .expect("a valid fingerprint is accepted");
-    let listed = IgnoredCommand::new(tmp.path())
+    IgnoreCommand::new(
+        &source_path(tmp.path()),
+        "deadbeef12345678",
+        Some("known duplicate"),
+    )
+    .run()
+    .expect("a valid fingerprint is accepted");
+    let listed = IgnoredCommand::new(&source_path(tmp.path()))
         .run()
         .expect("listing succeeds")
         .text()
@@ -34,7 +39,7 @@ fn run_without_an_ignore_file_says_there_is_nothing_ignored() {
     let tmp = TempDir::new().expect("temp dir");
 
     // Act
-    let listed = IgnoredCommand::new(tmp.path())
+    let listed = IgnoredCommand::new(&source_path(tmp.path()))
         .run()
         .expect("listing succeeds")
         .text()

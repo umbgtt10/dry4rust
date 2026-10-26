@@ -4,8 +4,9 @@
 // SPDX-License-Identifier: MIT
 
 use std::io;
-use std::path::PathBuf;
 use std::result::Result as StdResult;
+
+use crate::source_path::SourcePath;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -13,7 +14,7 @@ pub enum Error {
     Io(#[from] io::Error),
 
     #[error("No source files found in {0}")]
-    NoSourceFiles(PathBuf),
+    NoSourceFiles(SourcePath),
 
     #[error("{field} must be {expected}, got {value}")]
     InvalidConfig {
@@ -22,15 +23,15 @@ pub enum Error {
         expected: &'static str,
     },
 
-    #[error("baseline {}: {problem}", .path.display())]
-    Baseline { path: PathBuf, problem: String },
+    #[error("baseline {path}: {problem}")]
+    Baseline { path: SourcePath, problem: String },
 
     #[error("{0}")]
     Other(String),
-    #[error("Failed to parse {}: {reason}", .path.display())]
-    Parse { path: PathBuf, reason: String },
-    #[error("Failed to read {}: {reason}", .path.display())]
-    Read { path: PathBuf, reason: String },
+    #[error("Failed to parse {path}: {reason}")]
+    Parse { path: SourcePath, reason: String },
+    #[error("Failed to read {path}: {reason}")]
+    Read { path: SourcePath, reason: String },
 }
 
 /// Imported under another name because this alias is itself called `Result`:

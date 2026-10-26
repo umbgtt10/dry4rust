@@ -11,14 +11,14 @@ use dry4rust::near_duplicate::pair_scanner::PairScanner;
 use dry4rust::near_duplicate::similarity_pair::SimilarityPair;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
-use std::path::PathBuf;
+use dry4rust::source_path::SourcePath;
 
 fn sized_unit(kind: CodeUnitKind, node_count: usize) -> CodeUnit {
     let children = vec![NormalizedNode::leaf(NodeKind::Block); node_count - 1];
     CodeUnit {
         kind,
         name: format!("unit_of_{node_count}"),
-        file: PathBuf::from("sized.rs"),
+        file: SourcePath::new(String::from("sized.rs")),
         line_start: 1,
         line_end: 2,
         signature: NormalizedNode::leaf(NodeKind::Block),

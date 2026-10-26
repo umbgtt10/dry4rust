@@ -12,6 +12,7 @@ use dry4rust::cli::command::Command;
 
 use crate::invocation::cli_command::CliCommand;
 use crate::invocation::output_format::OutputFormat;
+use crate::system::portable_path::PortablePath;
 
 /// The command line, and what it means.
 ///
@@ -98,18 +99,23 @@ impl Args {
     /// The three booleans become `Some(true)` or `None` rather than
     /// `Some(false)`: a flag that was not passed has no opinion, and a config
     /// file that turned the behaviour on must not be switched off by its
-    /// absence.
+    /// absence. Paths and patterns reach the core with `/` for a separator.
     #[must_use]
     pub fn overrides(&self) -> CliOverrides {
         CliOverrides::default()
             .with_min_nodes(self.min_nodes)
             .with_min_lines(self.min_lines)
             .with_threshold(self.threshold)
-            .with_exclude(self.exclude.clone())
+            .with_exclude(
+                self.exclude
+                    .iter()
+                    .map(|pattern| PortablePath::pattern(pattern))
+                    .collect(),
+            )
             .with_exclude_tests(self.exclude_tests.then_some(true))
             .with_sub_function(self.sub_function.then_some(true))
             .with_min_sub_nodes(self.min_sub_nodes)
-            .with_baseline(self.baseline.clone())
+            .with_baseline(self.baseline.as_deref().map(PortablePath::lossy))
     }
 
     /// The root to analyse: what `--path` said, or where the shell is.

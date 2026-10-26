@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::source_path;
+use crate::support::in_memory_source_tree::InMemorySourceTree;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::command::Command;
@@ -10,10 +12,9 @@ use dry4rust::cli::output::json_reporter::JsonReporter;
 use dry4rust::cli::output::text_reporter::TextReporter;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
+use dry4rust::source_path::SourcePath;
 use serde_json::Value;
 use serde_json::from_str;
-use std::fs;
-use std::path::Path;
 use tempfile::TempDir;
 
 const DUPLICATED: &str = r"pub fn process_data(input: Vec<i32>) -> i32 {
@@ -37,14 +38,38 @@ pub fn compute_total(values: Vec<i32>) -> i32 {
 }
 ";
 
-fn dispatch_in(root: &Path, command: &Command) -> (Result<(), CliError>, String) {
+fn dispatch_in(
+    root: &SourcePath,
+    sources: &InMemorySourceTree,
+    command: &Command,
+) -> (Result<(), CliError>, String) {
     let analyzer = RustAnalyzer::new();
-    let reporter = TextReporter::new(Some(root.to_path_buf()));
-    let dispatcher = CommandDispatcher::new(&analyzer, root, &reporter, CliOverrides::default());
+    let reporter = TextReporter::new(Some(root.clone()));
+    let dispatcher =
+        CommandDispatcher::new(&analyzer, root, &reporter, CliOverrides::default(), sources);
     match dispatcher.dispatch(command) {
         Ok(outcome) => outcome.into_parts(),
         Err(error) => (Err(error), String::new()),
     }
+}
+
+#[test]
+fn dispatch_over_sources_that_cannot_be_listed_names_the_root() {
+    // Arrange
+    let root = SourcePath::new(String::from("/p"));
+    let sources = InMemorySourceTree::unlistable("/p/src/\u{FFFD}.rs: the path is not valid UTF-8");
+
+    // Act
+    let (outcome, _) = dispatch_in(&root, &sources, &Command::Stats);
+
+    // Assert
+    let Err(error) = outcome else {
+        panic!("a tree that cannot be listed cannot be analysed");
+    };
+    assert_eq!(
+        error.to_string(),
+        "Failed to read /p: /p/src/\u{FFFD}.rs: the path is not valid UTF-8"
+    );
 }
 
 #[test]
@@ -57,7 +82,11 @@ fn dispatch_with_ignore_records_the_fingerprint_without_analysing() {
     };
 
     // Act
-    let (outcome, _) = dispatch_in(tmp.path(), &command);
+    let (outcome, _) = dispatch_in(
+        &source_path(tmp.path()),
+        &InMemorySourceTree::new(),
+        &command,
+    );
 
     // Assert
     assert!(
@@ -74,12 +103,20 @@ fn dispatch_with_ignored_lists_what_ignore_recorded() {
         fingerprint: "cafebabe00000002".to_string(),
         reason: None,
     };
-    dispatch_in(tmp.path(), &recorded)
-        .0
-        .expect("ignore accepted");
+    dispatch_in(
+        &source_path(tmp.path()),
+        &InMemorySourceTree::new(),
+        &recorded,
+    )
+    .0
+    .expect("ignore accepted");
 
     // Act
-    let (outcome, text) = dispatch_in(tmp.path(), &Command::Ignored);
+    let (outcome, text) = dispatch_in(
+        &source_path(tmp.path()),
+        &InMemorySourceTree::new(),
+        &Command::Ignored,
+    );
 
     // Assert
     assert!(outcome.is_ok());
@@ -92,13 +129,17 @@ fn dispatch_with_ignored_lists_what_ignore_recorded() {
 #[test]
 fn dispatch_with_stats_writes_through_the_reporter_it_was_given() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    fs::create_dir_all(tmp.path().join("src")).expect("src");
-    fs::write(tmp.path().join("src/lib.rs"), DUPLICATED).expect("write");
+    let root = SourcePath::new(String::from("/p"));
+    let sources = InMemorySourceTree::new().with_file("/p/src/lib.rs", DUPLICATED);
     let analyzer = RustAnalyzer::new();
-    let reporter = JsonReporter::new(Some(tmp.path().to_path_buf()));
-    let dispatcher =
-        CommandDispatcher::new(&analyzer, tmp.path(), &reporter, CliOverrides::default());
+    let reporter = JsonReporter::new(Some(root.clone()));
+    let dispatcher = CommandDispatcher::new(
+        &analyzer,
+        &root,
+        &reporter,
+        CliOverrides::default(),
+        &sources,
+    );
 
     // Act
     let (_, stats) = dispatcher

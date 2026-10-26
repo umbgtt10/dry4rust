@@ -3,24 +3,23 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::suppression::ignore_file::IgnoreFile;
 use crate::fingerprint::Fingerprint;
+use crate::source_path::SourcePath;
 
 /// `ignore`: record one fingerprint as a duplicate that is meant to be there.
 pub struct IgnoreCommand<'a> {
-    root: &'a Path,
+    root: &'a SourcePath,
     fingerprint: &'a str,
     reason: Option<&'a str>,
 }
 
 impl<'a> IgnoreCommand<'a> {
     #[must_use]
-    pub const fn new(root: &'a Path, fingerprint: &'a str, reason: Option<&'a str>) -> Self {
+    pub const fn new(root: &'a SourcePath, fingerprint: &'a str, reason: Option<&'a str>) -> Self {
         Self {
             root,
             fingerprint,

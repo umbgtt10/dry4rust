@@ -4,22 +4,25 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
+use crate::common::source_path;
 use dry4rust::cli::suppression::baseline_constants::FORMAT_VERSION;
 use dry4rust::cli::suppression::baseline_entry::BaselineEntry;
 use dry4rust::cli::suppression::baseline_file::BaselineFile;
 use dry4rust::cli::suppression::baseline_filter::BaselineFilter;
 use dry4rust::cli::suppression::baseline_kind::BaselineKind;
 use dry4rust::config::Config;
-use std::path::PathBuf;
+use dry4rust::source_path::SourcePath;
 use tempfile::TempDir;
 
 fn recorded_in(root: &TempDir, entries: Vec<BaselineEntry>) -> Config {
     let file = BaselineFile::new(FORMAT_VERSION, entries);
-    file.save(&root.path().join("dry4rust-baseline.json"))
+    file.save(&source_path(&root.path().join("dry4rust-baseline.json")))
         .expect("the baseline is written");
     Config::default()
-        .with_root(root.path().to_path_buf())
-        .with_baseline(Some(PathBuf::from("dry4rust-baseline.json")))
+        .with_root(source_path(root.path()))
+        .with_baseline(Some(SourcePath::new(String::from(
+            "dry4rust-baseline.json",
+        ))))
 }
 
 #[test]
@@ -55,8 +58,10 @@ fn load_of_a_baseline_that_is_not_there_fails_rather_than_suppressing_nothing() 
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let config = Config::default()
-        .with_root(tmp.path().to_path_buf())
-        .with_baseline(Some(PathBuf::from("dry4rust-baseline.json")));
+        .with_root(source_path(tmp.path()))
+        .with_baseline(Some(SourcePath::new(String::from(
+            "dry4rust-baseline.json",
+        ))));
 
     // Act
     let outcome = BaselineFilter::load(&config);

@@ -3,13 +3,19 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::{Path, PathBuf};
-use walkdir::WalkDir;
+use crate::source_path::SourcePath;
+use crate::storage_failure::StorageFailure;
+use crate::traits::source_tree::SourceTree;
 
-/// Scans the filesystem for source files.
+/// Decides which source files under a root are analysed.
+///
+/// The walk itself belongs to a [`SourceTree`]; what it enters and what it
+/// keeps is decided here: never a `target/` directory, never a hidden one below
+/// the root, and only files with one of the extensions that no exclusion
+/// pattern matches.
 pub struct Scanner {
     /// Root directory to scan.
-    root: PathBuf,
+    root: SourcePath,
     /// Glob patterns to exclude (simple substring matching for now).
     exclude_patterns: Vec<String>,
     /// File extensions to include (without the leading dot). Defaults to `["rs"]`.
@@ -18,12 +24,34 @@ pub struct Scanner {
 
 impl Scanner {
     #[must_use]
-    pub fn new(root: PathBuf) -> Self {
+    pub fn new(root: SourcePath) -> Self {
         Self {
             root,
             exclude_patterns: Vec::new(),
             extensions: vec!["rs".to_string()],
         }
+    }
+
+    /// Whether a file is analysed: one of the extensions, and no exclusion
+    /// pattern in its path.
+    #[must_use]
+    pub fn admits(&self, file: &SourcePath) -> bool {
+        file.extension()
+            .is_some_and(|ext| self.extensions.iter().any(|e| e.eq_ignore_ascii_case(ext)))
+            && !Self::is_excluded(file, &self.exclude_patterns)
+    }
+
+    /// Whether the walk enters a directory. `target/` never; a hidden
+    /// directory only when it is the root itself.
+    #[must_use]
+    pub fn descends_into(&self, directory: &SourcePath) -> bool {
+        let Some(name) = directory.file_name() else {
+            return true;
+        };
+        if name == "target" {
+            return false;
+        }
+        !(name.starts_with('.') && *directory != self.root)
     }
 
     #[must_use]
@@ -33,57 +61,21 @@ impl Scanner {
 
     /// Check if a path should be excluded based on exclusion patterns.
     #[must_use]
-    pub fn is_excluded(path: &Path, patterns: &[String]) -> bool {
-        let path_str = path.to_string_lossy();
+    pub fn is_excluded(path: &SourcePath, patterns: &[String]) -> bool {
+        let path_str = path.as_str();
         patterns
             .iter()
             .any(|pattern| path_str.contains(pattern.as_str()))
     }
 
     #[must_use]
-    pub fn root(&self) -> &Path {
+    pub const fn root(&self) -> &SourcePath {
         &self.root
     }
 
-    /// Scan for source files under the given self.
-    /// Always skips `target/` directories.
-    #[must_use]
-    pub fn scan_files(&self) -> Vec<PathBuf> {
-        let mut files = Vec::new();
-
-        for entry in WalkDir::new(&self.root)
-            .into_iter()
-            .filter_entry(|e| {
-                let path = e.path();
-                // Only filter directories (not the root itself for hidden check)
-                if path.is_dir()
-                    && let Some(name) = path.file_name().and_then(|n| n.to_str())
-                {
-                    if name == "target" {
-                        return false;
-                    }
-                    // Skip hidden directories, but not the root
-                    if name.starts_with('.') && path != self.root.as_path() {
-                        return false;
-                    }
-                }
-                true
-            })
-            .flatten()
-        {
-            let path = entry.path();
-            if path.is_file()
-                && path
-                    .extension()
-                    .and_then(|ext| ext.to_str())
-                    .is_some_and(|ext| self.extensions.iter().any(|e| e.eq_ignore_ascii_case(ext)))
-                && !Self::is_excluded(path, &self.exclude_patterns)
-            {
-                files.push(path.to_path_buf());
-            }
-        }
-
-        files
+    /// The source files `tree` holds under the root that this scanner admits.
+    pub fn scan_files(&self, tree: &dyn SourceTree) -> Result<Vec<SourcePath>, StorageFailure> {
+        tree.source_files(self)
     }
 
     #[must_use]

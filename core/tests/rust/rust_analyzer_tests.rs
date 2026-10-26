@@ -6,7 +6,7 @@
 use dry4rust::analysis_config::AnalysisConfig;
 use dry4rust::analyzer::LanguageAnalyzer;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
-use std::path::PathBuf;
+use dry4rust::source_path::SourcePath;
 
 #[test]
 fn rust_analyzer_through_trait() {
@@ -28,7 +28,7 @@ fn rust_analyzer_through_trait() {
             assert_eq!(w, 2);
         }
     ";
-    let path = PathBuf::from("test.rs");
+    let path = SourcePath::new(String::from("test.rs"));
     let units = analyzer.parse_file(&path, source, &config).unwrap();
 
     // Both units should be present (filtering is done by analyze())

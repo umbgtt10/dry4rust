@@ -9,13 +9,12 @@
 //! [`crate::analyzer::LanguageAnalyzer`] trait using `syn` for AST parsing
 //! and normalization.
 
-use std::path::Path;
-
 use super::parser::parse_source;
 use crate::analysis_config::AnalysisConfig;
 use crate::analyzer::LanguageAnalyzer;
 use crate::code_unit::CodeUnit;
 use crate::error::Error;
+use crate::source_path::SourcePath;
 
 /// Rust language analyzer using syn for AST parsing.
 pub struct RustAnalyzer;
@@ -44,7 +43,7 @@ impl LanguageAnalyzer for RustAnalyzer {
 
     fn parse_file(
         &self,
-        path: &Path,
+        path: &SourcePath,
         source: &str,
         config: &AnalysisConfig,
     ) -> Result<Vec<CodeUnit>, Error> {

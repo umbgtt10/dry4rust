@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::source_path;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::ignore_command::IgnoreCommand;
 use dry4rust::cli::suppression::ignore_file::IgnoreFile;
@@ -12,17 +13,17 @@ use tempfile::TempDir;
 fn run_over_the_same_fingerprint_twice_records_it_once() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
-    IgnoreCommand::new(tmp.path(), "deadbeef12345678", None)
+    IgnoreCommand::new(&source_path(tmp.path()), "deadbeef12345678", None)
         .run()
         .expect("the first is accepted");
 
     // Act
-    IgnoreCommand::new(tmp.path(), "deadbeef12345678", None)
+    IgnoreCommand::new(&source_path(tmp.path()), "deadbeef12345678", None)
         .run()
         .expect("the second is accepted");
 
     // Assert
-    assert_eq!(IgnoreFile::load(tmp.path()).ignore().len(), 1);
+    assert_eq!(IgnoreFile::load(&source_path(tmp.path())).ignore().len(), 1);
 }
 
 #[test]
@@ -32,7 +33,7 @@ fn run_records_the_fingerprint_with_the_reason_it_was_given() {
 
     // Act
     IgnoreCommand::new(
-        tmp.path(),
+        &source_path(tmp.path()),
         "deadbeef12345678",
         Some("trait impls are meant to look alike"),
     )
@@ -40,7 +41,7 @@ fn run_records_the_fingerprint_with_the_reason_it_was_given() {
     .expect("a valid fingerprint is accepted");
 
     // Assert
-    let ignore_file = IgnoreFile::load(tmp.path());
+    let ignore_file = IgnoreFile::load(&source_path(tmp.path()));
     assert_eq!(ignore_file.ignore().len(), 1);
     assert_eq!(ignore_file.ignore()[0].fingerprint, "deadbeef12345678");
     assert_eq!(
@@ -55,7 +56,7 @@ fn run_with_a_malformed_fingerprint_is_rejected() {
     let tmp = TempDir::new().expect("temp dir");
 
     // Act
-    let outcome = IgnoreCommand::new(tmp.path(), "not-a-fingerprint", None).run();
+    let outcome = IgnoreCommand::new(&source_path(tmp.path()), "not-a-fingerprint", None).run();
 
     // Assert
     assert!(matches!(outcome, Err(CliError::InvalidFingerprint(_))));

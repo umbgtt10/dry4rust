@@ -7,13 +7,13 @@
 // reader of a warning or a terminal needs.
 
 use dry4rust::error::Error;
-use std::path::PathBuf;
+use dry4rust::source_path::SourcePath;
 
 #[test]
 fn to_string_of_a_parse_failure_names_the_file_and_why() {
     // Arrange
     let failure = Error::Parse {
-        path: PathBuf::from("src/a.rs"),
+        path: SourcePath::new(String::from("src/a.rs")),
         reason: String::from("expected `;`"),
     };
 
@@ -28,7 +28,7 @@ fn to_string_of_a_parse_failure_names_the_file_and_why() {
 fn to_string_of_a_read_failure_names_the_file_and_why() {
     // Arrange
     let failure = Error::Read {
-        path: PathBuf::from("src/a.rs"),
+        path: SourcePath::new(String::from("src/a.rs")),
         reason: String::from("denied"),
     };
 

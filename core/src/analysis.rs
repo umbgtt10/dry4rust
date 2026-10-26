@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::HashSet;
-use std::path::PathBuf;
 
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::suppression::baseline_filter::BaselineFilter;
@@ -18,8 +17,9 @@ use crate::error::Result;
 use crate::fingerprint::Fingerprint;
 use crate::node::node_kind::NodeKind;
 use crate::node::normalized_node::NormalizedNode;
+use crate::source_path::SourcePath;
 use crate::sub_unit::SubUnit;
-use std::fs;
+use crate::traits::source_tree::SourceTree;
 
 /// The result of a full analysis run.
 pub struct Analysis {
@@ -35,41 +35,6 @@ pub struct Analysis {
 }
 
 impl Analysis {
-    /// Run the full analysis pipeline using a language analyzer.
-    ///
-    /// Reads each file, parses it via the analyzer, optionally filters test code,
-    /// then delegates to [`analyze_units`] for grouping, similarity, and stats.
-    pub fn analyze(
-        analyzer: &dyn LanguageAnalyzer,
-        files: &[PathBuf],
-        config: &Config,
-    ) -> Result<Self> {
-        let analysis_config = config.analysis_config();
-        let mut units = Vec::new();
-        let mut warnings = Vec::new();
-
-        for path in files {
-            let source = match fs::read_to_string(path) {
-                Ok(s) => s,
-                Err(e) => {
-                    warnings.push(format!("Failed to read {}: {}", path.display(), e));
-                    continue;
-                }
-            };
-            match analyzer.parse_file(path, &source, &analysis_config) {
-                Ok(mut file_units) => {
-                    if config.exclude_tests() {
-                        file_units.retain(|u| !analyzer.is_test_code(u));
-                    }
-                    units.extend(file_units);
-                }
-                Err(e) => warnings.push(e.to_string()),
-            }
-        }
-
-        Self::analyze_units(&units, warnings, config)
-    }
-
     /// Run the analysis pipeline on pre-parsed code units.
     ///
     /// The caller is responsible for scanning files and parsing them into `CodeUnit`s.
@@ -177,6 +142,43 @@ impl Analysis {
             warnings,
             all_fingerprints,
         })
+    }
+
+    /// Run the full analysis pipeline using a language analyzer.
+    ///
+    /// Reads each file from `sources`, parses it via the analyzer, optionally
+    /// filters test code, then delegates to [`Self::analyze_units`] for
+    /// grouping, similarity, and stats.
+    pub fn analyze(
+        analyzer: &dyn LanguageAnalyzer,
+        sources: &dyn SourceTree,
+        files: &[SourcePath],
+        config: &Config,
+    ) -> Result<Self> {
+        let analysis_config = config.analysis_config();
+        let mut units = Vec::new();
+        let mut warnings = Vec::new();
+
+        for path in files {
+            let source = match sources.read_source(path) {
+                Ok(s) => s,
+                Err(e) => {
+                    warnings.push(format!("Failed to read {path}: {e}"));
+                    continue;
+                }
+            };
+            match analyzer.parse_file(path, &source, &analysis_config) {
+                Ok(mut file_units) => {
+                    if config.exclude_tests() {
+                        file_units.retain(|u| !analyzer.is_test_code(u));
+                    }
+                    units.extend(file_units);
+                }
+                Err(e) => warnings.push(e.to_string()),
+            }
+        }
+
+        Self::analyze_units(&units, warnings, config)
     }
 
     #[must_use]

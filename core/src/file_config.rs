@@ -3,12 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::PathBuf;
-
 use serde::Deserialize;
 
 use crate::config::Config;
 use crate::error::Result;
+use crate::source_path::SourcePath;
 use crate::threshold::Threshold;
 
 /// Configuration as `dry4rust.toml` and `[package.metadata.dry4rust]` spell it.
@@ -31,7 +30,7 @@ pub struct FileConfig {
     exclude_tests: Option<bool>,
     sub_function: Option<bool>,
     min_sub_nodes: Option<usize>,
-    baseline: Option<PathBuf>,
+    baseline: Option<String>,
 }
 
 impl FileConfig {
@@ -79,7 +78,7 @@ impl FileConfig {
             config = config.with_min_sub_nodes(v);
         }
         if let Some(ref v) = self.baseline {
-            config = config.with_baseline(Some(v.clone()));
+            config = config.with_baseline(Some(SourcePath::new(v.clone())));
         }
         Ok(config)
     }

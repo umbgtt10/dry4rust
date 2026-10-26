@@ -14,9 +14,12 @@ use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 
 use crate::invocation::args::Args;
+use crate::system::portable_path::PortablePath;
+use crate::system::walkdir_source_tree::WalkdirSourceTree;
 
 /// The composition root: the command line in, the report out on stdout and
-/// the errors on stderr, an exit code back.
+/// the errors on stderr, an exit code back. The one place the file system is
+/// chosen; what it composes is the core's, tested without it.
 pub struct EntryPoint;
 
 impl EntryPoint {
@@ -34,10 +37,16 @@ impl EntryPoint {
 
     fn execute(args: &Args) -> ExitCode {
         let analyzer = RustAnalyzer::new();
-        let root = args.root();
+        let root = PortablePath::lossy(&args.root());
         let reporter = args.format().reporter(Some(&root));
-        let dispatcher =
-            CommandDispatcher::new(&analyzer, &root, reporter.as_ref(), args.overrides());
+        let sources = WalkdirSourceTree::new();
+        let dispatcher = CommandDispatcher::new(
+            &analyzer,
+            &root,
+            reporter.as_ref(),
+            args.overrides(),
+            &sources,
+        );
         match dispatcher.dispatch(&args.command()) {
             Ok(outcome) => {
                 let stdout = io::stdout();

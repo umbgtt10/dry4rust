@@ -3,18 +3,17 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::PathBuf;
-
 use crate::code_unit_kind::CodeUnitKind;
 use crate::fingerprint::Fingerprint;
 use crate::node::normalized_node::NormalizedNode;
+use crate::source_path::SourcePath;
 
 /// A unit of code extracted and normalized for duplication analysis.
 #[derive(Debug, Clone, Default)]
 pub struct CodeUnit {
     pub kind: CodeUnitKind,
     pub name: String,
-    pub file: PathBuf,
+    pub file: SourcePath,
     pub line_start: usize,
     pub line_end: usize,
     pub signature: NormalizedNode,

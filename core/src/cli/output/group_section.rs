@@ -4,11 +4,11 @@
 // SPDX-License-Identifier: MIT
 
 use std::fmt::Write as _;
-use std::path::Path;
 
 use crate::cli::output::display_path::DisplayPath;
 use crate::code_unit::CodeUnit;
 use crate::duplicate_group::DuplicateGroup;
+use crate::source_path::SourcePath;
 
 /// One headed section of a text report, and how the groups under it read.
 ///
@@ -72,7 +72,7 @@ impl GroupSection {
 
     /// Build the section under its heading, or its empty message, or nothing.
     #[must_use]
-    pub fn write(&self, groups: &[DuplicateGroup], base: Option<&Path>) -> String {
+    pub fn write(&self, groups: &[DuplicateGroup], base: Option<&SourcePath>) -> String {
         if groups.is_empty() {
             return self.write_empty();
         }
@@ -99,7 +99,7 @@ impl GroupSection {
         }
     }
 
-    fn member_line(&self, member: &CodeUnit, base: Option<&Path>) -> String {
+    fn member_line(&self, member: &CodeUnit, base: Option<&SourcePath>) -> String {
         format!(
             "  - {} ({}){} at {}:{}-{}",
             member.name,
@@ -129,7 +129,12 @@ impl GroupSection {
         }
     }
 
-    fn write_group(&self, number: usize, group: &DuplicateGroup, base: Option<&Path>) -> String {
+    fn write_group(
+        &self,
+        number: usize,
+        group: &DuplicateGroup,
+        base: Option<&SourcePath>,
+    ) -> String {
         let mut out = String::new();
         let _ = writeln!(out, "{}", self.heading(number, group));
         for member in group.members() {

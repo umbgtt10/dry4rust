@@ -8,9 +8,9 @@ use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::suppression::baseline_file::BaselineFile;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
+use dry4rust::source_path::SourcePath;
+use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
 use std::fs;
-use std::path::Path;
-use std::path::PathBuf;
 use tempfile::TempDir;
 use validation::fixture::Fixture;
 use validation::pipeline_scenario::PipelineScenario;
@@ -55,19 +55,31 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     .expect("copy the fixture");
     let judged = PipelineScenario::produced(tmp.path(), &CliOverrides::default());
     BaselineFile::record(judged.result())
-        .save(&tmp.path().join("dry4rust-baseline.json"))
+        .save(&Fixture::root_of(
+            &tmp.path().join("dry4rust-baseline.json"),
+        ))
         .expect("the baseline is written");
-    let overrides =
-        CliOverrides::default().with_baseline(Some(PathBuf::from("dry4rust-baseline.json")));
+    let overrides = CliOverrides::default().with_baseline(Some(SourcePath::new(String::from(
+        "dry4rust-baseline.json",
+    ))));
 
     // Act
-    let recording =
-        AnalysisOutput::produce_ignoring_baseline(&RustAnalyzer::new(), tmp.path(), &overrides)
-            .expect("the fixture analyses cleanly");
+    let recording = AnalysisOutput::produce_ignoring_baseline(
+        &RustAnalyzer::new(),
+        &WalkdirSourceTree,
+        &Fixture::root_of(tmp.path()),
+        &overrides,
+    )
+    .expect("the fixture analyses cleanly");
 
     // Assert
-    let judging = AnalysisOutput::produce(&RustAnalyzer::new(), tmp.path(), &overrides)
-        .expect("the fixture analyses cleanly");
+    let judging = AnalysisOutput::produce(
+        &RustAnalyzer::new(),
+        &WalkdirSourceTree,
+        &Fixture::root_of(tmp.path()),
+        &overrides,
+    )
+    .expect("the fixture analyses cleanly");
     assert_eq!(
         judging.result().exact_groups().len(),
         0,
@@ -80,7 +92,7 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     );
     assert_eq!(
         recording.config().baseline(),
-        Some(Path::new("dry4rust-baseline.json")),
+        Some(&SourcePath::new(String::from("dry4rust-baseline.json"))),
         "and the path survives, because that is where the recording is written"
     );
 }

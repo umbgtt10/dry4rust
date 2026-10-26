@@ -6,9 +6,9 @@
 use std::error::Error;
 use std::fmt;
 use std::io;
-use std::path::PathBuf;
 
 use crate::error::Error as AnalysisError;
+use crate::source_path::SourcePath;
 
 /// Errors returned by CLI command functions.
 #[derive(Debug)]
@@ -16,7 +16,7 @@ pub enum CliError {
     /// An I/O error (exit code 2).
     Io(io::Error),
     /// No source files found (exit code 2).
-    NoSourceFiles(PathBuf),
+    NoSourceFiles(SourcePath),
     /// No recognized source files for language auto-detection (exit code 2).
     NoRecognizedFiles,
     /// Multiple languages detected — user must specify `--language` (exit code 2).
@@ -53,7 +53,7 @@ impl fmt::Display for CliError {
         match self {
             Self::Io(e) => write!(f, "{e}"),
             Self::NoSourceFiles(path) => {
-                write!(f, "No source files found in {}", path.display())
+                write!(f, "No source files found in {path}")
             }
             Self::NoRecognizedFiles => {
                 write!(

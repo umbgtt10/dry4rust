@@ -3,11 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use crate::analysis_config::AnalysisConfig;
 use crate::code_unit::CodeUnit;
 use crate::error::Error;
+use crate::source_path::SourcePath;
 
 /// Trait for language-specific code analysis.
 ///
@@ -30,7 +29,7 @@ pub trait LanguageAnalyzer: Send + Sync {
     /// filtering it out; the caller handles exclusion.
     fn parse_file(
         &self,
-        path: &Path,
+        path: &SourcePath,
         source: &str,
         config: &AnalysisConfig,
     ) -> Result<Vec<CodeUnit>, Error>;

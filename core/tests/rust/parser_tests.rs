@@ -3,19 +3,20 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::support::in_memory_source_tree::InMemorySourceTree;
 use dry4rust::error::Error;
 use dry4rust::rust::parser::*;
-use std::fs;
-use std::path::Path;
+use dry4rust::source_path::SourcePath;
 use syn::File;
 use syn::parse_str;
-use tempfile::TempDir;
+
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(String::from(text))
+}
 
 fn write_and_parse(code: &str, min_nodes: usize) -> Vec<CodeUnit> {
-    let tmp = TempDir::new().unwrap();
-    let file = tmp.path().join("test.rs");
-    fs::write(&file, code).unwrap();
-    parse_file(&file, min_nodes, 0).unwrap()
+    let tree = InMemorySourceTree::new().with_file("/p/test.rs", code);
+    parse_file(&tree, &path("/p/test.rs"), min_nodes, 0).unwrap()
 }
 
 #[test]
@@ -257,10 +258,8 @@ fn extracts_trait_impl_methods() {
 #[test]
 fn handles_parse_errors_gracefully() {
     // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    let file = tmp.path().join("broken.rs");
-    fs::write(&file, "fn broken( { }").unwrap();
-    let result = parse_file(&file, 1, 0);
+    let tree = InMemorySourceTree::new().with_file("/p/broken.rs", "fn broken( { }");
+    let result = parse_file(&tree, &path("/p/broken.rs"), 1, 0);
 
     // Assert
 
@@ -283,19 +282,18 @@ let d = c + 4;
 a + b + c + d
 }
     ";
-    let tmp = TempDir::new().unwrap();
-    let file = tmp.path().join("test.rs");
-    fs::write(&file, code).unwrap();
+    let tree = InMemorySourceTree::new().with_file("/p/test.rs", code);
+    let file = path("/p/test.rs");
 
     // With min_line_count=0, both functions should appear
-    let units_all = parse_file(&file, 1, 0).unwrap();
+    let units_all = parse_file(&tree, &file, 1, 0).unwrap();
 
     // Assert
 
     assert!(units_all.len() >= 2);
 
     // With min_line_count=5, only the longer function should pass
-    let units_filtered = parse_file(&file, 1, 5).unwrap();
+    let units_filtered = parse_file(&tree, &file, 1, 5).unwrap();
     assert!(units_filtered.len() < units_all.len());
     for unit in &units_filtered {
         let lines = unit.line_end.saturating_sub(unit.line_start) + 1;
@@ -331,10 +329,10 @@ fn non_test_code_not_tagged() {
 #[test]
 fn parse_file_of_a_missing_file_is_a_read_failure() {
     // Arrange
-    let tmp = TempDir::new().unwrap();
+    let tree = InMemorySourceTree::new();
 
     // Act
-    let result = parse_file(&tmp.path().join("missing.rs"), 1, 0);
+    let result = parse_file(&tree, &path("/p/missing.rs"), 1, 0);
 
     // Assert
     assert!(matches!(result, Err(Error::Read { .. })), "{result:?}");
@@ -343,12 +341,10 @@ fn parse_file_of_a_missing_file_is_a_read_failure() {
 #[test]
 fn parse_files_collects_warnings() {
     // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    let good = tmp.path().join("good.rs");
-    let bad = tmp.path().join("bad.rs");
-    fs::write(&good, "fn good() { let x = 1; }").unwrap();
-    fs::write(&bad, "fn bad( {").unwrap();
-    let (units, warnings) = parse_files(&[good, bad], 1, 0);
+    let tree = InMemorySourceTree::new()
+        .with_file("/p/good.rs", "fn good() { let x = 1; }")
+        .with_file("/p/bad.rs", "fn bad( {");
+    let (units, warnings) = parse_files(&tree, &[path("/p/good.rs"), path("/p/bad.rs")], 1, 0);
 
     // Assert
 
@@ -384,9 +380,9 @@ fn parse_source_extracts_closures_as_their_own_units() {
 #[test]
 fn parse_source_works() {
     // Arrange & Act
-    let path = Path::new("test.rs");
+    let file = path("test.rs");
     let source = "fn foo(x: i32) -> i32 { x + 1 }";
-    let units = parse_source(path, source, 1, 0).unwrap();
+    let units = parse_source(&file, source, 1, 0).unwrap();
 
     // Assert
 
