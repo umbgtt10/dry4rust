@@ -3,6 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::string::ToString;
+
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::analysis_output::AnalysisOutput;
 use crate::cli::baseline_command::BaselineCommand;

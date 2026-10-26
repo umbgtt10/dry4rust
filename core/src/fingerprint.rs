@@ -3,9 +3,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::fmt;
+
 use crate::node::node_encoder::NodeEncoder;
 use crate::stable_hasher::StableHasher;
-use std::fmt;
 
 use crate::node::normalized_node::NormalizedNode;
 

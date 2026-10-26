@@ -3,6 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::duplicate_group::DuplicateGroup;
 

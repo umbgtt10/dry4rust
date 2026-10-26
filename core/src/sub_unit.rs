@@ -3,6 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::code_unit_kind::CodeUnitKind;
 use crate::node::normalized_node::NormalizedNode;
 use crate::sub_unit_extractor::SubUnitExtractor;

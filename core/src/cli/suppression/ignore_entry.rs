@@ -3,6 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 /// One duplicate somebody decided should stay.
 ///
 /// The counterpart of [`crate::cli::suppression::baseline_entry::BaselineEntry`],

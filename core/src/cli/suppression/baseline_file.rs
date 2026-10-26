@@ -3,6 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use crate::analysis::Analysis;
 use crate::cli::suppression::baseline_constants::DEFAULT_BASELINE_FILE;
 use crate::cli::suppression::baseline_constants::FORMAT_VERSION;

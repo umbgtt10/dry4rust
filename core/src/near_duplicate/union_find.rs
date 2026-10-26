@@ -3,7 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
+use alloc::collections::BTreeMap;
+use alloc::vec;
+use alloc::vec::Vec;
 
 /// Disjoint-set forest over `0..size`, with path compression.
 ///
@@ -37,7 +39,7 @@ impl UnionFind {
     /// ascending, so the same input always yields the same output -- which
     /// a `HashMap` keyed by root would not have given.
     pub fn groups(&mut self) -> Vec<Vec<usize>> {
-        let mut position_of_root: HashMap<usize, usize> = HashMap::new();
+        let mut position_of_root: BTreeMap<usize, usize> = BTreeMap::new();
         let mut groups: Vec<Vec<usize>> = Vec::new();
         for i in 0..self.len() {
             let root = self.find(i);

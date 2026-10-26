@@ -16,7 +16,7 @@ use dry4rust_cli::system::json_baseline_store::JsonBaselineStore;
 use dry4rust_cli::system::toml_config_source::TomlConfigSource;
 use dry4rust_cli::system::toml_ignore_store::TomlIgnoreStore;
 use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::path::Path;
 
 /// The adapters `EntryPoint` composes, for tests that run the core against the
@@ -73,7 +73,7 @@ pub fn result_with(
         sub_exact,
         sub_near,
         Vec::new(),
-        HashSet::new(),
+        BTreeSet::new(),
     )
 }
 

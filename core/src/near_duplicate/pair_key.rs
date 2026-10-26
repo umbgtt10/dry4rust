@@ -9,7 +9,7 @@
 /// Similarity is symmetric, so a lookup keyed on the raw pair would miss half
 /// the time. Ordering the key removes the question, and naming its ends says
 /// which index is which.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct PairKey {
     low: usize,
     high: usize,

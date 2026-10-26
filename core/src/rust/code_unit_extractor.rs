@@ -3,6 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use crate::rust::normalizer::normalization_context::NormalizationContext;
 
 use syn::spanned::Spanned;

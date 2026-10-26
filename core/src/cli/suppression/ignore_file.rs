@@ -3,7 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashSet;
+use alloc::collections::BTreeSet;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 use crate::cli::suppression::ignore_entry::IgnoreEntry;
 use crate::duplicate_group::DuplicateGroup;
@@ -105,7 +107,7 @@ impl IgnoreFile {
     /// An entry whose fingerprint is not valid hex is always stale: nothing
     /// this tool produces could match it.
     #[must_use]
-    pub fn stale(&self, live: &HashSet<Fingerprint>) -> Vec<&IgnoreEntry> {
+    pub fn stale(&self, live: &BTreeSet<Fingerprint>) -> Vec<&IgnoreEntry> {
         self.ignore
             .iter()
             .filter(|entry| !Self::is_live(entry, live))
@@ -146,7 +148,7 @@ impl IgnoreFile {
 
     /// The same file with the stale entries taken out, and those entries.
     #[must_use]
-    pub fn without_stale(self, live: &HashSet<Fingerprint>) -> (Self, Vec<IgnoreEntry>) {
+    pub fn without_stale(self, live: &BTreeSet<Fingerprint>) -> (Self, Vec<IgnoreEntry>) {
         let (kept, stale) = self
             .ignore
             .into_iter()
@@ -154,7 +156,7 @@ impl IgnoreFile {
         (Self { ignore: kept }, stale)
     }
 
-    fn is_live(entry: &IgnoreEntry, live: &HashSet<Fingerprint>) -> bool {
+    fn is_live(entry: &IgnoreEntry, live: &BTreeSet<Fingerprint>) -> bool {
         Fingerprint::from_hex(&entry.fingerprint).is_some_and(|fp| live.contains(&fp))
     }
 }

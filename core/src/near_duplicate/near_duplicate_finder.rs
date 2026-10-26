@@ -3,8 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
-use std::collections::HashSet;
+use alloc::collections::BTreeMap;
+use alloc::collections::BTreeSet;
+use alloc::vec::Vec;
+use core::cmp::Ordering;
 
 use crate::code_unit::CodeUnit;
 use crate::duplicate_group::DuplicateGroup;
@@ -13,7 +15,6 @@ use crate::near_duplicate::pair_key::PairKey;
 use crate::near_duplicate::pair_scanner::PairScanner;
 use crate::near_duplicate::similarity_pair::SimilarityPair;
 use crate::near_duplicate::union_find::UnionFind;
-use std::cmp::Ordering;
 
 /// Finds groups of units that are similar without being identical.
 ///
@@ -25,7 +26,7 @@ pub struct NearDuplicateFinder {
     threshold: f64,
 }
 
-type Scores = HashMap<PairKey, f64>;
+type Scores = BTreeMap<PairKey, f64>;
 
 impl NearDuplicateFinder {
     #[must_use]
@@ -56,7 +57,7 @@ impl NearDuplicateFinder {
         pairs: &[SimilarityPair],
     ) -> Vec<DuplicateGroup> {
         let mut forest = UnionFind::new(candidates.len());
-        let mut scores: Scores = HashMap::new();
+        let mut scores: Scores = BTreeMap::new();
         for pair in pairs {
             forest.union(pair.left(), pair.right());
             scores.insert(pair.key(), pair.score());
@@ -74,7 +75,7 @@ impl NearDuplicateFinder {
         units: &'a [CodeUnit],
         exact_fingerprints: &[Fingerprint],
     ) -> Vec<&'a CodeUnit> {
-        let exact: HashSet<Fingerprint> = exact_fingerprints.iter().copied().collect();
+        let exact: BTreeSet<Fingerprint> = exact_fingerprints.iter().copied().collect();
         units
             .iter()
             .filter(|unit| !exact.contains(&unit.fingerprint))

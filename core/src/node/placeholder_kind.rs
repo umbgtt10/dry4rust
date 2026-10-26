@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 /// Kinds of placeholders — what the original identifier referred to.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum PlaceholderKind {
     Variable,
     Function,

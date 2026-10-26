@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 use crate::node::bin_op_kind::BinOpKind;
 use crate::node::literal_kind::LiteralKind;
 use crate::node::placeholder_kind::PlaceholderKind;

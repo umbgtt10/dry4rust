@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec::Vec;
+
 use crate::analysis::Analysis;
 use crate::cli::checking::ceiling::Ceiling;
 use crate::cli::checking::check_thresholds::CheckThresholds;

@@ -3,6 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::scanner::Scanner;
 use crate::source_path::SourcePath;
 use crate::storage_failure::StorageFailure;

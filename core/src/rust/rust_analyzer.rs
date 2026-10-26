@@ -9,6 +9,8 @@
 //! [`crate::analyzer::LanguageAnalyzer`] trait using `syn` for AST parsing
 //! and normalization.
 
+use alloc::vec::Vec;
+
 use super::parser::parse_source;
 use crate::analysis_config::AnalysisConfig;
 use crate::analyzer::LanguageAnalyzer;

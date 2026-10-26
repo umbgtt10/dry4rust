@@ -10,7 +10,11 @@ use crate::node::normalized_node::NormalizedNode;
 use crate::node::placeholder_kind::PlaceholderKind;
 use crate::node::un_op_kind::UnOpKind;
 use crate::rust::normalizer::normalized_fn::NormalizedFn;
-use std::collections::HashMap;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 use syn::BinOp;
 use syn::Block;
 use syn::Expr;
@@ -31,17 +35,17 @@ use syn::punctuated::Punctuated;
 /// Tracks identifier-to-placeholder mappings during normalization.
 pub struct NormalizationContext {
     /// Maps (identifier_string, kind) -> placeholder index
-    mappings: HashMap<(String, PlaceholderKind), usize>,
+    mappings: BTreeMap<(String, PlaceholderKind), usize>,
     /// Per-kind counters
-    counters: HashMap<PlaceholderKind, usize>,
+    counters: BTreeMap<PlaceholderKind, usize>,
 }
 
 impl NormalizationContext {
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
-            mappings: HashMap::new(),
-            counters: HashMap::new(),
+            mappings: BTreeMap::new(),
+            counters: BTreeMap::new(),
         }
     }
 

@@ -3,6 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use crate::code_unit_kind::CodeUnitKind;
 use crate::node::node_kind::NodeKind;
 use crate::node::normalized_node::NormalizedNode;

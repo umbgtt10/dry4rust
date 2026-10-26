@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::ToString;
+
 use crate::error::Error;
 use crate::error::Result;
 

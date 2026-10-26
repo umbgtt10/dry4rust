@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 use crate::code_unit_kind::CodeUnitKind;
 use crate::fingerprint::Fingerprint;
 use crate::node::normalized_node::NormalizedNode;

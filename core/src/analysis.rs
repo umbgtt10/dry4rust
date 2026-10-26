@@ -3,7 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashSet;
+use alloc::collections::BTreeSet;
+use alloc::format;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::suppression::baseline_filter::BaselineFilter;
@@ -30,7 +34,7 @@ pub struct Analysis {
     warnings: Vec<String>,
     /// All group fingerprints (exact + near) before ignore filtering.
     /// Used by the cleanup command to identify stale ignore entries.
-    all_fingerprints: HashSet<Fingerprint>,
+    all_fingerprints: BTreeSet<Fingerprint>,
 }
 
 impl Analysis {
@@ -100,7 +104,7 @@ impl Analysis {
         };
 
         // 4. Collect all fingerprints before filtering (for cleanup staleness check)
-        let all_fingerprints: HashSet<Fingerprint> = exact_groups
+        let all_fingerprints: BTreeSet<Fingerprint> = exact_groups
             .iter()
             .chain(near_groups.iter())
             .chain(sub_exact_groups.iter())
@@ -193,7 +197,7 @@ impl Analysis {
         sub_exact_groups: Vec<DuplicateGroup>,
         sub_near_groups: Vec<DuplicateGroup>,
         warnings: Vec<String>,
-        all_fingerprints: HashSet<Fingerprint>,
+        all_fingerprints: BTreeSet<Fingerprint>,
     ) -> Self {
         Self {
             stats,
@@ -207,7 +211,7 @@ impl Analysis {
     }
 
     #[must_use]
-    pub const fn all_fingerprints(&self) -> &HashSet<Fingerprint> {
+    pub const fn all_fingerprints(&self) -> &BTreeSet<Fingerprint> {
         &self.all_fingerprints
     }
 

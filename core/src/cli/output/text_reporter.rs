@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::string::ToString;
 use core::fmt::Write as _;
 
 use crate::cli::output::check_breach::CheckBreach;

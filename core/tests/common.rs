@@ -11,7 +11,7 @@ use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::source_path::SourcePath;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 /// A duplicate group with a stated fingerprint and members, for tests that
 /// care about grouping rather than about the code behind it.
@@ -55,6 +55,6 @@ pub fn result_with(
         sub_exact,
         sub_near,
         Vec::new(),
-        HashSet::new(),
+        BTreeSet::new(),
     )
 }

@@ -3,7 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashSet;
+use alloc::collections::BTreeSet;
+use alloc::vec::Vec;
 
 use crate::node::node_kind::NodeKind;
 use crate::node::normalized_node::NormalizedNode;
@@ -13,15 +14,15 @@ use crate::node::placeholder_kind::PlaceholderKind;
 /// deduplicating by (kind, old index) so a placeholder is recorded once.
 pub struct PlaceholderOrderCollector {
     order: Vec<(PlaceholderKind, usize)>,
-    seen: HashSet<(PlaceholderKind, usize)>,
+    seen: BTreeSet<(PlaceholderKind, usize)>,
 }
 
 impl PlaceholderOrderCollector {
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             order: Vec::new(),
-            seen: HashSet::new(),
+            seen: BTreeSet::new(),
         }
     }
 

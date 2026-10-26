@@ -3,6 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+
 use crate::threshold::Threshold;
 
 /// One limit `check` measures a result against, and the sentence it produces

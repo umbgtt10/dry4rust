@@ -3,7 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fmt::Write as _;
+use alloc::format;
+use alloc::string::String;
+use core::fmt::Write as _;
 
 use crate::cli::output::display_path::DisplayPath;
 use crate::code_unit::CodeUnit;

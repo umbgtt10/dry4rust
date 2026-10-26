@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
 use core::fmt::Write as _;
 
 use crate::analysis::Analysis;

@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 use crate::cli::output::check_breach::CheckBreach;
 use crate::cli::output::render_failure::RenderFailure;
 use crate::cli::output::report::Report;

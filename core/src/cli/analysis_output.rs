@@ -3,6 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::ToString;
+use alloc::vec::Vec;
+
 use crate::analysis::Analysis;
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::cli_error::CliError;

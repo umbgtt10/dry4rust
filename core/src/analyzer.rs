@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec::Vec;
+
 use crate::analysis_config::AnalysisConfig;
 use crate::code_unit::CodeUnit;
 use crate::error::Error;

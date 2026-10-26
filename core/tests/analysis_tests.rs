@@ -24,7 +24,7 @@ use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::source_path::SourcePath;
 use dry4rust::sub_unit::SubUnit;
 use parser::parse_source;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use syn::Expr;
 use syn::ItemFn;
 use syn::parse_str;
@@ -708,7 +708,7 @@ fn new_keeps_the_groups_the_warnings_and_every_fingerprint() {
         vec![],
         vec![],
         vec![String::from("could not parse src/broken.rs")],
-        HashSet::from([fingerprint]),
+        BTreeSet::from([fingerprint]),
     );
 
     // Assert

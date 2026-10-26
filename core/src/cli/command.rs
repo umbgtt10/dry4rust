@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 /// What the command line asked for, once parsed.
 ///
 /// The core's own enum: the command line that spells it lives in the cli crate,

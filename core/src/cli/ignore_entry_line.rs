@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fmt;
+use core::fmt;
 
 use crate::cli::suppression::ignore_entry::IgnoreEntry;
 

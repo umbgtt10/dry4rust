@@ -3,6 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::vec::Vec;
+
 use crate::cli::suppression::baseline_file::BaselineFile;
 use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::config::Config;

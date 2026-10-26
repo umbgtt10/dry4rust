@@ -22,6 +22,8 @@ path = "tests/all_tests.rs"
 name = "dry4rust"
 path = "src/lib.rs"
 
+# The technology-free analysis: no file system, process, clap, serde or
+# walkdir.
 [dependencies]
 proc-macro2 = { workspace = true }
 syn = { workspace = true }

@@ -3,7 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
+use alloc::collections::BTreeMap;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use crate::node::node_kind::NodeKind;
 use crate::node::placeholder_kind::PlaceholderKind;
@@ -70,8 +72,8 @@ impl NormalizedNode {
         let order = collector.into_order();
 
         // Build mapping: (kind, old_index) -> new sequential index per kind
-        let mut counters: HashMap<PlaceholderKind, usize> = HashMap::new();
-        let mut mapping: HashMap<(PlaceholderKind, usize), usize> = HashMap::new();
+        let mut counters: BTreeMap<PlaceholderKind, usize> = BTreeMap::new();
+        let mut mapping: BTreeMap<(PlaceholderKind, usize), usize> = BTreeMap::new();
         for (kind, old_idx) in order {
             let counter = counters.entry(kind).or_insert(0);
             mapping.insert((kind, old_idx), *counter);
@@ -82,7 +84,7 @@ impl NormalizedNode {
     }
 
     /// Applies the reindex mapping to a node, returning a new node with remapped indices.
-    fn apply_reindex(node: &Self, mapping: &HashMap<(PlaceholderKind, usize), usize>) -> Self {
+    fn apply_reindex(node: &Self, mapping: &BTreeMap<(PlaceholderKind, usize), usize>) -> Self {
         let kind = match &node.kind {
             NodeKind::Placeholder(kind, idx) => {
                 let new_idx = mapping.get(&(*kind, *idx)).copied().unwrap_or(*idx);

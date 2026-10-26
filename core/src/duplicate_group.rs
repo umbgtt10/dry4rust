@@ -3,7 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
+use alloc::collections::BTreeMap;
+use alloc::vec::Vec;
 
 use crate::code_unit::CodeUnit;
 use crate::duplication_stats::DuplicationStats;
@@ -26,7 +27,7 @@ impl DuplicateGroup {
     /// Group code units by exact fingerprint match.
     #[must_use]
     pub fn group_exact_duplicates(units: &[CodeUnit]) -> Vec<Self> {
-        let mut groups: HashMap<Fingerprint, Vec<CodeUnit>> = HashMap::new();
+        let mut groups: BTreeMap<Fingerprint, Vec<CodeUnit>> = BTreeMap::new();
 
         for unit in units {
             groups

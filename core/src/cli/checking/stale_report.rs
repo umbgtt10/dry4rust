@@ -3,6 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::cli::suppression::ignore_entry::IgnoreEntry;
 
 /// What `cleanup` found, and the words it uses to say so.

@@ -201,6 +201,14 @@ where a run is composed rather than by the analysis.
   warnings before the error exactly as before. `CodeUnitKind` and
   `DuplicationStats` no longer derive `Serialize`. Core no longer depends on
   serde or serde_json.
+- **The library is `no_std`.** `dry4rust` builds against `core` and `alloc`
+  only, and forbids `unsafe` at its crate root; it depends on proc-macro2, syn
+  and thiserror, the last without its `std` feature. The collections are
+  ordered ones: `Analysis::all_fingerprints` and the `live` sets that
+  `IgnoreFile::{stale, without_stale}` take are `BTreeSet`s, as is the last
+  argument of `Analysis::new`, and `PairKey` and `PlaceholderKind` derive
+  `PartialOrd` and `Ord`. `error::Error` has no `Io` variant: nothing in the
+  core reads or writes, and nothing built one.
 
 ## [0.4.0] - 2026-10-10
 

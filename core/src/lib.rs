@@ -3,7 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+#![no_std]
 #![forbid(unsafe_code)]
+
+extern crate alloc;
 
 pub mod analysis;
 pub mod analysis_config;

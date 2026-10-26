@@ -12,7 +12,7 @@ use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::source_path::SourcePath;
 use dry4rust::storage_failure::StorageFailure;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::iter::once;
 
 const fn group_of(fingerprint: Fingerprint, similarity: f64) -> DuplicateGroup {
@@ -221,7 +221,7 @@ fn stale_separates_the_entries_that_no_longer_match_anything() {
         (live_fp, Some("live")),
         (other_fingerprint(), Some("stale")),
     ]);
-    let live: HashSet<Fingerprint> = once(live_fp).collect();
+    let live: BTreeSet<Fingerprint> = once(live_fp).collect();
 
     // Act
     let stale = ignore.stale(&live);
@@ -278,7 +278,7 @@ fn without_stale_keeps_the_live_entries_and_hands_back_the_rest() {
         (live_fp, Some("live")),
         (other_fingerprint(), Some("stale")),
     ]);
-    let live: HashSet<Fingerprint> = once(live_fp).collect();
+    let live: BTreeSet<Fingerprint> = once(live_fp).collect();
 
     // Act
     let (kept, taken) = ignore.without_stale(&live);

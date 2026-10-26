@@ -3,6 +3,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::borrow::ToOwned;
+use alloc::format;
+use alloc::vec;
+
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;

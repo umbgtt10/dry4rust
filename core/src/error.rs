@@ -3,16 +3,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io;
-use std::result::Result as StdResult;
+use alloc::string::String;
+use core::result::Result as StdResult;
 
 use crate::source_path::SourcePath;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("I/O error: {0}")]
-    Io(#[from] io::Error),
-
     #[error("No source files found in {0}")]
     NoSourceFiles(SourcePath),
 

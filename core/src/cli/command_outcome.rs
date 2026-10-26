@@ -3,6 +3,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
 use crate::cli::cli_error::CliResult;
 
 /// What a command produced: the text it means to print, and the verdict that
