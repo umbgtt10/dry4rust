@@ -214,6 +214,9 @@ where a run is composed rather than by the analysis.
   crate root must carry `#![no_std]` and `#![forbid(unsafe_code)]`, and no file
   under `core/src` or `core/tests` may reach `std::{env, fs, io, net, os,
   process}`, a printing macro, a file-system method or `extern crate std`.
+- `.cargo/mutants.toml` scopes cargo-mutants to `core/src`, each mutant tested
+  by core's own tests: 989 mutants, where an unscoped run listed 1,098 across
+  the workspace, technology and gates included.
 
 ## [0.4.0] - 2026-10-10
 
