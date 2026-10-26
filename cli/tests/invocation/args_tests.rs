@@ -5,14 +5,13 @@
 
 use clap::Parser;
 use dry4rust::cli::command::Command;
-use dry4rust::cli::entry_point::EntryPoint;
-use dry4rust::cli::output_format::OutputFormat;
+use dry4rust_cli::invocation::args::Args;
+use dry4rust_cli::invocation::output_format::OutputFormat;
 use std::path::Path;
 use std::path::PathBuf;
-use std::process::ExitCode;
 
-fn parsed(args: &[&str]) -> EntryPoint {
-    EntryPoint::try_parse_from(args).expect("the arguments parse")
+fn parsed(args: &[&str]) -> Args {
+    Args::try_parse_from(args).expect("the arguments parse")
 }
 
 #[test]
@@ -123,54 +122,4 @@ fn root_returns_the_path_that_was_given() {
 
     // Assert
     assert_eq!(root, PathBuf::from("/projects/thing"));
-}
-
-#[test]
-fn run_over_a_request_for_help_exits_zero() {
-    // Arrange
-    let args = ["cargo-dry4rust", "dry4rust", "--help"];
-
-    // Act
-    let code = EntryPoint::run(args.iter().map(|a| (*a).to_owned()).collect());
-
-    // Assert
-    assert_eq!(
-        code,
-        ExitCode::SUCCESS,
-        "clap reports --help the same way it reports a typo; only use_stderr          tells them apart"
-    );
-}
-
-#[test]
-fn run_over_a_root_with_no_sources_reports_the_error_and_exits_two() {
-    // Arrange
-    let args = [
-        "cargo-dry4rust",
-        "dry4rust",
-        "--path",
-        "/no/such/place",
-        "stats",
-    ];
-
-    // Act
-    let code = EntryPoint::run(args.iter().map(|a| (*a).to_owned()).collect());
-
-    // Assert
-    assert_eq!(
-        code,
-        ExitCode::from(2),
-        "2 is the code for an error the tool could not run through, as against          1 for duplication over a ceiling"
-    );
-}
-
-#[test]
-fn run_over_arguments_it_cannot_parse_exits_two() {
-    // Arrange
-    let args = ["cargo-dry4rust", "dry4rust", "--no-such-flag"];
-
-    // Act
-    let code = EntryPoint::run(args.iter().map(|a| (*a).to_owned()).collect());
-
-    // Assert
-    assert_eq!(code, ExitCode::from(2));
 }

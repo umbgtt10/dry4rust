@@ -4,20 +4,14 @@
 // SPDX-License-Identifier: MIT
 
 use std::env::current_dir;
-use std::io;
-use std::io::Write as _;
 use std::path::PathBuf;
-use std::process::ExitCode;
 
-use clap::Error as ClapError;
 use clap::Parser;
+use dry4rust::cli::cli_overrides::CliOverrides;
+use dry4rust::cli::command::Command;
 
-use crate::cli::cli_error::CliError;
-use crate::cli::cli_overrides::CliOverrides;
-use crate::cli::command::Command;
-use crate::cli::output_format::OutputFormat;
-use crate::command_dispatcher::CommandDispatcher;
-use crate::rust::rust_analyzer::RustAnalyzer;
+use crate::invocation::cli_command::CliCommand;
+use crate::invocation::output_format::OutputFormat;
 
 /// The command line, and what it means.
 ///
@@ -34,13 +28,13 @@ use crate::rust::rust_analyzer::RustAnalyzer;
     about = "Detect duplicate code in Rust codebases",
     long_about = None
 )]
-pub struct EntryPoint {
+pub struct Args {
     /// When invoked as `cargo dry4rust`, cargo passes "dry4rust" as the first arg.
     #[arg(hide = true, default_value = "")]
     _cargo_subcommand: String,
 
     #[command(subcommand)]
-    command: Option<Command>,
+    command: Option<CliCommand>,
 
     /// Path to analyze (defaults to current directory).
     #[arg(short, long, global = true)]
@@ -84,11 +78,13 @@ pub struct EntryPoint {
     baseline: Option<PathBuf>,
 }
 
-impl EntryPoint {
+impl Args {
     /// The command to run. Naming none means `report`.
     #[must_use]
     pub fn command(&self) -> Command {
-        self.command.clone().unwrap_or(Command::Report)
+        self.command
+            .as_ref()
+            .map_or(Command::Report, CliCommand::command)
     }
 
     /// The output format asked for.
@@ -122,60 +118,5 @@ impl EntryPoint {
         self.path
             .clone()
             .unwrap_or_else(|| current_dir().unwrap_or_else(|_| PathBuf::from(".")))
-    }
-
-    /// Parse `args`, run what they ask for, and report the outcome.
-    ///
-    /// Taking the arguments rather than reading `argv` is what lets a test
-    /// call this at all; `main` passes the real ones.
-    #[must_use]
-    pub fn run(args: Vec<String>) -> ExitCode {
-        match Self::try_parse_from(args) {
-            Ok(entry) => entry.execute(),
-            Err(error) => Self::parsing_failed(&error),
-        }
-    }
-
-    fn execute(self) -> ExitCode {
-        let analyzer = RustAnalyzer::new();
-        let root = self.root();
-        let reporter = self.format.reporter(Some(&root));
-        let dispatcher =
-            CommandDispatcher::new(&analyzer, &root, reporter.as_ref(), self.overrides());
-        match dispatcher.dispatch(&self.command()) {
-            Ok(outcome) => {
-                let stdout = io::stdout();
-                let mut writer = stdout.lock();
-                match writer
-                    .write_all(outcome.text().as_bytes())
-                    .and_then(|()| writer.flush())
-                {
-                    Ok(()) => match outcome.result() {
-                        Ok(()) => ExitCode::SUCCESS,
-                        Err(e) => Self::reported(e),
-                    },
-                    Err(e) => Self::reported(&CliError::Io(e)),
-                }
-            }
-            Err(e) => Self::reported(&e),
-        }
-    }
-
-    /// `--help` and `--version` are not failures; clap reports them the same
-    /// way it reports a typo, and only `use_stderr` tells the two apart.
-    fn parsing_failed(error: &ClapError) -> ExitCode {
-        let _ = error.print();
-        if error.use_stderr() {
-            ExitCode::from(2)
-        } else {
-            ExitCode::SUCCESS
-        }
-    }
-
-    fn reported(error: &CliError) -> ExitCode {
-        if !matches!(error, CliError::CheckFailed) {
-            eprintln!("Error: {error}");
-        }
-        ExitCode::from(error.exit_code() as u8)
     }
 }

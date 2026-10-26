@@ -1,19 +1,16 @@
 [package]
-name = "cargo-dry4rust"
-version = "0.4.0"
-edition = "2024"
-rust-version = "1.91"
-license = "MIT"
-description = "A cargo subcommand that detects duplicate and near-duplicate code blocks in Rust codebases using AST normalization"
-repository = "https://github.com/umbgtt10/dry4rust"
-documentation = "https://docs.rs/cargo-dry4rust"
-readme = "../README.md"
-keywords = ["cargo", "duplicates", "code-quality", "lint", "ast"]
-categories = ["development-tools::cargo-plugins", "development-tools"]
-authors = [
-    "Matjaz Domen Pecan <matjaz.pecan@gmail.com>",
-    "Umberto Gotti <umberto.gotti@umbertogotti.dev>",
-]
+name = "dry4rust-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "The analysis behind cargo-dry4rust: duplicate and near-duplicate code in Rust, found by normalising the AST"
+documentation = "https://docs.rs/dry4rust-core"
+readme = "README.md"
+keywords = ["duplicates", "code-quality", "lint", "ast", "static-analysis"]
+categories = ["development-tools"]
 
 autotests = false
 
@@ -25,12 +22,7 @@ path = "tests/all_tests.rs"
 name = "dry4rust"
 path = "src/lib.rs"
 
-[[bin]]
-name = "cargo-dry4rust"
-path = "src/main.rs"
-
 [dependencies]
-clap = { workspace = true }
 proc-macro2 = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -40,8 +32,11 @@ toml = { workspace = true }
 walkdir = { workspace = true }
 
 [dev-dependencies]
-clap = { workspace = true }
 tempfile = { workspace = true }
+
+# No `unsafe` in any target, tests included; the crate root says so as well.
+[lints.rust]
+unsafe_code = "forbid"
 
 # Upstream's lint configuration, kept. pedantic and nursery at warn are
 # stricter than this family's stage 1, which runs -D warnings on the default

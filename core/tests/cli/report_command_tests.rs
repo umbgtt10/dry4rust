@@ -5,15 +5,15 @@
 
 use crate::common::group;
 use crate::common::result_with;
-use dry4rust::cli::output_format::OutputFormat;
+use dry4rust::cli::output::text_reporter::TextReporter;
 use dry4rust::cli::report_command::ReportCommand;
 use dry4rust::duplicate_group::DuplicateGroup;
 
 fn report_of(exact: Vec<DuplicateGroup>, near: Vec<DuplicateGroup>) -> String {
     let result = result_with(exact, near, vec![], vec![]);
-    let reporter = OutputFormat::Text.reporter(None);
+    let reporter = TextReporter::new(None);
 
-    ReportCommand::new(&result, reporter.as_ref())
+    ReportCommand::new(&result, &reporter)
         .run()
         .expect("reporting succeeds")
         .text()

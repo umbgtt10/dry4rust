@@ -1,9 +1,9 @@
 [package]
 name = "xtask"
-version = "0.4.0"
-edition = "2024"
-rust-version = "1.91"
-license = "MIT"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
 description = "Gate orchestration for the dry4rust workspace"
 publish = false
 
@@ -24,6 +24,10 @@ path = "tests/all_tests.rs"
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+# No `unsafe` in any target, tests included.
+[lints.rust]
+unsafe_code = "forbid"
 
 # The same configuration core carries. The crate that runs the gates is held to
 # the bar it enforces, rather than being the one package in the workspace that

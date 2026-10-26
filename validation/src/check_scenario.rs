@@ -7,7 +7,7 @@ use crate::fixture::Fixture;
 use dry4rust::cli::check_command::CheckCommand;
 use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::cli_error::CliResult;
-use dry4rust::cli::output_format::OutputFormat;
+use dry4rust_cli::invocation::output_format::OutputFormat;
 
 pub struct CheckScenario;
 

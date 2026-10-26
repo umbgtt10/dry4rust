@@ -3,8 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::cli::report_command::ReportCommand;
+use dry4rust_cli::invocation::output_format::OutputFormat;
 use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;

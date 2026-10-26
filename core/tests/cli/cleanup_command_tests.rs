@@ -6,7 +6,6 @@
 use crate::common::result_with;
 use dry4rust::cli::cleanup_command::CleanupCommand;
 use dry4rust::cli::ignore_command::IgnoreCommand;
-use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::suppression::ignore_file::IgnoreFile;
 use std::fs;
 use tempfile::TempDir;
@@ -57,7 +56,6 @@ fn run_with_nothing_stale_says_so_and_writes_no_file() {
     // Arrange
     let tmp = TempDir::new().expect("temp dir");
     let result = result_with(vec![], vec![], vec![], vec![]);
-    let _ = OutputFormat::Text;
 
     // Act
     let text = CleanupCommand::new(tmp.path(), &result, false)

@@ -18,11 +18,11 @@
 # problem entirely: the tests that need it are never packaged.
 [package]
 name = "validation"
-version = "0.4.0"
-edition = "2024"
-rust-version = "1.91"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
 description = "End-to-end validation of the cargo-dry4rust binary against the fixture crates"
-license = "MIT"
 publish = false
 
 autotests = false
@@ -37,9 +37,14 @@ path = "tests/all_tests.rs"
 
 [dependencies]
 cargo-dry4rust = { workspace = true }
+dry4rust-core = { workspace = true }
 assert_cmd = { workspace = true }
 tempfile = { workspace = true }
 
 [dev-dependencies]
 predicates = { workspace = true }
 serde_json = { workspace = true }
+
+# No `unsafe` in any target, tests included.
+[lints.rust]
+unsafe_code = "forbid"

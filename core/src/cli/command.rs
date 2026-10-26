@@ -3,8 +3,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-/// CLI subcommands for `cargo-dry4rust`.
-#[derive(Debug, Clone, clap::Subcommand)]
+/// What the command line asked for, once parsed.
+///
+/// The core's own enum: the command line that spells it lives in the cli crate,
+/// which builds one of these and hands it to the dispatcher.
+#[derive(Debug, Clone)]
 pub enum Command {
     /// Show duplication statistics only.
     Stats,
@@ -12,17 +15,13 @@ pub enum Command {
     Report,
     /// Check for duplicates and exit with non-zero if thresholds exceeded.
     Check {
-        /// Maximum allowed exact duplicate groups (exit 1 if exceeded).
-        #[arg(long)]
+        /// Maximum allowed exact duplicate groups.
         max_exact: Option<usize>,
-        /// Maximum allowed near duplicate groups (exit 1 if exceeded).
-        #[arg(long)]
+        /// Maximum allowed near duplicate groups.
         max_near: Option<usize>,
-        /// Maximum allowed exact duplicate percentage (exit 1 if exceeded).
-        #[arg(long)]
+        /// Maximum allowed exact duplicate percentage.
         max_exact_percent: Option<f64>,
-        /// Maximum allowed near duplicate percentage (exit 1 if exceeded).
-        #[arg(long)]
+        /// Maximum allowed near duplicate percentage.
         max_near_percent: Option<f64>,
     },
     /// Add a fingerprint to the ignore list.
@@ -30,7 +29,6 @@ pub enum Command {
         /// The fingerprint to ignore (hex string).
         fingerprint: String,
         /// Reason for ignoring.
-        #[arg(long)]
         reason: Option<String>,
     },
     /// List all ignored fingerprints.
@@ -38,14 +36,11 @@ pub enum Command {
     /// Remove stale entries from the ignore file.
     Cleanup {
         /// Only list stale entries without removing them.
-        #[arg(long)]
         dry_run: bool,
     },
-    /// Record the duplication that is already there, so `check` fails on what
-    /// is added rather than on what was inherited.
+    /// Record the duplication that is already there.
     Baseline {
         /// Only list what would be recorded, without writing the file.
-        #[arg(long)]
         dry_run: bool,
     },
 }

@@ -80,3 +80,15 @@ fn apply_to_with_nothing_set_leaves_every_field_as_it_was() {
     assert!(config.sub_function());
     assert!(config.exclude_tests());
 }
+
+#[test]
+fn threshold_returns_the_override_it_was_given() {
+    // Arrange
+    let overrides = CliOverrides::default().with_threshold(Some(0.75));
+
+    // Act
+    let threshold = overrides.threshold();
+
+    // Assert
+    assert_eq!(threshold, Some(0.75));
+}

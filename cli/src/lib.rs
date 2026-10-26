@@ -3,11 +3,4 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::env::args;
-use std::process::ExitCode;
-
-use dry4rust::cli::entry_point::EntryPoint;
-
-fn main() -> ExitCode {
-    EntryPoint::run(args().collect())
-}
+pub mod invocation;

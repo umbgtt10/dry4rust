@@ -5,9 +5,9 @@
 
 use std::path::Path;
 
-use crate::cli::output::json_reporter::JsonReporter;
-use crate::cli::output::reporter::Reporter;
-use crate::cli::output::text_reporter::TextReporter;
+use dry4rust::cli::output::json_reporter::JsonReporter;
+use dry4rust::cli::output::reporter::Reporter;
+use dry4rust::cli::output::text_reporter::TextReporter;
 
 /// Output format for CLI reports.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, clap::ValueEnum)]

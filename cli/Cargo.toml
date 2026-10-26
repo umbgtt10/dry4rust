@@ -1,0 +1,58 @@
+[package]
+name = "cargo-dry4rust"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "A cargo subcommand that detects duplicate and near-duplicate code blocks in Rust codebases using AST normalization"
+documentation = "https://docs.rs/cargo-dry4rust"
+readme = "../README.md"
+keywords = ["cargo", "duplicates", "code-quality", "lint", "ast"]
+categories = ["development-tools::cargo-plugins", "development-tools"]
+
+autotests = false
+
+[[test]]
+name = "all_tests"
+path = "tests/all_tests.rs"
+
+[lib]
+name = "dry4rust_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cargo-dry4rust"
+path = "src/main.rs"
+
+# The command line and the technology the core is kept free of.
+[dependencies]
+clap = { workspace = true }
+dry4rust-core = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+
+# No `unsafe` in any target, tests included.
+[lints.rust]
+unsafe_code = "forbid"
+
+# The configuration core carries, so the code that moved here from core is held
+# to the bar it was written to.
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+doc_markdown = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+cast_possible_truncation = "allow"
+too_long_first_doc_paragraph = "allow"
+cognitive_complexity = "warn"
+module_name_repetitions = "allow"
+implicit_hasher = "allow"
+option_if_let_else = "allow"
+useless_let_if_seq = "allow"

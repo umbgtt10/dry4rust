@@ -1,0 +1,77 @@
+// Copyright (c) 2026 Matjaz Domen Pecan
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
+use std::io;
+use std::io::Write as _;
+use std::process::ExitCode;
+
+use clap::Error as ClapError;
+use clap::Parser;
+use dry4rust::cli::cli_error::CliError;
+use dry4rust::command_dispatcher::CommandDispatcher;
+use dry4rust::rust::rust_analyzer::RustAnalyzer;
+
+use crate::invocation::args::Args;
+
+/// The composition root: the command line in, the report out on stdout and
+/// the errors on stderr, an exit code back.
+pub struct EntryPoint;
+
+impl EntryPoint {
+    /// Parse `args`, run what they ask for, and report the outcome.
+    ///
+    /// Taking the arguments rather than reading `argv` is what lets a test
+    /// call this at all; `main` passes the real ones.
+    #[must_use]
+    pub fn run(args: Vec<String>) -> ExitCode {
+        match Args::try_parse_from(args) {
+            Ok(args) => Self::execute(&args),
+            Err(error) => Self::parsing_failed(&error),
+        }
+    }
+
+    fn execute(args: &Args) -> ExitCode {
+        let analyzer = RustAnalyzer::new();
+        let root = args.root();
+        let reporter = args.format().reporter(Some(&root));
+        let dispatcher =
+            CommandDispatcher::new(&analyzer, &root, reporter.as_ref(), args.overrides());
+        match dispatcher.dispatch(&args.command()) {
+            Ok(outcome) => {
+                let stdout = io::stdout();
+                let mut writer = stdout.lock();
+                match writer
+                    .write_all(outcome.text().as_bytes())
+                    .and_then(|()| writer.flush())
+                {
+                    Ok(()) => match outcome.result() {
+                        Ok(()) => ExitCode::SUCCESS,
+                        Err(e) => Self::reported(e),
+                    },
+                    Err(e) => Self::reported(&CliError::Io(e)),
+                }
+            }
+            Err(e) => Self::reported(&e),
+        }
+    }
+
+    /// `--help` and `--version` are not failures; clap reports them the same
+    /// way it reports a typo, and only `use_stderr` tells the two apart.
+    fn parsing_failed(error: &ClapError) -> ExitCode {
+        let _ = error.print();
+        if error.use_stderr() {
+            ExitCode::from(2)
+        } else {
+            ExitCode::SUCCESS
+        }
+    }
+
+    fn reported(error: &CliError) -> ExitCode {
+        if !matches!(error, CliError::CheckFailed) {
+            eprintln!("Error: {error}");
+        }
+        ExitCode::from(error.exit_code() as u8)
+    }
+}

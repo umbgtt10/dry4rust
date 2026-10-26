@@ -9,7 +9,7 @@ use dry4rust::cli::check_command::CheckCommand;
 use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_error::CliResult;
-use dry4rust::cli::output_format::OutputFormat;
+use dry4rust::cli::output::text_reporter::TextReporter;
 use dry4rust::config::Config;
 
 fn checked(exact: usize, thresholds: &CheckThresholds) -> (CliResult, String) {
@@ -18,9 +18,9 @@ fn checked(exact: usize, thresholds: &CheckThresholds) -> (CliResult, String) {
         .collect();
     let result = result_with(groups, vec![], vec![], vec![]);
     let config = Config::default();
-    let reporter = OutputFormat::Text.reporter(None);
+    let reporter = TextReporter::new(None);
 
-    let outcome = CheckCommand::new(&config, &result, reporter.as_ref(), thresholds)
+    let outcome = CheckCommand::new(&config, &result, &reporter, thresholds)
         .run()
         .expect("check produces a report");
 

@@ -18,13 +18,15 @@ use xtask::gates::stern_gate::SternGate;
 use xtask::gates::twin_gate::TwinGate;
 use xtask::process::system_command_runner::SystemCommandRunner;
 
-const CORE_PACKAGE: &str = "cargo-dry4rust";
+const CLI_PACKAGE: &str = "cargo-dry4rust";
+const CORE_PACKAGE: &str = "dry4rust-core";
 const VALIDATION_PACKAGE: &str = "validation";
 const XTASK_PACKAGE: &str = "xtask";
 const CRAP_THRESHOLD: &str = "15";
 const ICEBERG_THRESHOLD: &str = "10";
 const DRY_BINARY: &str = "cargo-dry4rust";
-const DRY_EXCLUDES: [&[&str]; 4] = [
+const DRY_EXCLUDES: [&[&str]; 5] = [
+    &["cli", "tests"],
     &["core", "tests"],
     &["fixture"],
     &["validation"],
@@ -64,10 +66,10 @@ fn run_stage2() -> ExitCode {
     // moves code between files, which changes what the three behind it measure.
     // This checkout's own dry4rust, built from source -- a tool that enforces a
     // check it does not pass is not worth installing. One run from the
-    // repository root over the published crate's source: tests repeat their
-    // arrangement by design, the fixture corpus is duplicated on purpose, and
-    // validation and xtask are not published. Each tree it must not judge is
-    // excluded by its full path. Against a baseline of what was already
+    // repository root over both published crates' sources, so a copy from one
+    // into the other is seen: tests repeat their arrangement by design, the
+    // fixture corpus is duplicated on purpose, and validation and xtask are not
+    // published. Each tree it must not judge is excluded by its full path. Against a baseline of what was already
     // duplicated when the gate arrived, so it fails on what a change adds. The
     // floor leaves out units whose whole body is one call or one short struct
     // literal -- accessors, two-field constructors, the `Reporter` methods that
@@ -86,24 +88,25 @@ fn run_stage2() -> ExitCode {
         String::from(DRY_MIN_NODES),
     );
 
-    // core only. validation has source -- the harness and the scenario types
+    // core and cli. validation has source -- the harness and the scenario types
     // its tests call -- but coverage driven with `-p validation` does not build
-    // core's binary. On a clean target the tests that spawn it cannot find it
+    // cli's binary. On a clean target the tests that spawn it cannot find it
     // and the run fails outright; on a used one they find whatever binary an
     // earlier run left behind, which is not a measurement of this checkout.
     let crap = CrapGate::new(
         &runner,
         &parser,
         manifest_path.clone(),
-        vec![String::from(CORE_PACKAGE)],
+        vec![String::from(CORE_PACKAGE), String::from(CLI_PACKAGE)],
         String::from(CRAP_THRESHOLD),
     );
 
-    // All three in one call rather than one call each, so one report covers
+    // All four in one call rather than one call each, so one report covers
     // every member. validation's src/ -- the shared harness and one scenario
     // type per scenario file -- is mirrored and scored like core's and xtask's.
     let measured = vec![
         String::from(CORE_PACKAGE),
+        String::from(CLI_PACKAGE),
         String::from(VALIDATION_PACKAGE),
         String::from(XTASK_PACKAGE),
     ];

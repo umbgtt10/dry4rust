@@ -4,8 +4,8 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::result_with;
-use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::cli::stats_command::StatsCommand;
+use dry4rust_cli::invocation::output_format::OutputFormat;
 use serde_json::Value;
 use serde_json::from_str;
 

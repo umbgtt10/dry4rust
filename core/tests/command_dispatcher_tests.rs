@@ -6,7 +6,8 @@
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::command::Command;
-use dry4rust::cli::output_format::OutputFormat;
+use dry4rust::cli::output::json_reporter::JsonReporter;
+use dry4rust::cli::output::text_reporter::TextReporter;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use serde_json::Value;
@@ -38,9 +39,8 @@ pub fn compute_total(values: Vec<i32>) -> i32 {
 
 fn dispatch_in(root: &Path, command: &Command) -> (Result<(), CliError>, String) {
     let analyzer = RustAnalyzer::new();
-    let reporter = OutputFormat::Text.reporter(Some(root));
-    let dispatcher =
-        CommandDispatcher::new(&analyzer, root, reporter.as_ref(), CliOverrides::default());
+    let reporter = TextReporter::new(Some(root.to_path_buf()));
+    let dispatcher = CommandDispatcher::new(&analyzer, root, &reporter, CliOverrides::default());
     match dispatcher.dispatch(command) {
         Ok(outcome) => outcome.into_parts(),
         Err(error) => (Err(error), String::new()),
@@ -96,13 +96,9 @@ fn dispatch_with_stats_writes_through_the_reporter_it_was_given() {
     fs::create_dir_all(tmp.path().join("src")).expect("src");
     fs::write(tmp.path().join("src/lib.rs"), DUPLICATED).expect("write");
     let analyzer = RustAnalyzer::new();
-    let reporter = OutputFormat::Json.reporter(Some(tmp.path()));
-    let dispatcher = CommandDispatcher::new(
-        &analyzer,
-        tmp.path(),
-        reporter.as_ref(),
-        CliOverrides::default(),
-    );
+    let reporter = JsonReporter::new(Some(tmp.path().to_path_buf()));
+    let dispatcher =
+        CommandDispatcher::new(&analyzer, tmp.path(), &reporter, CliOverrides::default());
 
     // Act
     let (_, stats) = dispatcher

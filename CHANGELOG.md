@@ -129,6 +129,19 @@ where a run is composed rather than by the analysis.
   `CommandDispatcher::new` takes the `&dyn Reporter` to write through in place
   of the format, and `EntryPoint` builds that reporter from `--format`. What
   is printed is unchanged.
+- **Two published crates** (docs/CORE_CLI_SPLIT.md). `cargo-dry4rust` is now the
+  command-line crate, `cli/`: the binary and a library `dry4rust_cli`. The
+  analysis library `dry4rust` is published by the new package `dry4rust-core`,
+  `core/`, which no longer depends on clap; a dependent switches
+  `cargo-dry4rust` for `dry4rust-core` and keeps its `dry4rust::` paths.
+  `cli::entry_point::EntryPoint` is `dry4rust_cli::invocation::args::Args`, the
+  parsed command line with `command`, `format`, `overrides` and `root`, beside
+  `dry4rust_cli::invocation::entry_point::EntryPoint::run`;
+  `cli::output_format::OutputFormat` is `dry4rust_cli::invocation::output_format`.
+  `cli::command::Command` is a plain enum; the command line that spells it is
+  `dry4rust_cli::invocation::cli_command::CliCommand`, whose `command()` hands
+  it over. The members share one version from `[workspace.package]`, and every
+  member forbids `unsafe` in every target.
 
 ## [0.4.0] - 2026-10-10
 

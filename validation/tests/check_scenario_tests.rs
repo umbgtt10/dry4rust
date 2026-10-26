@@ -6,7 +6,7 @@
 use dry4rust::cli::check_command::CheckCommand;
 use dry4rust::cli::checking::check_thresholds::CheckThresholds;
 use dry4rust::cli::cli_error::CliError;
-use dry4rust::cli::output_format::OutputFormat;
+use dry4rust_cli::invocation::output_format::OutputFormat;
 use predicate::str;
 use predicates::prelude::*;
 use serde_json::Value;

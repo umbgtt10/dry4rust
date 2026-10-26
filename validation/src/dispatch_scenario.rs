@@ -6,9 +6,9 @@
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::cli::command::Command;
-use dry4rust::cli::output_format::OutputFormat;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
+use dry4rust_cli::invocation::output_format::OutputFormat;
 use std::path::Path;
 
 pub struct DispatchScenario;

@@ -54,8 +54,8 @@ impl Gate for DrySelfGate<'_> {
         // before the gate was, and anything beyond it is what a change added. The
         // baseline was recorded at this floor and only matches at this floor.
         //
-        // One run from `path`; each exclusion is a path below it the gate does
-        // not judge.
+        // One run from `path`, so a copy from one published crate into the other
+        // is seen; each exclusion is a path below it the gate does not judge.
         let mut args = vec![
             String::from("run"),
             String::from("--quiet"),
