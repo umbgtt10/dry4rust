@@ -13,7 +13,6 @@ use crate::code_unit::CodeUnit;
 use crate::config::Config;
 use crate::duplicate_group::DuplicateGroup;
 use crate::duplication_stats::DuplicationStats;
-use crate::error::Result;
 use crate::fingerprint::Fingerprint;
 use crate::node::node_kind::NodeKind;
 use crate::node::normalized_node::NormalizedNode;
@@ -37,13 +36,17 @@ pub struct Analysis {
 impl Analysis {
     /// Run the analysis pipeline on pre-parsed code units.
     ///
-    /// The caller is responsible for scanning files and parsing them into `CodeUnit`s.
-    /// This function handles grouping, similarity detection, ignore filtering, and stats.
+    /// The caller is responsible for scanning files and parsing them into
+    /// `CodeUnit`s, and for loading the ignore file and the baseline. This
+    /// function handles grouping, similarity detection, suppression, and stats.
+    #[must_use]
     pub fn analyze_units(
         units: &[CodeUnit],
         warnings: Vec<String>,
         config: &Config,
-    ) -> Result<Self> {
+        ignore_file: &IgnoreFile,
+        baseline: &BaselineFilter,
+    ) -> Self {
         // 1. Group exact duplicates
         let exact_groups = DuplicateGroup::group_exact_duplicates(units);
 
@@ -106,14 +109,12 @@ impl Analysis {
             .collect();
 
         // 5. Apply ignore filtering
-        let ignore_file = IgnoreFile::load(config.root());
         let exact_groups = ignore_file.retain_unsuppressed(exact_groups);
         let near_groups = ignore_file.retain_unsuppressed(near_groups);
         let sub_exact_groups = ignore_file.retain_unsuppressed(sub_exact_groups);
         let sub_near_groups = ignore_file.retain_unsuppressed(sub_near_groups);
 
         // 6. Set aside what the baseline already accounted for
-        let baseline = BaselineFilter::load(config)?;
         let found =
             exact_groups.len() + near_groups.len() + sub_exact_groups.len() + sub_near_groups.len();
         let exact_groups = baseline.retain_new(BaselineKind::Exact, exact_groups);
@@ -133,7 +134,7 @@ impl Analysis {
         )
         .with_baseline_suppressed(baseline.is_in_effect().then_some(found - reported));
 
-        Ok(Self {
+        Self {
             stats,
             exact_groups,
             near_groups,
@@ -141,20 +142,23 @@ impl Analysis {
             sub_near_groups,
             warnings,
             all_fingerprints,
-        })
+        }
     }
 
     /// Run the full analysis pipeline using a language analyzer.
     ///
     /// Reads each file from `sources`, parses it via the analyzer, optionally
     /// filters test code, then delegates to [`Self::analyze_units`] for
-    /// grouping, similarity, and stats.
+    /// grouping, similarity, suppression and stats.
+    #[must_use]
     pub fn analyze(
         analyzer: &dyn LanguageAnalyzer,
         sources: &dyn SourceTree,
         files: &[SourcePath],
         config: &Config,
-    ) -> Result<Self> {
+        ignore_file: &IgnoreFile,
+        baseline: &BaselineFilter,
+    ) -> Self {
         let analysis_config = config.analysis_config();
         let mut units = Vec::new();
         let mut warnings = Vec::new();
@@ -178,7 +182,7 @@ impl Analysis {
             }
         }
 
-        Self::analyze_units(&units, warnings, config)
+        Self::analyze_units(&units, warnings, config, ignore_file, baseline)
     }
 
     #[must_use]

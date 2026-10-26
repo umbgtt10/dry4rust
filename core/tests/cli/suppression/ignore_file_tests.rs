@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::source_path;
+use crate::support::in_memory_ignore_store::InMemoryIgnoreStore;
 use dry4rust::cli::suppression::ignore_file::IgnoreFile;
 use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
@@ -11,10 +11,9 @@ use dry4rust::node::literal_kind::LiteralKind;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::source_path::SourcePath;
+use dry4rust::storage_failure::StorageFailure;
 use std::collections::HashSet;
 use std::iter::once;
-use std::path::Path;
-use tempfile::TempDir;
 
 const fn group_of(fingerprint: Fingerprint, similarity: f64) -> DuplicateGroup {
     DuplicateGroup::new(fingerprint, vec![], similarity)
@@ -22,6 +21,10 @@ const fn group_of(fingerprint: Fingerprint, similarity: f64) -> DuplicateGroup {
 
 fn other_fingerprint() -> Fingerprint {
     Fingerprint::from_node(&NormalizedNode::with_children(NodeKind::Block, vec![]))
+}
+
+fn root() -> SourcePath {
+    SourcePath::new(String::from("/project"))
 }
 
 fn suppressing(fingerprints: &[(Fingerprint, Option<&str>)]) -> IgnoreFile {
@@ -54,10 +57,10 @@ fn contains_reports_whether_the_fingerprint_is_suppressed() {
 #[test]
 fn load_over_a_root_with_no_ignore_file_returns_an_empty_one() {
     // Arrange
-    let tmp = TempDir::new().unwrap();
+    let store = InMemoryIgnoreStore::new();
 
     // Act
-    let ignore = IgnoreFile::load(&source_path(tmp.path()));
+    let ignore = IgnoreFile::load(&store, &root());
 
     // Assert
     assert!(
@@ -68,9 +71,24 @@ fn load_over_a_root_with_no_ignore_file_returns_an_empty_one() {
 }
 
 #[test]
+fn load_over_a_store_that_cannot_read_it_returns_an_empty_one() {
+    // Arrange
+    let store = InMemoryIgnoreStore::unreadable("expected `=` at line 1");
+
+    // Act
+    let ignore = IgnoreFile::load(&store, &root());
+
+    // Assert
+    assert!(
+        ignore.ignore().is_empty(),
+        "a file the tool cannot read suppresses nothing, as it always has"
+    );
+}
+
+#[test]
 fn path_in_names_the_file_beside_the_project_root() {
     // Arrange & Act
-    let path = IgnoreFile::path_in(&SourcePath::new(String::from("/project")));
+    let path = IgnoreFile::path_in(&root());
 
     // Assert
     assert_eq!(
@@ -82,15 +100,32 @@ fn path_in_names_the_file_beside_the_project_root() {
 #[test]
 fn remove_from_a_root_with_no_ignore_file_is_not_an_error() {
     // Arrange
-    let tmp = TempDir::new().unwrap();
+    let store = InMemoryIgnoreStore::new();
 
     // Act
-    let outcome = IgnoreFile::remove_from(&source_path(tmp.path()));
+    let outcome = IgnoreFile::remove_from(&store, &root());
 
     // Assert
     assert!(
         outcome.is_ok(),
         "taking away what was never there is the state the caller asked for"
+    );
+}
+
+#[test]
+fn remove_from_a_store_that_cannot_remove_it_reports_why() {
+    // Arrange
+    let store = InMemoryIgnoreStore::failing("Permission denied (os error 13)");
+
+    // Act
+    let outcome = IgnoreFile::remove_from(&store, &root());
+
+    // Assert
+    assert_eq!(
+        outcome,
+        Err(StorageFailure::Failed(String::from(
+            "Permission denied (os error 13)"
+        )))
     );
 }
 
@@ -141,47 +176,41 @@ fn retain_unsuppressed_removes_the_group_whose_fingerprint_matches() {
 }
 
 #[test]
-fn save_of_an_emptied_file_takes_it_away_rather_than_writing_an_empty_list() {
+fn save_of_a_file_with_entries_hands_it_to_the_store() {
     // Arrange
-    let tmp = TempDir::new().unwrap();
+    let store = InMemoryIgnoreStore::new();
     let fp = test_fingerprint();
-    suppressing(&[(fp, None)])
-        .save(&source_path(tmp.path()))
-        .expect("the first save writes it");
-    let (emptied, _) = IgnoreFile::load(&source_path(tmp.path())).without(&fp.to_hex());
 
     // Act
-    emptied
-        .save(&source_path(tmp.path()))
-        .expect("saving nothing succeeds");
+    suppressing(&[(fp, Some("kept"))])
+        .save(&store, &root())
+        .expect("the store takes it");
 
     // Assert
-    assert!(
-        !Path::new(IgnoreFile::path_in(&source_path(tmp.path())).as_str()).exists(),
-        "an empty suppression list makes exactly the claim that no file makes,          and load cannot tell them apart"
-    );
+    let held = store
+        .held(&IgnoreFile::path_in(&root()))
+        .expect("held beside the root");
+    assert_eq!(held.ignore().len(), 1);
+    assert_eq!(held.ignore()[0].reason.as_deref(), Some("kept"));
 }
 
 #[test]
-fn save_then_load_returns_what_was_recorded() {
+fn save_of_an_emptied_file_asks_the_store_to_take_it_away() {
     // Arrange
-    let tmp = TempDir::new().unwrap();
+    let store = InMemoryIgnoreStore::new();
     let fp = test_fingerprint();
-    let ignore = IgnoreFile::default().with_ignored(
-        &fp,
-        Some("test reason".to_string()),
-        vec!["foo".to_string(), "bar".to_string()],
-    );
+    suppressing(&[(fp, None)])
+        .save(&store, &root())
+        .expect("the first save writes it");
+    let (emptied, _) = IgnoreFile::load(&store, &root()).without(&fp.to_hex());
 
     // Act
-    ignore.save(&source_path(tmp.path())).unwrap();
-    let loaded = IgnoreFile::load(&source_path(tmp.path()));
+    emptied
+        .save(&store, &root())
+        .expect("saving nothing succeeds");
 
     // Assert
-    assert_eq!(loaded.ignore().len(), 1);
-    assert_eq!(loaded.ignore()[0].fingerprint, fp.to_hex());
-    assert_eq!(loaded.ignore()[0].reason.as_deref(), Some("test reason"));
-    assert_eq!(loaded.ignore()[0].members, vec!["foo", "bar"]);
+    assert!(!store.holds(&IgnoreFile::path_in(&root())));
 }
 
 #[test]

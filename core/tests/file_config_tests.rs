@@ -7,10 +7,51 @@ use dry4rust::config::Config;
 use dry4rust::file_config::FileConfig;
 use dry4rust::source_path::SourcePath;
 use dry4rust::threshold::Threshold;
-use toml::from_str;
 
-fn stating(toml: &str) -> FileConfig {
-    from_str(toml).expect("the test states valid toml")
+#[test]
+fn apply_to_carries_every_field_the_file_states() {
+    // Arrange
+    let file = FileConfig::default()
+        .with_min_nodes(Some(30))
+        .with_similarity_threshold(Some(0.8))
+        .with_exclude(Some(vec![String::from("vendor")]))
+        .with_max_exact_duplicates(Some(1))
+        .with_max_near_duplicates(Some(2))
+        .with_max_exact_percent(Some(3.0))
+        .with_max_near_percent(Some(4.0))
+        .with_min_lines(Some(5))
+        .with_exclude_tests(Some(true))
+        .with_sub_function(Some(true))
+        .with_min_sub_nodes(Some(6))
+        .with_baseline(Some(SourcePath::new(String::from("b.json"))));
+
+    // Act
+    let config = file
+        .apply_to(Config::default())
+        .expect("every value is in range");
+
+    // Assert
+    assert_eq!(config.min_nodes(), 30);
+    assert!((config.similarity_threshold().as_fraction() - 0.8).abs() < f64::EPSILON);
+    assert_eq!(config.exclude(), vec![String::from("vendor")]);
+    assert_eq!(config.max_exact_duplicates(), Some(1));
+    assert_eq!(config.max_near_duplicates(), Some(2));
+    assert_eq!(
+        config.max_exact_percent().map(Threshold::as_percent),
+        Some(3.0)
+    );
+    assert_eq!(
+        config.max_near_percent().map(Threshold::as_percent),
+        Some(4.0)
+    );
+    assert_eq!(config.min_lines(), 5);
+    assert!(config.exclude_tests());
+    assert!(config.sub_function());
+    assert_eq!(config.min_sub_nodes(), 6);
+    assert_eq!(
+        config.baseline(),
+        Some(&SourcePath::new(String::from("b.json")))
+    );
 }
 
 #[test]
@@ -19,7 +60,8 @@ fn apply_to_changes_only_the_fields_the_file_states() {
     let config = Config::default().with_min_nodes(7).with_min_lines(3);
 
     // Act
-    let config = stating("min_nodes = 25\n")
+    let config = FileConfig::default()
+        .with_min_nodes(Some(25))
         .apply_to(config)
         .expect("25 is in range");
 
@@ -46,7 +88,8 @@ fn apply_to_of_an_empty_file_changes_nothing() {
 #[test]
 fn apply_to_reads_a_baseline_path_as_written() {
     // Arrange & Act
-    let config = stating("baseline = \"ci/recorded.json\"\n")
+    let config = FileConfig::default()
+        .with_baseline(Some(SourcePath::new(String::from("ci/recorded.json"))))
         .apply_to(Config::default())
         .expect("a path is always in range");
 
@@ -60,7 +103,9 @@ fn apply_to_reads_a_baseline_path_as_written() {
 #[test]
 fn apply_to_rejects_a_percentage_outside_a_hundred() {
     // Arrange & Act
-    let outcome = stating("max_near_percent = 150.0\n").apply_to(Config::default());
+    let outcome = FileConfig::default()
+        .with_max_near_percent(Some(150.0))
+        .apply_to(Config::default());
 
     // Assert
     assert_eq!(
@@ -72,7 +117,9 @@ fn apply_to_rejects_a_percentage_outside_a_hundred() {
 #[test]
 fn apply_to_rejects_a_similarity_threshold_outside_one() {
     // Arrange & Act
-    let outcome = stating("similarity_threshold = 5.0\n").apply_to(Config::default());
+    let outcome = FileConfig::default()
+        .with_similarity_threshold(Some(5.0))
+        .apply_to(Config::default());
 
     // Assert
     assert_eq!(
@@ -87,7 +134,8 @@ fn apply_to_replaces_the_excludes_rather_than_appending_to_them() {
     let config = Config::default().with_exclude(vec![String::from("vendor")]);
 
     // Act
-    let config = stating("exclude = [\"tests\"]\n")
+    let config = FileConfig::default()
+        .with_exclude(Some(vec![String::from("tests")]))
         .apply_to(config)
         .expect("a list is always in range");
 
@@ -102,7 +150,8 @@ fn apply_to_replaces_the_excludes_rather_than_appending_to_them() {
 #[test]
 fn apply_to_takes_a_percentage_as_a_share_of_a_hundred() {
     // Arrange & Act
-    let config = stating("max_exact_percent = 5.0\n")
+    let config = FileConfig::default()
+        .with_max_exact_percent(Some(5.0))
         .apply_to(Config::default())
         .expect("5% is in range");
 

@@ -3,4 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod baseline_store;
+pub mod config_source;
+pub mod ignore_store;
 pub mod source_tree;

@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::source_path;
+use crate::support::fake_ports::FakePorts;
 use crate::support::in_memory_source_tree::InMemorySourceTree;
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::cli_overrides::CliOverrides;
@@ -15,7 +15,6 @@ use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::source_path::SourcePath;
 use serde_json::Value;
 use serde_json::from_str;
-use tempfile::TempDir;
 
 const DUPLICATED: &str = r"pub fn process_data(input: Vec<i32>) -> i32 {
     let mut sum = 0;
@@ -38,29 +37,36 @@ pub fn compute_total(values: Vec<i32>) -> i32 {
 }
 ";
 
-fn dispatch_in(
-    root: &SourcePath,
-    sources: &InMemorySourceTree,
-    command: &Command,
-) -> (Result<(), CliError>, String) {
+fn dispatch_in(fakes: &FakePorts, command: &Command) -> (Result<(), CliError>, String) {
     let analyzer = RustAnalyzer::new();
+    let root = root();
     let reporter = TextReporter::new(Some(root.clone()));
-    let dispatcher =
-        CommandDispatcher::new(&analyzer, root, &reporter, CliOverrides::default(), sources);
+    let dispatcher = CommandDispatcher::new(
+        &analyzer,
+        &root,
+        &reporter,
+        CliOverrides::default(),
+        fakes.ports(),
+    );
     match dispatcher.dispatch(command) {
         Ok(outcome) => outcome.into_parts(),
         Err(error) => (Err(error), String::new()),
     }
 }
 
+fn root() -> SourcePath {
+    SourcePath::new(String::from("/p"))
+}
+
 #[test]
 fn dispatch_over_sources_that_cannot_be_listed_names_the_root() {
     // Arrange
-    let root = SourcePath::new(String::from("/p"));
-    let sources = InMemorySourceTree::unlistable("/p/src/\u{FFFD}.rs: the path is not valid UTF-8");
+    let fakes = FakePorts::with_sources(InMemorySourceTree::unlistable(
+        "/p/src/\u{FFFD}.rs: the path is not valid UTF-8",
+    ));
 
     // Act
-    let (outcome, _) = dispatch_in(&root, &sources, &Command::Stats);
+    let (outcome, _) = dispatch_in(&fakes, &Command::Stats);
 
     // Assert
     let Err(error) = outcome else {
@@ -75,18 +81,14 @@ fn dispatch_over_sources_that_cannot_be_listed_names_the_root() {
 #[test]
 fn dispatch_with_ignore_records_the_fingerprint_without_analysing() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
+    let fakes = FakePorts::default();
     let command = Command::Ignore {
         fingerprint: "cafebabe00000001".to_string(),
         reason: Some("a reason".to_string()),
     };
 
     // Act
-    let (outcome, _) = dispatch_in(
-        &source_path(tmp.path()),
-        &InMemorySourceTree::new(),
-        &command,
-    );
+    let (outcome, _) = dispatch_in(&fakes, &command);
 
     // Assert
     assert!(
@@ -98,25 +100,15 @@ fn dispatch_with_ignore_records_the_fingerprint_without_analysing() {
 #[test]
 fn dispatch_with_ignored_lists_what_ignore_recorded() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
+    let fakes = FakePorts::default();
     let recorded = Command::Ignore {
         fingerprint: "cafebabe00000002".to_string(),
         reason: None,
     };
-    dispatch_in(
-        &source_path(tmp.path()),
-        &InMemorySourceTree::new(),
-        &recorded,
-    )
-    .0
-    .expect("ignore accepted");
+    dispatch_in(&fakes, &recorded).0.expect("ignore accepted");
 
     // Act
-    let (outcome, text) = dispatch_in(
-        &source_path(tmp.path()),
-        &InMemorySourceTree::new(),
-        &Command::Ignored,
-    );
+    let (outcome, text) = dispatch_in(&fakes, &Command::Ignored);
 
     // Assert
     assert!(outcome.is_ok());
@@ -129,16 +121,17 @@ fn dispatch_with_ignored_lists_what_ignore_recorded() {
 #[test]
 fn dispatch_with_stats_writes_through_the_reporter_it_was_given() {
     // Arrange
-    let root = SourcePath::new(String::from("/p"));
-    let sources = InMemorySourceTree::new().with_file("/p/src/lib.rs", DUPLICATED);
+    let fakes =
+        FakePorts::with_sources(InMemorySourceTree::new().with_file("/p/src/lib.rs", DUPLICATED));
     let analyzer = RustAnalyzer::new();
+    let root = root();
     let reporter = JsonReporter::new(Some(root.clone()));
     let dispatcher = CommandDispatcher::new(
         &analyzer,
         &root,
         &reporter,
         CliOverrides::default(),
-        &sources,
+        fakes.ports(),
     );
 
     // Act

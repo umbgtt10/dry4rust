@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fmt::Write as _;
+use core::fmt::Write as _;
 
 use crate::analysis::Analysis;
 use crate::cli::checking::stale_report::StaleReport;
@@ -12,12 +12,14 @@ use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_entry_line::IgnoreEntryLine;
 use crate::cli::suppression::ignore_file::IgnoreFile;
 use crate::source_path::SourcePath;
+use crate::traits::ignore_store::IgnoreStore;
 
 /// `cleanup`: drop ignore entries whose fingerprint no longer matches anything.
 ///
 /// In dry run the file is read and reported on but never written, so the
 /// command can be pointed at a repository whose ignore file is under review.
 pub struct CleanupCommand<'a> {
+    store: &'a dyn IgnoreStore,
     root: &'a SourcePath,
     result: &'a Analysis,
     dry_run: bool,
@@ -25,8 +27,14 @@ pub struct CleanupCommand<'a> {
 
 impl<'a> CleanupCommand<'a> {
     #[must_use]
-    pub const fn new(root: &'a SourcePath, result: &'a Analysis, dry_run: bool) -> Self {
+    pub const fn new(
+        store: &'a dyn IgnoreStore,
+        root: &'a SourcePath,
+        result: &'a Analysis,
+        dry_run: bool,
+    ) -> Self {
         Self {
+            store,
             root,
             result,
             dry_run,
@@ -40,7 +48,7 @@ impl<'a> CleanupCommand<'a> {
     /// Returns [`crate::cli::cli_error::CliError::Io`] if the ignore file
     /// cannot be written.
     pub fn run(&self) -> CliResult<CommandOutcome> {
-        let ignore_file = IgnoreFile::load(self.root);
+        let ignore_file = IgnoreFile::load(self.store, self.root);
         let taken;
 
         let report = if self.dry_run {
@@ -49,7 +57,7 @@ impl<'a> CleanupCommand<'a> {
             let pruned;
             (pruned, taken) = ignore_file.without_stale(self.result.all_fingerprints());
             if !taken.is_empty() {
-                pruned.save(self.root)?;
+                pruned.save(self.store, self.root)?;
             }
             StaleReport::removed(taken.iter().collect())
         };

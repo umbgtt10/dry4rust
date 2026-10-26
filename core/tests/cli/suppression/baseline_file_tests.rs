@@ -5,14 +5,12 @@
 
 use crate::common::group;
 use crate::common::result_with;
-use crate::common::source_path;
+use crate::support::in_memory_baseline_store::InMemoryBaselineStore;
 use dry4rust::cli::suppression::baseline_constants::DEFAULT_BASELINE_FILE;
 use dry4rust::cli::suppression::baseline_constants::FORMAT_VERSION;
 use dry4rust::cli::suppression::baseline_file::BaselineFile;
 use dry4rust::cli::suppression::baseline_kind::BaselineKind;
 use dry4rust::source_path::SourcePath;
-use std::fs;
-use tempfile::TempDir;
 
 fn path(text: &str) -> SourcePath {
     SourcePath::new(String::from(text))
@@ -64,12 +62,13 @@ fn baseline_path_without_a_name_uses_the_family_default() {
 #[test]
 fn load_of_a_baseline_from_a_later_format_says_to_re_record_it() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    let path = tmp.path().join("dry4rust-baseline.json");
-    fs::write(&path, "{\"version\": 99, \"entries\": []}").expect("write");
+    let store = InMemoryBaselineStore::new().with_baseline(
+        "/p/dry4rust-baseline.json",
+        BaselineFile::new(99, Vec::new()),
+    );
 
     // Act
-    let outcome = BaselineFile::load(&source_path(&path));
+    let outcome = BaselineFile::load(&store, &path("/p/dry4rust-baseline.json"));
 
     // Assert
     let message = outcome
@@ -80,56 +79,38 @@ fn load_of_a_baseline_from_a_later_format_says_to_re_record_it() {
 }
 
 #[test]
-fn load_of_a_directory_reports_what_the_filesystem_said_rather_than_absence() {
+fn load_of_a_baseline_the_store_cannot_read_reports_its_reason() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-
-    // Act
-    let outcome = BaselineFile::load(&source_path(tmp.path()));
-
-    // Assert
-    let message = outcome
-        .expect_err("a directory is not a baseline")
-        .to_string();
-    assert!(
-        !message.contains("no such file"),
-        "a baseline that is there and cannot be read is a different problem \
-         from one that was never recorded, got: {message}"
+    let store = InMemoryBaselineStore::new().with_unreadable(
+        "/p/dry4rust-baseline.json",
+        "expected value at line 1 column 3",
     );
-    assert!(message.contains("baseline"), "{message}");
-}
-
-#[test]
-fn load_of_a_malformed_baseline_is_an_error_rather_than_an_empty_one() {
-    // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    let path = tmp.path().join("dry4rust-baseline.json");
-    fs::write(&path, "{ this is not json").expect("write");
 
     // Act
-    let outcome = BaselineFile::load(&source_path(&path));
+    let outcome = BaselineFile::load(&store, &path("/p/dry4rust-baseline.json"));
 
     // Assert
-    assert!(
-        outcome.is_err(),
-        "reading a broken baseline as empty would turn every inherited finding \
-         into a new one, all at once and without saying so"
+    assert_eq!(
+        outcome
+            .expect_err("an unreadable baseline is not an empty one")
+            .to_string(),
+        "baseline /p/dry4rust-baseline.json: expected value at line 1 column 3"
     );
 }
 
 #[test]
-fn load_of_a_missing_baseline_names_the_command_that_would_record_one() {
+fn load_of_a_baseline_the_store_does_not_hold_names_the_command_that_would_record_one() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    let path = tmp.path().join("dry4rust-baseline.json");
+    let store = InMemoryBaselineStore::new();
 
     // Act
-    let outcome = BaselineFile::load(&source_path(&path));
+    let outcome = BaselineFile::load(&store, &path("/p/dry4rust-baseline.json"));
 
     // Assert
-    let message = outcome.expect_err("nothing is there to load").to_string();
-    assert!(message.contains("no such file"), "{message}");
-    assert!(message.contains("cargo dry4rust baseline"), "{message}");
+    assert_eq!(
+        outcome.expect_err("nothing is there to load").to_string(),
+        "baseline /p/dry4rust-baseline.json: no such file; record one with `cargo dry4rust baseline`"
+    );
 }
 
 #[test]
@@ -164,23 +145,42 @@ fn record_orders_entries_by_kind_then_fingerprint() {
 }
 
 #[test]
-fn save_where_the_parent_is_a_file_reports_the_failure() {
-    // Arrange -- the directory `save` would create is blocked by a file
-    let tmp = TempDir::new().expect("temp dir");
-    let blocker = tmp.path().join("blocker");
-    fs::write(&blocker, "not a directory").expect("write");
+fn save_hands_the_store_the_recording() {
+    // Arrange
+    let store = InMemoryBaselineStore::new();
+    let recorded = BaselineFile::record(&result_with(
+        vec![group(0x11, &["a", "b"])],
+        vec![],
+        vec![],
+        vec![],
+    ));
+
+    // Act
+    recorded
+        .save(&store, &path("/p/dry4rust-baseline.json"))
+        .expect("the store takes it");
+
+    // Assert
+    let held = store
+        .held(&path("/p/dry4rust-baseline.json"))
+        .expect("held where it was saved");
+    assert_eq!(held.len(), 1);
+    assert_eq!(held.version(), FORMAT_VERSION);
+}
+
+#[test]
+fn save_through_a_store_that_fails_names_the_baseline() {
+    // Arrange
+    let store = InMemoryBaselineStore::failing("Not a directory (os error 20)");
     let recorded = BaselineFile::new(FORMAT_VERSION, Vec::new());
 
     // Act
-    let outcome = recorded.save(&source_path(&blocker.join("dry4rust-baseline.json")));
+    let outcome = recorded.save(&store, &path("/p/blocker/dry4rust-baseline.json"));
 
     // Assert
-    let message = outcome
-        .expect_err("the directory above the baseline cannot be created")
-        .to_string();
-    assert!(
-        message.contains("baseline"),
-        "a write that failed says which file it was, got: {message}"
+    assert_eq!(
+        outcome.expect_err("the store refused it").to_string(),
+        "baseline /p/blocker/dry4rust-baseline.json: Not a directory (os error 20)"
     );
 }
 

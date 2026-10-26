@@ -111,8 +111,10 @@ version = "0.4.0"
 dependencies = [
  "clap",
  "dry4rust-core",
+ "serde",
  "serde_json",
  "tempfile",
+ "toml",
  "walkdir",
 ]
 
@@ -182,9 +184,7 @@ dependencies = [
  "serde",
  "serde_json",
  "syn",
- "tempfile",
  "thiserror",
- "toml",
 ]
 
 [[package]]

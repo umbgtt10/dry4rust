@@ -10,7 +10,6 @@ use dry4rust::cli::command::Command;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust_cli::invocation::output_format::OutputFormat;
-use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
 use std::path::Path;
 
 pub struct DispatchScenario;
@@ -35,7 +34,7 @@ impl DispatchScenario {
             &root,
             reporter.as_ref(),
             CliOverrides::default(),
-            &WalkdirSourceTree,
+            Fixture::ports(),
         );
         match dispatcher.dispatch(command) {
             Ok(outcome) => outcome.into_parts(),

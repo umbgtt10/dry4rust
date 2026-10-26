@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::common::group;
-use crate::common::source_path;
+use crate::support::in_memory_baseline_store::InMemoryBaselineStore;
 use dry4rust::cli::suppression::baseline_constants::FORMAT_VERSION;
 use dry4rust::cli::suppression::baseline_entry::BaselineEntry;
 use dry4rust::cli::suppression::baseline_file::BaselineFile;
@@ -12,17 +12,23 @@ use dry4rust::cli::suppression::baseline_filter::BaselineFilter;
 use dry4rust::cli::suppression::baseline_kind::BaselineKind;
 use dry4rust::config::Config;
 use dry4rust::source_path::SourcePath;
-use tempfile::TempDir;
 
-fn recorded_in(root: &TempDir, entries: Vec<BaselineEntry>) -> Config {
-    let file = BaselineFile::new(FORMAT_VERSION, entries);
-    file.save(&source_path(&root.path().join("dry4rust-baseline.json")))
-        .expect("the baseline is written");
+fn configured() -> Config {
     Config::default()
-        .with_root(source_path(root.path()))
+        .with_root(SourcePath::new(String::from("/p")))
         .with_baseline(Some(SourcePath::new(String::from(
             "dry4rust-baseline.json",
         ))))
+}
+
+fn recorded_in(store: &InMemoryBaselineStore, entries: Vec<BaselineEntry>) -> Config {
+    let file = BaselineFile::new(FORMAT_VERSION, entries);
+    file.save(
+        store,
+        &SourcePath::new(String::from("/p/dry4rust-baseline.json")),
+    )
+    .expect("the baseline is written");
+    configured()
 }
 
 #[test]
@@ -31,7 +37,8 @@ fn is_in_effect_is_false_when_no_baseline_is_configured() {
     let config = Config::default();
 
     // Act
-    let filter = BaselineFilter::load(&config).expect("no baseline is not a failure");
+    let filter = BaselineFilter::load(&InMemoryBaselineStore::new(), &config)
+        .expect("no baseline is not a failure");
 
     // Assert
     assert!(
@@ -43,11 +50,11 @@ fn is_in_effect_is_false_when_no_baseline_is_configured() {
 #[test]
 fn is_in_effect_is_true_once_one_is_loaded() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    let config = recorded_in(&tmp, Vec::new());
+    let store = InMemoryBaselineStore::new();
+    let config = recorded_in(&store, Vec::new());
 
     // Act
-    let filter = BaselineFilter::load(&config).expect("the baseline loads");
+    let filter = BaselineFilter::load(&store, &config).expect("the baseline loads");
 
     // Assert
     assert!(filter.is_in_effect());
@@ -56,15 +63,10 @@ fn is_in_effect_is_true_once_one_is_loaded() {
 #[test]
 fn load_of_a_baseline_that_is_not_there_fails_rather_than_suppressing_nothing() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    let config = Config::default()
-        .with_root(source_path(tmp.path()))
-        .with_baseline(Some(SourcePath::new(String::from(
-            "dry4rust-baseline.json",
-        ))));
+    let config = configured();
 
     // Act
-    let outcome = BaselineFilter::load(&config);
+    let outcome = BaselineFilter::load(&InMemoryBaselineStore::new(), &config);
 
     // Assert
     assert!(
@@ -91,13 +93,13 @@ fn none_suppresses_nothing_and_says_it_is_not_in_effect() {
 #[test]
 fn retain_new_drops_a_group_the_baseline_recorded() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
+    let store = InMemoryBaselineStore::new();
     let inherited = group(0x1234, &["one", "two"]);
     let config = recorded_in(
-        &tmp,
+        &store,
         vec![BaselineEntry::of(BaselineKind::Exact, &inherited)],
     );
-    let filter = BaselineFilter::load(&config).expect("the baseline loads");
+    let filter = BaselineFilter::load(&store, &config).expect("the baseline loads");
 
     // Act
     let kept = filter.retain_new(BaselineKind::Exact, vec![inherited]);
@@ -109,10 +111,13 @@ fn retain_new_drops_a_group_the_baseline_recorded() {
 #[test]
 fn retain_new_keeps_a_group_recorded_under_another_kind() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
+    let store = InMemoryBaselineStore::new();
     let same = group(0x1234, &["one", "two"]);
-    let config = recorded_in(&tmp, vec![BaselineEntry::of(BaselineKind::SubExact, &same)]);
-    let filter = BaselineFilter::load(&config).expect("the baseline loads");
+    let config = recorded_in(
+        &store,
+        vec![BaselineEntry::of(BaselineKind::SubExact, &same)],
+    );
+    let filter = BaselineFilter::load(&store, &config).expect("the baseline loads");
 
     // Act
     let kept = filter.retain_new(BaselineKind::Exact, vec![same]);
@@ -124,15 +129,15 @@ fn retain_new_keeps_a_group_recorded_under_another_kind() {
 #[test]
 fn retain_new_keeps_a_group_the_baseline_never_saw() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
+    let store = InMemoryBaselineStore::new();
     let config = recorded_in(
-        &tmp,
+        &store,
         vec![BaselineEntry::of(
             BaselineKind::Exact,
             &group(0x1234, &["one", "two"]),
         )],
     );
-    let filter = BaselineFilter::load(&config).expect("the baseline loads");
+    let filter = BaselineFilter::load(&store, &config).expect("the baseline loads");
     let added = group(0x5678, &["three", "four"]);
 
     // Act
@@ -146,15 +151,15 @@ fn retain_new_keeps_a_group_the_baseline_never_saw() {
 #[test]
 fn retain_new_keeps_a_recorded_group_that_has_since_grown() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
+    let store = InMemoryBaselineStore::new();
     let config = recorded_in(
-        &tmp,
+        &store,
         vec![BaselineEntry::of(
             BaselineKind::Exact,
             &group(0x1234, &["one", "two"]),
         )],
     );
-    let filter = BaselineFilter::load(&config).expect("the baseline loads");
+    let filter = BaselineFilter::load(&store, &config).expect("the baseline loads");
 
     // Act
     let kept = filter.retain_new(

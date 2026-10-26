@@ -4,20 +4,13 @@
 // SPDX-License-Identifier: MIT
 
 use std::collections::HashSet;
-use std::fs;
-use std::io;
-use std::io::Error as IoError;
-use std::io::ErrorKind;
-use std::path::Path;
-
-use serde::{Deserialize, Serialize};
-use toml::from_str;
-use toml::to_string_pretty;
 
 use crate::cli::suppression::ignore_entry::IgnoreEntry;
 use crate::duplicate_group::DuplicateGroup;
 use crate::fingerprint::Fingerprint;
 use crate::source_path::SourcePath;
+use crate::storage_failure::StorageFailure;
+use crate::traits::ignore_store::IgnoreStore;
 
 const IGNORE_FILE_NAME: &str = ".dry4rust-ignore.toml";
 
@@ -26,33 +19,27 @@ const IGNORE_FILE_NAME: &str = ".dry4rust-ignore.toml";
 /// Every operation that changes the file takes it by value and hands back the
 /// changed one, so a caller cannot half-apply a change and cannot be handed a
 /// file that something else is still writing to.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct IgnoreFile {
-    #[serde(default)]
     ignore: Vec<IgnoreEntry>,
 }
 
 impl IgnoreFile {
-    /// Read it, or an empty one if there is nothing readable there.
-    ///
-    /// Unlike a baseline, an absent ignore file is the ordinary case: most
-    /// projects suppress nothing, and that is indistinguishable from a project
-    /// that has not started yet.
-    #[must_use]
-    pub fn load(root: &SourcePath) -> Self {
-        let path = Self::path_in(root);
-        if !Path::new(path.as_str()).exists() {
-            return Self::default();
-        }
-        fs::read_to_string(path.as_str()).map_or_else(
-            |_| Self::default(),
-            |content| from_str(&content).unwrap_or_default(),
-        )
-    }
-
     #[must_use]
     pub const fn new(ignore: Vec<IgnoreEntry>) -> Self {
         Self { ignore }
+    }
+
+    /// Read it from `store`, or an empty one if there is nothing readable
+    /// there.
+    ///
+    /// Unlike a baseline, an absent ignore file is the ordinary case: most
+    /// projects suppress nothing, and that is indistinguishable from a project
+    /// that has not started yet. One the store cannot read or parse is passed
+    /// over the same way.
+    #[must_use]
+    pub fn load(store: &dyn IgnoreStore, root: &SourcePath) -> Self {
+        store.load(&Self::path_in(root)).unwrap_or_default()
     }
 
     /// Whether this fingerprint is suppressed.
@@ -77,10 +64,10 @@ impl IgnoreFile {
     ///
     /// # Errors
     ///
-    /// Returns the I/O error if the file exists and cannot be removed.
-    pub fn remove_from(root: &SourcePath) -> io::Result<()> {
-        match fs::remove_file(Self::path_in(root).as_str()) {
-            Err(e) if e.kind() == ErrorKind::NotFound => Ok(()),
+    /// Returns what the store said if the file exists and cannot be removed.
+    pub fn remove_from(store: &dyn IgnoreStore, root: &SourcePath) -> Result<(), StorageFailure> {
+        match store.remove(&Self::path_in(root)) {
+            Err(StorageFailure::Missing(_)) => Ok(()),
             outcome => outcome,
         }
     }
@@ -104,15 +91,13 @@ impl IgnoreFile {
     ///
     /// # Errors
     ///
-    /// Returns the I/O error if the file cannot be serialized, written or
-    /// removed.
-    pub fn save(&self, root: &SourcePath) -> io::Result<()> {
+    /// Returns what the store said if the file cannot be serialized, written
+    /// or removed.
+    pub fn save(&self, store: &dyn IgnoreStore, root: &SourcePath) -> Result<(), StorageFailure> {
         if self.ignore.is_empty() {
-            return Self::remove_from(root);
+            return Self::remove_from(store, root);
         }
-        let content = to_string_pretty(self)
-            .map_err(|e| IoError::other(format!("Failed to serialize ignore file: {e}")))?;
-        fs::write(Self::path_in(root).as_str(), content)
+        store.save(&Self::path_in(root), self)
     }
 
     /// The entries whose fingerprint no longer matches anything live.

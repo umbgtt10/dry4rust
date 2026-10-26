@@ -168,6 +168,26 @@ where a run is composed rather than by the analysis.
   naming it, where it was analysed under a name it does not have; on Windows,
   paths in the output show `/`, and an exclusion pattern matches with either
   separator.
+- **The files a run reads and writes are ports.** `traits::config_source::ConfigSource`
+  states what a `dry4rust.toml` or a `Cargo.toml`'s `[package.metadata.dry4rust]`
+  says; `traits::ignore_store::IgnoreStore` loads, saves and removes the ignore
+  file; `traits::baseline_store::BaselineStore` loads and saves a baseline. The
+  four storage ports travel together in `cli::ports::Ports`. `Config::load`
+  takes a `&dyn ConfigSource`; `IgnoreFile::{load, save, remove_from}`,
+  `BaselineFile::{load, save}` and `BaselineFilter::load` take their store and
+  fail with `StorageFailure`; the four commands, `AnalysisOutput::{produce,
+  produce_ignoring_baseline}` and `CommandDispatcher::new` take theirs.
+  `Analysis::{analyze, analyze_units}` take the loaded `IgnoreFile` and
+  `BaselineFilter` and no longer return a `Result`. `CliError::Io` carries a
+  `StorageFailure`. `FileConfig` is built with a `with_<field>` step per field
+  and is no longer `Deserialize`, and `BaselineEntry`, `BaselineFile`,
+  `BaselineKind`, `IgnoreEntry` and `IgnoreFile` no longer implement serde's
+  traits: the formats are cli's, `system::{toml_config_source::TomlConfigSource,
+  toml_ignore_store::TomlIgnoreStore, json_baseline_store::JsonBaselineStore}`
+  over records of their own. The rules stay in the core: which file wins,
+  that an unreadable ignore file suppresses nothing and an emptied one is
+  removed, what a missing baseline says and which format it must be in. Core
+  no longer depends on toml or, for its tests, on tempfile.
 
 ## [0.4.0] - 2026-10-10
 

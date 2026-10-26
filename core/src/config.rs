@@ -3,16 +3,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fs;
-
-use toml::Value;
-use toml::from_str;
-
 use crate::analysis_config::AnalysisConfig;
 use crate::error::Result;
-use crate::file_config::FileConfig;
 use crate::source_path::SourcePath;
 use crate::threshold::Threshold;
+use crate::traits::config_source::ConfigSource;
+
+const CONFIG_FILE: &str = "dry4rust.toml";
+const MANIFEST_FILE: &str = "Cargo.toml";
 
 /// Configuration for cargo-dry4rust analysis.
 ///
@@ -88,19 +86,19 @@ impl Config {
     ///
     /// Returns [`crate::error::Error::InvalidConfig`] naming the first field
     /// whose value falls outside the range it allows.
-    pub fn load(root: &SourcePath) -> Result<Self> {
+    pub fn load(source: &dyn ConfigSource, root: &SourcePath) -> Result<Self> {
         let mut config = Self {
             root: root.clone(),
             ..Default::default()
         };
 
         // Cargo.toml metadata first: the lowest-priority file config
-        if let Some(file_config) = Self::from_cargo_metadata(root) {
+        if let Some(file_config) = source.package_metadata(&root.join(MANIFEST_FILE)) {
             config = file_config.apply_to(config)?;
         }
 
         // dry4rust.toml wins over it
-        if let Some(file_config) = Self::from_named_file(root) {
+        if let Some(file_config) = source.file_config(&root.join(CONFIG_FILE)) {
             config = file_config.apply_to(config)?;
         }
 
@@ -268,22 +266,5 @@ impl Config {
             sub_function,
             ..self
         }
-    }
-
-    fn from_cargo_metadata(root: &SourcePath) -> Option<FileConfig> {
-        let content = fs::read_to_string(root.join("Cargo.toml").as_str()).ok()?;
-        from_str::<Value>(&content)
-            .ok()?
-            .get("package")?
-            .get("metadata")?
-            .get("dry4rust")?
-            .clone()
-            .try_into()
-            .ok()
-    }
-
-    fn from_named_file(root: &SourcePath) -> Option<FileConfig> {
-        let content = fs::read_to_string(root.join("dry4rust.toml").as_str()).ok()?;
-        from_str(&content).ok()
     }
 }

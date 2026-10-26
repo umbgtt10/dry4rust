@@ -3,88 +3,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::common::source_path;
+use crate::support::in_memory_config_source::InMemoryConfigSource;
 use dry4rust::config::Config;
+use dry4rust::file_config::FileConfig;
+use dry4rust::source_path::SourcePath;
 use dry4rust::threshold::Threshold;
-use std::fs;
-use tempfile::TempDir;
 
-#[test]
-fn config_with_exclude_tests() {
-    // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("dry4rust.toml"),
-        r"
-        exclude_tests = true
-        ",
-    )
-    .unwrap();
-    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
-
-    // Assert
-    assert!(config.exclude_tests());
-}
-
-#[test]
-fn config_with_min_lines() {
-    // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("dry4rust.toml"),
-        r"
-        min_lines = 5
-        ",
-    )
-    .unwrap();
-    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
-
-    // Assert
-    assert_eq!(config.min_lines(), 5);
-}
-
-#[test]
-fn config_with_percentage_thresholds() {
-    // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("dry4rust.toml"),
-        r"
-        max_exact_percent = 5.0
-        max_near_percent = 10.5
-        ",
-    )
-    .unwrap();
-    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
-
-    // Assert
-    assert_eq!(
-        config.max_exact_percent().map(Threshold::as_percent),
-        Some(5.0)
-    );
-    assert_eq!(
-        config.max_near_percent().map(Threshold::as_percent),
-        Some(10.5)
-    );
-}
-
-#[test]
-fn config_with_thresholds() {
-    // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("dry4rust.toml"),
-        r"
-        max_exact_duplicates = 0
-        max_near_duplicates = 5
-        ",
-    )
-    .unwrap();
-    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
-
-    // Assert
-    assert_eq!(config.max_exact_duplicates(), Some(0));
-    assert_eq!(config.max_near_duplicates(), Some(5));
+fn root() -> SourcePath {
+    SourcePath::new(String::from("/p"))
 }
 
 #[test]
@@ -99,154 +25,84 @@ fn default_returns_the_documented_thresholds() {
 }
 
 #[test]
-fn dry4rust_toml_overrides_cargo_toml() {
-    // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("Cargo.toml"),
-        r#"
-        [package]
-        name = "test"
-        version = "0.1.0"
-        edition = "2021"
-
-        [package.metadata.dry4rust]
-        min_nodes = 15
-        "#,
-    )
-    .unwrap();
-    fs::write(
-        tmp.path().join("dry4rust.toml"),
-        r"
-        min_nodes = 25
-        ",
-    )
-    .unwrap();
-    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
-
-    // Assert
-    assert_eq!(config.min_nodes(), 25);
-}
-
-#[test]
-fn load_from_cargo_toml_metadata() {
-    // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("Cargo.toml"),
-        r#"
-        [package]
-        name = "test"
-        version = "0.1.0"
-        edition = "2021"
-
-        [package.metadata.dry4rust]
-        min_nodes = 15
-        similarity_threshold = 0.75
-        "#,
-    )
-    .unwrap();
-    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
-
-    // Assert
-    assert_eq!(config.min_nodes(), 15);
-    assert!((config.similarity_threshold().as_fraction() - 0.75).abs() < f64::EPSILON);
-}
-
-#[test]
-fn load_from_dry4rust_toml() {
-    // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("dry4rust.toml"),
-        r#"
-        min_nodes = 20
-        similarity_threshold = 0.9
-        exclude = ["tests"]
-        "#,
-    )
-    .unwrap();
-    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
-
-    // Assert
-    assert_eq!(config.min_nodes(), 20);
-    assert!((config.similarity_threshold().as_fraction() - 0.9).abs() < f64::EPSILON);
-    assert_eq!(config.exclude(), vec!["tests".to_string()]);
-}
-
-#[test]
-fn load_no_config_files() {
-    // Arrange & Act
-    let tmp = TempDir::new().unwrap();
-    let config = Config::load(&source_path(tmp.path())).expect("every value is in range");
-
-    // Assert
-    assert_eq!(config.min_nodes(), 10); // default
-}
-
-#[test]
-fn load_over_a_negative_percentage_ceiling_is_rejected() {
+fn load_over_a_stated_value_out_of_range_is_rejected() {
     // Arrange
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("dry4rust.toml"),
-        "max_near_percent = -5.0\n",
-    )
-    .unwrap();
+    let source = InMemoryConfigSource::new().with_file_config(
+        "/p/dry4rust.toml",
+        FileConfig::default().with_max_near_percent(Some(-5.0)),
+    );
 
     // Act
-    let outcome = Config::load(&source_path(tmp.path()));
+    let outcome = Config::load(&source, &root());
 
     // Assert
-    let message = outcome
-        .expect_err("a negative share of lines is not a share")
-        .to_string();
     assert_eq!(
-        message,
+        outcome
+            .expect_err("a negative share of lines is not a share")
+            .to_string(),
         "max_near_percent must be a percentage between 0.0 and 100.0, got -5"
     );
 }
 
 #[test]
-fn load_over_a_similarity_threshold_above_one_names_the_field_and_the_value() {
+fn load_prefers_the_named_file_over_the_package_metadata() {
     // Arrange
-    let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("dry4rust.toml"),
-        "similarity_threshold = 5.0\n",
-    )
-    .unwrap();
+    let source = InMemoryConfigSource::new()
+        .with_package_metadata(
+            "/p/Cargo.toml",
+            FileConfig::default()
+                .with_min_nodes(Some(15))
+                .with_min_lines(Some(4)),
+        )
+        .with_file_config(
+            "/p/dry4rust.toml",
+            FileConfig::default().with_min_nodes(Some(25)),
+        );
 
     // Act
-    let outcome = Config::load(&source_path(tmp.path()));
+    let config = Config::load(&source, &root()).expect("every value is in range");
 
     // Assert
-    let message = outcome
-        .expect_err("no pair can score five, so the run would find nothing and say nothing")
-        .to_string();
+    assert_eq!(config.min_nodes(), 25);
     assert_eq!(
-        message,
-        "similarity_threshold must be a fraction between 0.0 and 1.0, got 5"
+        config.min_lines(),
+        4,
+        "what the named file leaves alone, the metadata keeps"
     );
 }
 
 #[test]
-fn load_over_an_unparseable_file_falls_back_to_the_defaults() {
+fn load_reads_each_file_beside_the_root_it_was_given() {
     // Arrange
-    let tmp = TempDir::new().unwrap();
-    fs::write(tmp.path().join("dry4rust.toml"), "this is not toml = = =\n").unwrap();
+    let source = InMemoryConfigSource::new()
+        .with_package_metadata(
+            "/elsewhere/Cargo.toml",
+            FileConfig::default().with_min_nodes(Some(15)),
+        )
+        .with_file_config(
+            "/elsewhere/dry4rust.toml",
+            FileConfig::default().with_min_lines(Some(4)),
+        );
 
     // Act
-    let config =
-        Config::load(&source_path(tmp.path())).expect("an unreadable file is not a stated value");
+    let config = Config::load(&source, &root()).expect("every value is in range");
 
     // Assert
-    assert_eq!(
-        config.min_nodes(),
-        Config::default().min_nodes(),
-        "a file the tool cannot read looks the same as no file at all; only a \
-         value it can read and cannot honour is an error"
-    );
+    assert_eq!(config.min_nodes(), Config::default().min_nodes());
+    assert_eq!(config.min_lines(), Config::default().min_lines());
+}
+
+#[test]
+fn load_with_no_file_returns_the_defaults_at_the_root_it_was_given() {
+    // Arrange
+    let source = InMemoryConfigSource::new();
+
+    // Act
+    let config = Config::load(&source, &root()).expect("nothing stated is always in range");
+
+    // Assert
+    assert_eq!(config.min_nodes(), 10);
+    assert_eq!(config.root(), &root());
 }
 
 #[test]

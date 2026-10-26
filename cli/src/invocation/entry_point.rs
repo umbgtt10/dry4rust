@@ -10,16 +10,22 @@ use std::process::ExitCode;
 use clap::Error as ClapError;
 use clap::Parser;
 use dry4rust::cli::cli_error::CliError;
+use dry4rust::cli::ports::Ports;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
+use dry4rust::storage_failure::StorageFailure;
 
 use crate::invocation::args::Args;
+use crate::system::json_baseline_store::JsonBaselineStore;
 use crate::system::portable_path::PortablePath;
+use crate::system::toml_config_source::TomlConfigSource;
+use crate::system::toml_ignore_store::TomlIgnoreStore;
 use crate::system::walkdir_source_tree::WalkdirSourceTree;
 
 /// The composition root: the command line in, the report out on stdout and
-/// the errors on stderr, an exit code back. The one place the file system is
-/// chosen; what it composes is the core's, tested without it.
+/// the errors on stderr, an exit code back. The one place the file system and
+/// the formats the files are written in are chosen; everything it composes is
+/// the core's, tested without them.
 pub struct EntryPoint;
 
 impl EntryPoint {
@@ -40,13 +46,17 @@ impl EntryPoint {
         let root = PortablePath::lossy(&args.root());
         let reporter = args.format().reporter(Some(&root));
         let sources = WalkdirSourceTree::new();
-        let dispatcher = CommandDispatcher::new(
-            &analyzer,
-            &root,
-            reporter.as_ref(),
-            args.overrides(),
-            &sources,
-        );
+        let config = TomlConfigSource::new();
+        let ignore = TomlIgnoreStore::new();
+        let baseline = JsonBaselineStore::new();
+        let ports = Ports {
+            sources: &sources,
+            config: &config,
+            ignore: &ignore,
+            baseline: &baseline,
+        };
+        let dispatcher =
+            CommandDispatcher::new(&analyzer, &root, reporter.as_ref(), args.overrides(), ports);
         match dispatcher.dispatch(&args.command()) {
             Ok(outcome) => {
                 let stdout = io::stdout();
@@ -59,7 +69,7 @@ impl EntryPoint {
                         Ok(()) => ExitCode::SUCCESS,
                         Err(e) => Self::reported(e),
                     },
-                    Err(e) => Self::reported(&CliError::Io(e)),
+                    Err(e) => Self::reported(&CliError::Io(StorageFailure::Failed(e.to_string()))),
                 }
             }
             Err(e) => Self::reported(&e),

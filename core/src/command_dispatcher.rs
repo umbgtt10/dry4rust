@@ -17,10 +17,10 @@ use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_command::IgnoreCommand;
 use crate::cli::ignored_command::IgnoredCommand;
 use crate::cli::output::reporter::Reporter;
+use crate::cli::ports::Ports;
 use crate::cli::report_command::ReportCommand;
 use crate::cli::stats_command::StatsCommand;
 use crate::source_path::SourcePath;
-use crate::traits::source_tree::SourceTree;
 
 /// Routes a parsed [`Command`] to the type that serves it.
 ///
@@ -33,7 +33,7 @@ pub struct CommandDispatcher<'a> {
     root: &'a SourcePath,
     reporter: &'a dyn Reporter,
     overrides: CliOverrides,
-    sources: &'a dyn SourceTree,
+    ports: Ports<'a>,
 }
 
 impl<'a> CommandDispatcher<'a> {
@@ -43,14 +43,14 @@ impl<'a> CommandDispatcher<'a> {
         root: &'a SourcePath,
         reporter: &'a dyn Reporter,
         overrides: CliOverrides,
-        sources: &'a dyn SourceTree,
+        ports: Ports<'a>,
     ) -> Self {
         Self {
             analyzer,
             root,
             reporter,
             overrides,
-            sources,
+            ports,
         }
     }
 
@@ -66,8 +66,9 @@ impl<'a> CommandDispatcher<'a> {
             Command::Ignore {
                 fingerprint,
                 reason,
-            } => IgnoreCommand::new(self.root, fingerprint, reason.as_deref()).run(),
-            Command::Ignored => IgnoredCommand::new(self.root).run(),
+            } => IgnoreCommand::new(self.ports.ignore, self.root, fingerprint, reason.as_deref())
+                .run(),
+            Command::Ignored => IgnoredCommand::new(self.ports.ignore, self.root).run(),
             _ => self.dispatch_analysed(command),
         }
     }
@@ -76,12 +77,12 @@ impl<'a> CommandDispatcher<'a> {
         let output = if matches!(command, Command::Baseline { .. }) {
             AnalysisOutput::produce_ignoring_baseline(
                 self.analyzer,
-                self.sources,
+                &self.ports,
                 self.root,
                 &self.overrides,
             )?
         } else {
-            AnalysisOutput::produce(self.analyzer, self.sources, self.root, &self.overrides)?
+            AnalysisOutput::produce(self.analyzer, &self.ports, self.root, &self.overrides)?
         };
         Self::report_warnings(&output);
         self.render(command, &output)
@@ -108,11 +109,16 @@ impl<'a> CommandDispatcher<'a> {
                 CheckCommand::new(output.config(), output.result(), reporter, &thresholds).run()
             }
             Command::Cleanup { dry_run } => {
-                CleanupCommand::new(self.root, output.result(), *dry_run).run()
+                CleanupCommand::new(self.ports.ignore, self.root, output.result(), *dry_run).run()
             }
-            Command::Baseline { dry_run } => {
-                BaselineCommand::new(self.root, output.config(), output.result(), *dry_run).run()
-            }
+            Command::Baseline { dry_run } => BaselineCommand::new(
+                self.ports.baseline,
+                self.root,
+                output.config(),
+                output.result(),
+                *dry_run,
+            )
+            .run(),
             Command::Ignore { .. } | Command::Ignored => unreachable!(),
         }
     }

@@ -3,8 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use serde::{Deserialize, Serialize};
-
 use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::duplicate_group::DuplicateGroup;
 
@@ -18,7 +16,7 @@ use crate::duplicate_group::DuplicateGroup;
 ///
 /// `names` is decoration, and deliberately so: a baseline nobody can read is a
 /// baseline nobody audits. Nothing matches on it.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BaselineEntry {
     /// Which set of groups this was recorded from.
     kind: BaselineKind,
@@ -27,7 +25,6 @@ pub struct BaselineEntry {
     /// How many members the group had when it was recorded.
     members: usize,
     /// What those members were called, for a reader.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     names: Vec<String>,
 }
 

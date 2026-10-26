@@ -3,8 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use serde::Deserialize;
-
 use crate::config::Config;
 use crate::error::Result;
 use crate::source_path::SourcePath;
@@ -15,9 +13,10 @@ use crate::threshold::Threshold;
 /// Every field is optional, because a file states what it wants changed and
 /// says nothing about the rest. Turning that into a [`Config`] is where the
 /// ranges are checked, so a value that cannot be honoured is refused at the
-/// point it is read rather than carried further.
-#[derive(Debug, Deserialize, Default)]
-#[serde(default)]
+/// point it is read rather than carried further. Reading the file is a
+/// [`crate::traits::config_source::ConfigSource`]'s; it builds one of these
+/// with a step per field it found.
+#[derive(Debug, Clone, Default)]
 pub struct FileConfig {
     min_nodes: Option<usize>,
     similarity_threshold: Option<f64>,
@@ -30,7 +29,7 @@ pub struct FileConfig {
     exclude_tests: Option<bool>,
     sub_function: Option<bool>,
     min_sub_nodes: Option<usize>,
-    baseline: Option<String>,
+    baseline: Option<SourcePath>,
 }
 
 impl FileConfig {
@@ -78,8 +77,92 @@ impl FileConfig {
             config = config.with_min_sub_nodes(v);
         }
         if let Some(ref v) = self.baseline {
-            config = config.with_baseline(Some(SourcePath::new(v.clone())));
+            config = config.with_baseline(Some(v.clone()));
         }
         Ok(config)
+    }
+
+    #[must_use]
+    pub fn with_baseline(self, baseline: Option<SourcePath>) -> Self {
+        Self { baseline, ..self }
+    }
+
+    #[must_use]
+    pub fn with_exclude(self, exclude: Option<Vec<String>>) -> Self {
+        Self { exclude, ..self }
+    }
+
+    #[must_use]
+    pub fn with_exclude_tests(self, exclude_tests: Option<bool>) -> Self {
+        Self {
+            exclude_tests,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_max_exact_duplicates(self, max_exact_duplicates: Option<usize>) -> Self {
+        Self {
+            max_exact_duplicates,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_max_exact_percent(self, max_exact_percent: Option<f64>) -> Self {
+        Self {
+            max_exact_percent,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_max_near_duplicates(self, max_near_duplicates: Option<usize>) -> Self {
+        Self {
+            max_near_duplicates,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_max_near_percent(self, max_near_percent: Option<f64>) -> Self {
+        Self {
+            max_near_percent,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_min_lines(self, min_lines: Option<usize>) -> Self {
+        Self { min_lines, ..self }
+    }
+
+    #[must_use]
+    pub fn with_min_nodes(self, min_nodes: Option<usize>) -> Self {
+        Self { min_nodes, ..self }
+    }
+
+    #[must_use]
+    pub fn with_min_sub_nodes(self, min_sub_nodes: Option<usize>) -> Self {
+        Self {
+            min_sub_nodes,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_similarity_threshold(self, similarity_threshold: Option<f64>) -> Self {
+        Self {
+            similarity_threshold,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_sub_function(self, sub_function: Option<bool>) -> Self {
+        Self {
+            sub_function,
+            ..self
+        }
     }
 }

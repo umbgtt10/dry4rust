@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fmt::Write as _;
+use core::fmt::Write as _;
 
 use crate::analysis::Analysis;
 use crate::cli::cli_error::CliError;
@@ -12,6 +12,7 @@ use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::suppression::baseline_file::BaselineFile;
 use crate::config::Config;
 use crate::source_path::SourcePath;
+use crate::traits::baseline_store::BaselineStore;
 
 /// `baseline`: record the duplication that is already there.
 ///
@@ -20,6 +21,7 @@ use crate::source_path::SourcePath;
 /// every group found, so a later `check` fails on what is added rather than on
 /// what was found.
 pub struct BaselineCommand<'a> {
+    store: &'a dyn BaselineStore,
     root: &'a SourcePath,
     config: &'a Config,
     result: &'a Analysis,
@@ -29,12 +31,14 @@ pub struct BaselineCommand<'a> {
 impl<'a> BaselineCommand<'a> {
     #[must_use]
     pub const fn new(
+        store: &'a dyn BaselineStore,
         root: &'a SourcePath,
         config: &'a Config,
         result: &'a Analysis,
         dry_run: bool,
     ) -> Self {
         Self {
+            store,
             root,
             config,
             result,
@@ -75,7 +79,7 @@ impl<'a> BaselineCommand<'a> {
             return Ok(CommandOutcome::succeeded(out));
         }
 
-        if let Err(error) = recorded.save(&path) {
+        if let Err(error) = recorded.save(self.store, &path) {
             return Ok(CommandOutcome::new(out, Err(CliError::Analysis(error))));
         }
         let _ = writeln!(out, "Recorded {} groups in {}.", recorded.len(), path);

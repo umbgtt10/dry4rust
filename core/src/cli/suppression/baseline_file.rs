@@ -3,15 +3,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fs;
-use std::io::Error as IoError;
-use std::io::ErrorKind;
-use std::path::Path;
-
-use serde::{Deserialize, Serialize};
-use serde_json::from_str;
-use serde_json::to_string_pretty;
-
 use crate::analysis::Analysis;
 use crate::cli::suppression::baseline_constants::DEFAULT_BASELINE_FILE;
 use crate::cli::suppression::baseline_constants::FORMAT_VERSION;
@@ -21,9 +12,11 @@ use crate::duplicate_group::DuplicateGroup;
 use crate::error::Error;
 use crate::error::Result;
 use crate::source_path::SourcePath;
+use crate::storage_failure::StorageFailure;
+use crate::traits::baseline_store::BaselineStore;
 
 /// The duplication a codebase already had when the baseline was recorded.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct BaselineFile {
     /// The format the entries are written in.
     version: u32,
@@ -32,41 +25,6 @@ pub struct BaselineFile {
 }
 
 impl BaselineFile {
-    /// Read the baseline at `path`.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`Error::Baseline`] when the file is missing, unreadable,
-    /// malformed, or written in a format this build does not read. A baseline
-    /// that cannot be applied is never treated as an empty one: that would
-    /// quietly turn every inherited finding into a new one.
-    pub fn load(path: &SourcePath) -> Result<Self> {
-        let content = fs::read_to_string(path.as_str()).map_err(|e| Error::Baseline {
-            path: path.clone(),
-            problem: if e.kind() == ErrorKind::NotFound {
-                String::from("no such file; record one with `cargo dry4rust baseline`")
-            } else {
-                e.to_string()
-            },
-        })?;
-        let file: Self = from_str(&content).map_err(|e| Error::Baseline {
-            path: path.clone(),
-            problem: e.to_string(),
-        })?;
-        if file.version == FORMAT_VERSION {
-            Ok(file)
-        } else {
-            Err(Error::Baseline {
-                path: path.clone(),
-                problem: format!(
-                    "written in format {}, this build reads format {FORMAT_VERSION}; \
-                     re-record it with `cargo dry4rust baseline`",
-                    file.version
-                ),
-            })
-        }
-    }
-
     /// Record everything `result` found.
     ///
     /// Entries are ordered by kind and then by fingerprint, so re-recording an
@@ -91,6 +49,38 @@ impl BaselineFile {
         Self {
             version: FORMAT_VERSION,
             entries,
+        }
+    }
+
+    /// Read the baseline at `path` from `store`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Baseline`] when the file is missing, unreadable,
+    /// malformed, or written in a format this build does not read. A baseline
+    /// that cannot be applied is never treated as an empty one: that would
+    /// quietly turn every inherited finding into a new one.
+    pub fn load(store: &dyn BaselineStore, path: &SourcePath) -> Result<Self> {
+        let file = store.load(path).map_err(|failure| Error::Baseline {
+            path: path.clone(),
+            problem: match failure {
+                StorageFailure::Missing(_) => {
+                    String::from("no such file; record one with `cargo dry4rust baseline`")
+                }
+                StorageFailure::Failed(reason) => reason,
+            },
+        })?;
+        if file.version == FORMAT_VERSION {
+            Ok(file)
+        } else {
+            Err(Error::Baseline {
+                path: path.clone(),
+                problem: format!(
+                    "written in format {}, this build reads format {FORMAT_VERSION}; \
+                     re-record it with `cargo dry4rust baseline`",
+                    file.version
+                ),
+            })
         }
     }
 
@@ -135,26 +125,16 @@ impl BaselineFile {
         self.entries.len()
     }
 
-    /// Write the baseline to `path`, creating the directory above it.
+    /// Write the baseline to `path` through `store`.
     ///
     /// # Errors
     ///
-    /// Returns [`Error::Baseline`] if the file cannot be written.
-    pub fn save(&self, path: &SourcePath) -> Result<()> {
-        let problem = |e: IoError| Error::Baseline {
+    /// Returns [`Error::Baseline`] if the store cannot write it.
+    pub fn save(&self, store: &dyn BaselineStore, path: &SourcePath) -> Result<()> {
+        store.save(path, self).map_err(|failure| Error::Baseline {
             path: path.clone(),
-            problem: e.to_string(),
-        };
-        if let Some(parent) = Path::new(path.as_str()).parent()
-            && !parent.as_os_str().is_empty()
-        {
-            fs::create_dir_all(parent).map_err(problem)?;
-        }
-        let json = to_string_pretty(self).map_err(|e| Error::Baseline {
-            path: path.clone(),
-            problem: e.to_string(),
-        })?;
-        fs::write(path.as_str(), format!("{json}\n")).map_err(problem)
+            problem: failure.to_string(),
+        })
     }
 
     #[must_use]

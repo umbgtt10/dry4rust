@@ -7,5 +7,4 @@ pub mod baseline_entry_tests;
 pub mod baseline_file_tests;
 pub mod baseline_filter_tests;
 pub mod baseline_kind_tests;
-pub mod ignore_entry_tests;
 pub mod ignore_file_tests;

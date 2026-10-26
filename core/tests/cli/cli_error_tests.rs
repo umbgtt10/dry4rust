@@ -6,9 +6,8 @@
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::error::Error as AnalysisError;
 use dry4rust::source_path::SourcePath;
+use dry4rust::storage_failure::StorageFailure;
 use std::error::Error;
-use std::io::Error as IoError;
-use std::io::ErrorKind;
 
 #[test]
 fn exit_code_distinguishes_a_failed_check_from_an_internal_error() {
@@ -115,7 +114,7 @@ fn from_an_analysis_error_keeps_it_as_the_source() {
 #[test]
 fn from_an_io_error_keeps_it_as_the_source() {
     // Arrange
-    let io_error = IoError::new(ErrorKind::PermissionDenied, "no");
+    let io_error = StorageFailure::Failed(String::from("no"));
 
     // Act
     let error = CliError::from(io_error);

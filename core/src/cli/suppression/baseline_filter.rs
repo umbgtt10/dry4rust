@@ -8,6 +8,7 @@ use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::config::Config;
 use crate::duplicate_group::DuplicateGroup;
 use crate::error::Result;
+use crate::traits::baseline_store::BaselineStore;
 
 /// Keeps the duplication a baseline did not already account for.
 ///
@@ -26,19 +27,19 @@ impl BaselineFilter {
         Self { recorded: None }
     }
 
-    /// Read the baseline `config` names, if it names one.
+    /// Read the baseline `config` names from `store`, if it names one.
     ///
     /// # Errors
     ///
     /// Returns [`crate::error::Error::Baseline`] when a baseline is named and
     /// cannot be read.
-    pub fn load(config: &Config) -> Result<Self> {
+    pub fn load(store: &dyn BaselineStore, config: &Config) -> Result<Self> {
         let Some(configured) = config.baseline() else {
             return Ok(Self { recorded: None });
         };
         let path = BaselineFile::baseline_path(config.root(), Some(configured));
         Ok(Self {
-            recorded: Some(BaselineFile::load(&path)?),
+            recorded: Some(BaselineFile::load(store, &path)?),
         })
     }
 

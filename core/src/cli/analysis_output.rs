@@ -3,18 +3,18 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::string::ToString;
-
 use crate::analysis::Analysis;
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::cli_overrides::CliOverrides;
+use crate::cli::ports::Ports;
+use crate::cli::suppression::baseline_filter::BaselineFilter;
+use crate::cli::suppression::ignore_file::IgnoreFile;
 use crate::config::Config;
 use crate::error::Error;
 use crate::scanner::Scanner;
 use crate::source_path::SourcePath;
-use crate::traits::source_tree::SourceTree;
 
 /// Everything one analysis run produces: the configuration it ran under and
 /// what it found.
@@ -31,7 +31,7 @@ impl AnalysisOutput {
 
     fn from_config(
         analyzer: &dyn LanguageAnalyzer,
-        sources: &dyn SourceTree,
+        ports: &Ports<'_>,
         config: Config,
     ) -> CliResult<Self> {
         let scanner = Scanner::new(config.root().clone())
@@ -43,16 +43,28 @@ impl AnalysisOutput {
                     .map(ToString::to_string)
                     .collect(),
             );
-        let files = scanner.scan_files(sources).map_err(|failure| Error::Read {
-            path: config.root().clone(),
-            reason: failure.to_string(),
-        })?;
+        let files: Vec<SourcePath> =
+            scanner
+                .scan_files(ports.sources)
+                .map_err(|failure| Error::Read {
+                    path: config.root().clone(),
+                    reason: failure.to_string(),
+                })?;
 
         if files.is_empty() {
             return Err(CliError::NoSourceFiles(config.root().clone()));
         }
 
-        let result = Analysis::analyze(analyzer, sources, &files, &config)?;
+        let ignore_file = IgnoreFile::load(ports.ignore, config.root());
+        let baseline = BaselineFilter::load(ports.baseline, &config)?;
+        let result = Analysis::analyze(
+            analyzer,
+            ports.sources,
+            &files,
+            &config,
+            &ignore_file,
+            &baseline,
+        );
 
         Ok(Self { config, result })
     }
@@ -67,14 +79,14 @@ impl AnalysisOutput {
     /// Returns [`CliError::InvalidConfig`] when the configuration states a
     /// value the tool cannot run under, [`CliError::NoSourceFiles`] when the
     /// scan finds nothing to analyse, and [`CliError::Analysis`] when the
-    /// sources cannot be listed or the pipeline itself fails.
+    /// sources cannot be listed or the baseline cannot be read.
     pub fn produce(
         analyzer: &dyn LanguageAnalyzer,
-        sources: &dyn SourceTree,
+        ports: &Ports<'_>,
         root: &SourcePath,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
-        Self::from_config(analyzer, sources, Self::configure(root, overrides)?)
+        Self::from_config(analyzer, ports, Self::configure(ports, root, overrides)?)
     }
 
     /// The same run, with the baseline left out of it.
@@ -88,13 +100,13 @@ impl AnalysisOutput {
     /// The same as [`AnalysisOutput::produce`], less the baseline.
     pub fn produce_ignoring_baseline(
         analyzer: &dyn LanguageAnalyzer,
-        sources: &dyn SourceTree,
+        ports: &Ports<'_>,
         root: &SourcePath,
         overrides: &CliOverrides,
     ) -> CliResult<Self> {
-        let config = Self::configure(root, overrides)?;
+        let config = Self::configure(ports, root, overrides)?;
         let named = config.baseline().cloned();
-        let output = Self::from_config(analyzer, sources, config.with_baseline(None))?;
+        let output = Self::from_config(analyzer, ports, config.with_baseline(None))?;
         Ok(Self {
             config: output.config.with_baseline(named),
             ..output
@@ -111,8 +123,12 @@ impl AnalysisOutput {
         &self.result
     }
 
-    fn configure(root: &SourcePath, overrides: &CliOverrides) -> CliResult<Config> {
-        Config::load(root)
+    fn configure(
+        ports: &Ports<'_>,
+        root: &SourcePath,
+        overrides: &CliOverrides,
+    ) -> CliResult<Config> {
+        Config::load(ports.config, root)
             .and_then(|config| overrides.apply_to(config))
             .map_err(|e| CliError::InvalidConfig(e.to_string()))
     }

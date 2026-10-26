@@ -5,65 +5,79 @@
 
 use crate::common::group;
 use crate::common::result_with;
-use crate::common::source_path;
+use crate::support::in_memory_baseline_store::InMemoryBaselineStore;
 use dry4rust::cli::baseline_command::BaselineCommand;
 use dry4rust::cli::cli_error::CliError;
-use dry4rust::cli::suppression::baseline_file::BaselineFile;
 use dry4rust::config::Config;
-use std::fs;
-use tempfile::TempDir;
+use dry4rust::source_path::SourcePath;
 
-fn recorded(dry_run: bool) -> (TempDir, String) {
-    let tmp = TempDir::new().expect("temp dir");
+fn path(text: &str) -> SourcePath {
+    SourcePath::new(String::from(text))
+}
+
+fn recorded(dry_run: bool) -> (InMemoryBaselineStore, String) {
+    let store = InMemoryBaselineStore::new();
+    let root = path("/p");
     let result = result_with(
         vec![group(0x11, &["process_data", "compute_total"])],
         vec![],
         vec![],
         vec![],
     );
-    let config = Config::default().with_root(source_path(tmp.path()));
+    let config = Config::default().with_root(root.clone());
 
-    let text = BaselineCommand::new(&source_path(tmp.path()), &config, &result, dry_run)
+    let text = BaselineCommand::new(&store, &root, &config, &result, dry_run)
         .run()
         .expect("recording succeeds")
         .text()
         .to_string();
 
-    (tmp, text)
+    (store, text)
 }
 
 #[test]
-fn run_in_dry_run_names_what_it_would_record_without_writing_it() {
+fn run_in_dry_run_leaves_the_store_untouched() {
     // Arrange & Act
-    let (tmp, text) = recorded(true);
+    let (store, text) = recorded(true);
 
     // Assert
-    assert!(text.contains("1 groups would be recorded"), "{text}");
-    assert!(text.contains("process_data"), "{text}");
-    assert!(!tmp.path().join("dry4rust-baseline.json").exists());
+    assert!(
+        text.contains("1 groups would be recorded in /p/dry4rust-baseline.json."),
+        "{text}"
+    );
+    assert!(!store.holds(&path("/p/dry4rust-baseline.json")));
 }
 
 #[test]
-fn run_outside_dry_run_writes_a_baseline_that_loads_back() {
+fn run_outside_dry_run_hands_the_store_the_recording() {
     // Arrange & Act
-    let (tmp, text) = recorded(false);
+    let (store, text) = recorded(false);
 
     // Assert
-    assert!(text.contains("Recorded 1 groups"), "{text}");
-    let written = BaselineFile::load(&source_path(&tmp.path().join("dry4rust-baseline.json")))
-        .expect("what was written is what this build reads");
+    assert!(
+        text.contains("Recorded 1 groups in /p/dry4rust-baseline.json."),
+        "{text}"
+    );
+    let written = store
+        .held(&path("/p/dry4rust-baseline.json"))
+        .expect("the recording reached the store");
     assert_eq!(written.len(), 1);
+    assert_eq!(
+        written.entries()[0].names(),
+        ["process_data", "compute_total"]
+    );
 }
 
 #[test]
 fn run_over_a_clean_result_records_nothing_and_says_so() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
+    let store = InMemoryBaselineStore::new();
+    let root = path("/p");
     let result = result_with(vec![], vec![], vec![], vec![]);
-    let config = Config::default().with_root(source_path(tmp.path()));
+    let config = Config::default().with_root(root.clone());
 
     // Act
-    let text = BaselineCommand::new(&source_path(tmp.path()), &config, &result, false)
+    let text = BaselineCommand::new(&store, &root, &config, &result, false)
         .run()
         .expect("recording succeeds")
         .text()
@@ -82,8 +96,8 @@ fn run_over_a_clean_result_records_nothing_and_says_so() {
 #[test]
 fn run_with_an_unwritable_baseline_keeps_the_entries_it_listed_and_fails() {
     // Arrange
-    let tmp = TempDir::new().expect("temp dir");
-    fs::write(tmp.path().join("blocker"), "a file, not a directory").expect("blocker");
+    let store = InMemoryBaselineStore::failing("Not a directory (os error 20)");
+    let root = path("/p");
     let result = result_with(
         vec![group(0x11, &["process_data", "compute_total"])],
         vec![],
@@ -91,13 +105,11 @@ fn run_with_an_unwritable_baseline_keeps_the_entries_it_listed_and_fails() {
         vec![],
     );
     let config = Config::default()
-        .with_root(source_path(tmp.path()))
-        .with_baseline(Some(source_path(
-            &tmp.path().join("blocker").join("baseline.json"),
-        )));
+        .with_root(root.clone())
+        .with_baseline(Some(path("/p/blocker/baseline.json")));
 
     // Act
-    let outcome = BaselineCommand::new(&source_path(tmp.path()), &config, &result, false)
+    let outcome = BaselineCommand::new(&store, &root, &config, &result, false)
         .run()
         .expect("the entries are produced before the write is attempted");
 

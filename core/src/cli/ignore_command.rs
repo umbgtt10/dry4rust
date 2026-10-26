@@ -9,9 +9,11 @@ use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::suppression::ignore_file::IgnoreFile;
 use crate::fingerprint::Fingerprint;
 use crate::source_path::SourcePath;
+use crate::traits::ignore_store::IgnoreStore;
 
 /// `ignore`: record one fingerprint as a duplicate that is meant to be there.
 pub struct IgnoreCommand<'a> {
+    store: &'a dyn IgnoreStore,
     root: &'a SourcePath,
     fingerprint: &'a str,
     reason: Option<&'a str>,
@@ -19,8 +21,14 @@ pub struct IgnoreCommand<'a> {
 
 impl<'a> IgnoreCommand<'a> {
     #[must_use]
-    pub const fn new(root: &'a SourcePath, fingerprint: &'a str, reason: Option<&'a str>) -> Self {
+    pub const fn new(
+        store: &'a dyn IgnoreStore,
+        root: &'a SourcePath,
+        fingerprint: &'a str,
+        reason: Option<&'a str>,
+    ) -> Self {
         Self {
+            store,
             root,
             fingerprint,
             reason,
@@ -37,9 +45,9 @@ impl<'a> IgnoreCommand<'a> {
     pub fn run(&self) -> CliResult<CommandOutcome> {
         let fingerprint = Fingerprint::from_hex(self.fingerprint)
             .ok_or_else(|| CliError::InvalidFingerprint(self.fingerprint.to_owned()))?;
-        IgnoreFile::load(self.root)
+        IgnoreFile::load(self.store, self.root)
             .with_ignored(&fingerprint, self.reason.map(ToOwned::to_owned), vec![])
-            .save(self.root)?;
+            .save(self.store, self.root)?;
         Ok(CommandOutcome::succeeded(format!(
             "Added {} to ignore list.\n",
             self.fingerprint

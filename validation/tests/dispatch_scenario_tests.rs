@@ -9,7 +9,6 @@ use dry4rust::cli::command::Command;
 use dry4rust::command_dispatcher::CommandDispatcher;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust_cli::invocation::output_format::OutputFormat;
-use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
 use validation::dispatch_scenario::DispatchScenario;
 use validation::fixture::Fixture;
 
@@ -120,7 +119,7 @@ fn new_stores_the_overrides_it_is_given_and_applies_them_to_the_analysis() {
         &root,
         reporter.as_ref(),
         overrides,
-        &WalkdirSourceTree,
+        Fixture::ports(),
     );
 
     // Act

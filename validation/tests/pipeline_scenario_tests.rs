@@ -9,7 +9,6 @@ use dry4rust::cli::suppression::baseline_file::BaselineFile;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
 use dry4rust::source_path::SourcePath;
-use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
 use std::fs;
 use tempfile::TempDir;
 use validation::fixture::Fixture;
@@ -55,9 +54,10 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     .expect("copy the fixture");
     let judged = PipelineScenario::produced(tmp.path(), &CliOverrides::default());
     BaselineFile::record(judged.result())
-        .save(&Fixture::root_of(
-            &tmp.path().join("dry4rust-baseline.json"),
-        ))
+        .save(
+            Fixture::ports().baseline,
+            &Fixture::root_of(&tmp.path().join("dry4rust-baseline.json")),
+        )
         .expect("the baseline is written");
     let overrides = CliOverrides::default().with_baseline(Some(SourcePath::new(String::from(
         "dry4rust-baseline.json",
@@ -66,7 +66,7 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     // Act
     let recording = AnalysisOutput::produce_ignoring_baseline(
         &RustAnalyzer::new(),
-        &WalkdirSourceTree,
+        &Fixture::ports(),
         &Fixture::root_of(tmp.path()),
         &overrides,
     )
@@ -75,7 +75,7 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
     // Assert
     let judging = AnalysisOutput::produce(
         &RustAnalyzer::new(),
-        &WalkdirSourceTree,
+        &Fixture::ports(),
         &Fixture::root_of(tmp.path()),
         &overrides,
     )

@@ -4,11 +4,12 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::cli::suppression::ignore_entry::IgnoreEntry;
+use dry4rust_cli::system::ignore_entry_record::IgnoreEntryRecord;
 use toml::from_str;
 use toml::to_string_pretty;
 
-fn entry(reason: Option<&str>, members: &[&str]) -> IgnoreEntry {
-    IgnoreEntry {
+fn entry(reason: Option<&str>, members: &[&str]) -> IgnoreEntryRecord {
+    IgnoreEntryRecord {
         fingerprint: String::from("deadbeef12345678"),
         reason: reason.map(ToOwned::to_owned),
         members: members.iter().map(|m| (*m).to_owned()).collect(),
@@ -21,11 +22,27 @@ fn deserialize_defaults_the_two_optional_fields_when_the_file_omits_them() {
     let written = "fingerprint = \"deadbeef12345678\"\n";
 
     // Act
-    let read: IgnoreEntry = from_str(written).expect("a bare fingerprint is a whole entry");
+    let read: IgnoreEntryRecord = from_str(written).expect("a bare fingerprint is a whole entry");
 
     // Assert
     assert_eq!(read.reason, None);
     assert!(read.members.is_empty());
+}
+
+#[test]
+fn from_an_entry_and_back_returns_what_was_recorded() {
+    // Arrange
+    let original = IgnoreEntry {
+        fingerprint: String::from("deadbeef12345678"),
+        reason: Some(String::from("kept")),
+        members: vec![String::from("a")],
+    };
+
+    // Act
+    let back = IgnoreEntry::from(IgnoreEntryRecord::from(&original));
+
+    // Assert
+    assert_eq!(back, original);
 }
 
 #[test]
@@ -51,7 +68,7 @@ fn serialize_then_deserialize_returns_what_was_recorded() {
 
     // Act
     let written = to_string_pretty(&entry).expect("an entry serializes");
-    let read: IgnoreEntry = from_str(&written).expect("and reads back");
+    let read: IgnoreEntryRecord = from_str(&written).expect("and reads back");
 
     // Assert
     assert_eq!(read, entry);

@@ -9,12 +9,13 @@ use std::io;
 
 use crate::error::Error as AnalysisError;
 use crate::source_path::SourcePath;
+use crate::storage_failure::StorageFailure;
 
 /// Errors returned by CLI command functions.
 #[derive(Debug)]
 pub enum CliError {
-    /// An I/O error (exit code 2).
-    Io(io::Error),
+    /// A file could not be read, written or removed (exit code 2).
+    Io(StorageFailure),
     /// No source files found (exit code 2).
     NoSourceFiles(SourcePath),
     /// No recognized source files for language auto-detection (exit code 2).
@@ -86,8 +87,16 @@ impl Error for CliError {
     }
 }
 
+// The reporters' I/O errors, in the words they were given, until the reporters
+// fail with a type of the core's own.
 impl From<io::Error> for CliError {
     fn from(e: io::Error) -> Self {
+        Self::Io(StorageFailure::Failed(e.to_string()))
+    }
+}
+
+impl From<StorageFailure> for CliError {
+    fn from(e: StorageFailure) -> Self {
         Self::Io(e)
     }
 }

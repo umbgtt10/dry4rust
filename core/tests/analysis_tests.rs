@@ -9,6 +9,8 @@
 
 use crate::support::in_memory_source_tree::InMemorySourceTree;
 use dry4rust::analysis::Analysis;
+use dry4rust::cli::suppression::baseline_filter::BaselineFilter;
+use dry4rust::cli::suppression::ignore_file::IgnoreFile;
 use dry4rust::config::Config;
 use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::duplication_stats::DuplicationStats;
@@ -93,8 +95,14 @@ fn analyze_over_a_written_crate_reports_the_duplication_in_it() {
     let config = Config::default().with_root(SourcePath::new(String::from("/project")));
 
     // Act
-    let result = Analysis::analyze(&RustAnalyzer::new(), &sources, &[file], &config)
-        .expect("it analyses cleanly");
+    let result = Analysis::analyze(
+        &RustAnalyzer::new(),
+        &sources,
+        &[file],
+        &config,
+        &IgnoreFile::default(),
+        &BaselineFilter::none(),
+    );
 
     // Assert
     assert_eq!(result.stats().total_code_units(), 2);
@@ -108,8 +116,13 @@ fn analyze_units_over_no_units_reports_nothing_duplicated() {
     let config = Config::default();
 
     // Act
-    let result =
-        Analysis::analyze_units(&[], Vec::new(), &config).expect("empty input is not an error");
+    let result = Analysis::analyze_units(
+        &[],
+        Vec::new(),
+        &config,
+        &IgnoreFile::default(),
+        &BaselineFilter::none(),
+    );
 
     // Assert
     assert_eq!(result.stats().total_code_units(), 0);

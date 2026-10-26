@@ -7,7 +7,6 @@ use crate::fixture::Fixture;
 use dry4rust::cli::analysis_output::AnalysisOutput;
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
-use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
 use std::path::Path;
 
 pub struct PipelineScenario;
@@ -17,7 +16,7 @@ impl PipelineScenario {
     pub fn produced(root: &Path, overrides: &CliOverrides) -> AnalysisOutput {
         AnalysisOutput::produce(
             &RustAnalyzer::new(),
-            &WalkdirSourceTree,
+            &Fixture::ports(),
             &Fixture::root_of(root),
             overrides,
         )

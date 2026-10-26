@@ -3,17 +3,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::fmt;
-
-use serde::{Deserialize, Serialize};
+use core::fmt;
 
 /// Which of the four sets of groups a baseline entry was recorded from.
 ///
 /// Recorded alongside the fingerprint because the four sets are counted and
 /// gated separately, and a fingerprint alone would let a recorded sub-function
 /// duplicate suppress a whole function that happened to hash the same.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BaselineKind {
     Exact,
     Near,

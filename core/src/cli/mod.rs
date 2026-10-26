@@ -16,6 +16,7 @@ pub mod ignore_command;
 pub mod ignore_entry_line;
 pub mod ignored_command;
 pub mod output;
+pub mod ports;
 pub mod report_command;
 pub mod stats_command;
 pub mod suppression;
