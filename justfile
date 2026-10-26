@@ -28,9 +28,10 @@ stage1:
     cargo clippy --workspace --all-targets -- -D warnings
     cargo test --workspace
 
-# House rules, CRAP, mirrored tests and file risk, run in that order. stern
-# runs first because its corrections are renames, file moves and directory
-# splits: a layout it is about to reject is one the other three would have
-# measured for nothing.
+# The technology-free core, house rules, dependencies, duplication, CRAP,
+# mirrored tests and file risk, run in that order. The core's gate runs first
+# because its fix moves code into cli; stern runs next because its corrections
+# are renames, file moves and directory splits: a layout it is about to reject
+# is one the others would have measured for nothing.
 stage2:
     cargo xtask stage2

@@ -2,8 +2,14 @@
 
 ## Status
 
-- **Status:** Accepted
+- **Status:** Accepted; its one-crate half superseded by
+  [ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md) on 2026-10-26
 - **Date:** 2026-08-23
+
+Amended 2026-10-26: one language still holds, and `LanguageAnalyzer` is still
+the seam a second one would plug into. One crate does not: the analysis is
+`dry4rust-core` and the command `cargo-dry4rust`, split so the core can be
+mutation-tested alone, and both analyse Rust only.
 
 ## Context
 
@@ -84,3 +90,4 @@ to `LanguageAnalyzer` with no skip.
 
 - [ADR-ForkedNotCopied](ADR-ForkedNotCopied.md)
 - [ADR-CargoSubcommandPackaging](ADR-CargoSubcommandPackaging.md)
+- [ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md)

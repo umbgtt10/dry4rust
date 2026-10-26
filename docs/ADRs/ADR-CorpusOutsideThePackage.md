@@ -57,6 +57,12 @@ Stage 1 covers the workspace. Stage 2 gates both members: `core` at all
 twenty-one rules, `validation` at first at twenty (see Consequences; it has
 since taken every rule).
 
+Updated 2026-10-26: the published crate is two,
+[ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md) -- `core/` is
+`dry4rust-core` and `cli/` is `cargo-dry4rust`, whose binary validation's
+scenarios run and whose adapters its harness composes. The corpus stays outside
+every member, and both published crates stay free of it.
+
 ## Forcing constraints / Evidence
 
 **Six core mirrors emptied, and every replacement is better.** `StatsCommand`,
@@ -131,8 +137,9 @@ about what core's own tests reach.
 
 ## Enforcement
 
-The packaged artifact is the test: `cargo package` in `core/`, then
-`cargo test` inside `target/package/cargo-dry4rust-<version>/`. It is not part
+The packaged artifact is the test: `cargo package --workspace`, then
+`cargo test` inside each of `target/package/dry4rust-core-<version>/` and
+`target/package/cargo-dry4rust-<version>/`. It is not part
 of either gate, because neither gate builds a tarball -- run it before
 publishing.
 

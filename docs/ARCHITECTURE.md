@@ -9,27 +9,34 @@ matches and compared tree-to-tree for near ones. Nothing is inferred from
 names, comments or formatting, because all three are exactly what a copied
 block changes first.
 
-79 source files, roughly 6,800 lines, one object each and records where
-`record-home` puts them. Five directories group the modules that answer one
-question between them: `src/near_duplicate/`, which only `duplicate_group`
-reaches; `src/suppression/`, the two ways duplication is kept out of a report;
-`src/cli/`, one file per command, with `checking/` and `output/` -- the
-reporters, which only the command line uses -- under it; `src/node/`, the
-normalised tree, the kinds its nodes are named by, and the encoder and the
-placeholder collector that read it; and `src/rust/`, the only
-`LanguageAnalyzer` there is.
+Two published crates. `core/` -- `dry4rust-core`, library `dry4rust` -- is
+the analysis: `#![no_std]`, `#![forbid(unsafe_code)]`, depending on proc-macro2,
+syn and thiserror only, and touching no file system, process, environment or
+format. It declares a trait for everything it needs from the machine, and
+`cli/` -- `cargo-dry4rust`, library `dry4rust_cli` -- implements those traits,
+parses the command line, prints, and returns the exit code. `cli` depends on
+`core`, never the reverse.
+
+`core/src` holds 84 source files, roughly 6,900 lines, one object each and
+records where `record-home` puts them. Five directories group the modules that
+answer one question between them: `near_duplicate/`, which only
+`duplicate_group` reaches; `cli/`, one file per command, with `checking/`,
+`output/` -- the text reporter -- and `suppression/`, the two ways duplication
+is kept out of a report, under it; `node/`, the normalised tree, the kinds its
+nodes are named by, and the encoder and the placeholder collector that read it;
+`rust/`, the only `LanguageAnalyzer` there is; and `traits/`, the ports.
 
 The house rules allow twenty files at the top of `src/` and five directories
-under it. The node kinds, which the library's public API names, each needed a
-file of their own; `src/node/` took the fifth directory slot, freed by moving
-`output/` under `cli/`, and the top holds eighteen files. The next directory
-forces a grouping decision rather than another loose one, which is what the
-limits are for.
+under it, and both are full: nineteen files beside `lib.rs`, and `traits/` took
+the fifth directory slot, freed by moving `suppression/` under `cli/`. The next
+file or directory forces a grouping decision rather than another loose one,
+which is what the limits are for.
 
 ## Pipeline
 
 ```
-  scanner        walk the tree, honour excludes and extensions
+  scanner        the rules of the walk -- which directories to enter, which
+     |           files to keep -- asked by the SourceTree as it walks
      |
      v
   rust::parser   syn -> one CodeUnit per fn / method / closure,
@@ -51,13 +58,13 @@ limits are for.
      |  NearDuplicateFinder       PairScanner picks the pairs worth scoring,
      |                            UnionFind closes them into groups
      v
-  ignore         drop fingerprints listed in .dry4rust-ignore.toml
-     |
+  ignore         drop fingerprints listed in .dry4rust-ignore.toml,
+     |           loaded through the IgnoreStore before the run
      v
   baseline       drop groups a recorded baseline already accounts for,
-     |           and count how many that was
+     |           loaded through the BaselineStore, and count how many that was
      v
-  output         text or json
+  output         a Reporter: text in the core, json in cli
 ```
 
 The two filters are not the same thing. `ignore` drops duplication somebody
@@ -72,7 +79,14 @@ bodies as further units, which then travel the same path.
 
 | module | responsibility |
 |---|---|
-| `scanner` | `Scanner`: walk a root, apply exclude globs and extension filters. |
+| `scanner` | `Scanner`: the rules of the walk -- `descends_into` refuses `target/` and a hidden directory below the root, `admits` takes the extensions and the exclusions -- and `scan_files`, which hands them to a `SourceTree`. |
+| `source_path` | `SourcePath`, a path held as text with `/` as its only separator, compared by component. |
+| `storage_failure` | `StorageFailure`, what a port's storage said: `Missing` or `Failed`, in the platform's words. |
+| `traits::source_tree` | `SourceTree`: the source files under a root, and a file's text. |
+| `traits::config_source` | `ConfigSource`: what a `dry4rust.toml`, or a `Cargo.toml`'s metadata table, states. |
+| `traits::ignore_store` | `IgnoreStore`: the ignore file's load, save and remove. |
+| `traits::baseline_store` | `BaselineStore`: a baseline's load and save. |
+| `traits::reporter` | `Reporter`: five section methods, plus `report` and `report_check` for a whole document, failing with `RenderFailure`. |
 | `analyzer` | `LanguageAnalyzer`, the trait every backend implements. One implementation today. |
 | `rust::parser` | `syn` -> `CodeUnit`, one per function, method and closure. |
 | `rust::code_unit_extractor` | `CodeUnitExtractor`, the visitor that walks a parsed file and keeps each unit over the floors. |
@@ -92,34 +106,49 @@ bodies as further units, which then travel the same path.
 | `near_duplicate::similarity` | The Dice score between two normalised trees. |
 | `near_duplicate::union_find` | Disjoint-set forest turning similar-pairs into groups. |
 | `near_duplicate::similarity_pair` | One scored pair, and the ordered key a symmetric lookup needs. |
-| `suppression::ignore_entry` | One duplicate somebody decided should stay, with their reason. |
-| `suppression::ignore_file` | The ignore file: read, write, add, prune, filter. |
-| `suppression::baseline_kind` | Which of the four group sets an entry was recorded from. |
-| `suppression::baseline_entry` | One recorded group: kind, fingerprint, member count, names. |
-| `suppression::baseline_file` | The file itself -- record, load, save, and where it lives. |
-| `suppression::baseline_filter` | Keeps the groups the baseline does not already account for. |
+| `cli::suppression::ignore_entry` | One duplicate somebody decided should stay, with their reason. |
+| `cli::suppression::ignore_file` | The ignore file: load and save through its store, add, prune, filter; an unreadable one is empty, an emptied one is removed. |
+| `cli::suppression::baseline_kind` | Which of the four group sets an entry was recorded from. |
+| `cli::suppression::baseline_entry` | One recorded group: kind, fingerprint, member count, names. |
+| `cli::suppression::baseline_file` | The file itself -- record, load and save through its store, the format it must be in, and where it lives. |
+| `cli::suppression::baseline_filter` | Keeps the groups the baseline does not already account for. |
 | `threshold` | `Threshold`, a proportion that cannot be built out of range. |
-| `config` | `Config`: what a run is configured with, assembled and range-checked. |
-| `file_config` | What `dry4rust.toml` and `[package.metadata.dry4rust]` may state. |
+| `config` | `Config`: what a run is configured with, assembled from a `ConfigSource` -- the manifest's metadata first, `dry4rust.toml` over it -- and range-checked. |
+| `file_config` | What `dry4rust.toml` and `[package.metadata.dry4rust]` may state, a `with_` step per field. |
 | `analysis_config` | The two floors a language analyzer needs, and nothing else. |
 | `analysis` | `Analysis`, what a run returns, and `Analysis::analyze` and `Analysis::analyze_units` -- the pipeline as one call. |
 | `cli::cli_error` | `CliError` and the exit code each variant maps to. |
-| `cli::command` | The subcommands, as `clap` sees them. |
-| `cli::command_outcome` | What a command produced: the text to print, and the verdict that sets the exit code once it is printed. |
-| `cli::entry_point` | The command line and what it means: which root, which command, which overrides. |
+| `cli::command` | The commands, as the core dispatches them. |
+| `cli::command_outcome` | What a command produced: the text to print, the verdict that sets the exit code once it is printed, and the analysis's warnings. |
 | `cli::cli_overrides` | What the command line said, applied over what the files said. |
-| `cli::output_format` | Text or JSON, and the reporter each builds. |
-| `cli::analysis_output` | One run's config and result, produced together. |
+| `cli::ports` | `Ports`, the four storage ports a run is composed with, handed over in one piece. |
+| `cli::analysis_output` | One run's config and result, produced together: scan, load the suppressions, analyse. |
 | `cli::*_command` | One struct per subcommand, each with a single `run`. |
 | `cli::checking` | `Ceiling`, `CheckThresholds`, `StaleReport` -- what `check` and `cleanup` measure with. |
 | `command_dispatcher` | Routes a parsed `Command` to the type that serves it. |
-| `cli::output::reporter` | `Reporter`: five section methods, plus `report` and `report_check` for a whole document. |
+| `cli::output::render_failure` | `RenderFailure`, a reporter's reason for not writing its document. |
 | `cli::output::report` | What a full report shows, handed over in one piece. |
 | `cli::output::check_breach` | One exceeded ceiling and the groups behind it. |
 | `cli::output::group_section` | One headed section of a text report, and how its groups read. |
 | `cli::output::display_path` | `DisplayPath::of`, a file as a reporter shows it: relative to the base when it lies under one. |
 | `duplication_stats` | `DuplicationStats`, the counts and percentages a report states. |
-| `cli::output` | `text_reporter` and `json_reporter`, the implementations of `Reporter`. |
+| `cli::output::text_reporter` | `TextReporter`, the core's implementation of `Reporter`. |
+
+And in `cli/src`, the crate that talks to the machine:
+
+| module | responsibility |
+|---|---|
+| `invocation::args` | `Args`, the command line and what it means: which root, which command, which overrides, which format. |
+| `invocation::cli_command` | `CliCommand`, the subcommands as `clap` sees them, and the core's `Command` each one is. |
+| `invocation::output_format` | Text or JSON, and the reporter each builds. |
+| `invocation::entry_point` | `EntryPoint`, the composition root: the adapters in `Ports`, the dispatch, and the only printing. |
+| `system::walkdir_source_tree` | `WalkdirSourceTree`, the walk on disk, asking the scanner per directory and per file. |
+| `system::toml_config_source` | `TomlConfigSource`, the two configuration files read as TOML. |
+| `system::toml_ignore_store`, `ignore_document`, `ignore_entry_record` | The ignore file on disk, in TOML, over records of its own. |
+| `system::json_baseline_store`, `baseline_document`, `baseline_entry_record`, `baseline_kind_record` | A baseline on disk, in JSON, over records of its own; the kind a serde mirror of the core's enum. |
+| `system::json_reporter` | `JsonReporter`, the JSON implementation of `Reporter`. |
+| `system::disk_file` | `DiskFile`, one file read, written or removed, with what the platform says as a `StorageFailure`. |
+| `system::portable_path` | `PortablePath`, a platform path or pattern as the core's, `\` turned into `/` on Windows. |
 
 ## Data model
 
@@ -129,7 +158,7 @@ bodies as further units, which then travel the same path.
 pub struct CodeUnit {
     pub kind: CodeUnitKind,       // Function, Method, Closure, IfBranch, MatchArm, LoopBody, Block
     pub name: String,
-    pub file: PathBuf,
+    pub file: SourcePath,
     pub line_start: usize,
     pub line_end: usize,
     pub signature: NormalizedNode,
@@ -168,21 +197,22 @@ extracted fragment can be compared against another extracted fragment.
 
 ## CLI layer
 
-`main` is eleven lines: it hands `argv` to `EntryPoint::run` and returns the
-`ExitCode` that comes back. The mapping from arguments to a run lives in the
-library, so a test can call it, and everything after it is there too:
-`EntryPoint` composes the run -- the analyzer, the root, and the reporter
-`--format` names -- and `CommandDispatcher` splits the two commands that touch
-only the ignore file from the five that need an analysis first, runs the
-analysis once, and hands the result and that reporter to the command struct
-that serves it.
+`cli`'s `main` is eleven lines: it hands `argv` to `EntryPoint::run` and
+returns the `ExitCode` that comes back. `Args` maps the arguments to a run --
+which root, which command, which overrides, which format -- and `EntryPoint`
+composes it: the analyzer, the root as a `SourcePath`, the reporter `--format`
+names, and the four adapters in `Ports`. The core's `CommandDispatcher` splits
+the two commands that touch only the ignore file from the five that need an
+analysis first, runs the analysis once, and hands the result and that reporter
+to the command struct that serves it.
 
 Each command is a type with a constructor and a single `run`, returning a
 `CommandOutcome` -- the text it means to print and the verdict that sets the
-exit code -- rather than printing, so each is driven directly against a fixture
-in tests and its output read back. `EntryPoint` is the one place that writes to
-stdout, and it writes the text before it acts on the verdict, which is how
-`check` prints its report and still exits 1. `baseline` is the one command dispatched through
+exit code -- rather than printing, so each is driven directly against
+in-memory fakes in tests and its output read back. `EntryPoint` is the one
+place that writes: the analysis's warnings to stderr, then the text to
+stdout, and only then does it act on the verdict, which is how `check` prints
+its report and still exits 1. `baseline` is the one command dispatched through
 `AnalysisOutput::produce_ignoring_baseline`: a recording that judged against
 the previous recording would hold only what had been added since, and the
 second run would empty the file.

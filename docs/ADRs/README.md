@@ -3,7 +3,7 @@
 Each ADR documents one load-bearing decision behind `cargo-dry4rust` --
 succinct, self-contained, citable on its own. Like the sibling `crap4rust`,
 `twin4rust` and `iceberg4rust` tools, and unlike the larger `etheram`
-ecosystem repositories, these are not priority-tiered: two crates and a corpus
+ecosystem repositories, these are not priority-tiered: a few crates and a corpus
 have a small enough decision surface that a flat list is sufficient.
 
 Decisions about where this tool is *going* are not here. They are in
@@ -30,3 +30,4 @@ than a record of anything settled.
 | [ADR-OneDocumentPerRun](ADR-OneDocumentPerRun.md) | `--format json` produces one document per run, because the document is the format's business and not the command's -- `report` was several top-level values and `check` printed its verdict as prose between two of them. |
 | [ADR-PlainConstructorsAreTheStructsShape](ADR-PlainConstructorsAreTheStructsShape.md) | A constructor whose body is only its own type built from its parameters is not a code unit, because what its fingerprint matches is the field count -- stern4rust's private-fields rule, now records-and-objects, made hundreds of them, one per object, and a group per arity turned gates red over no copied logic. |
 | [ADR-ThresholdsCarryTheirRange](ADR-ThresholdsCarryTheirRange.md) | Every threshold is a `Threshold`, which cannot be built outside its range -- a similarity of five made the size filter reject every pair and the report say "no near duplicates", which is what a clean codebase says. |
+| [ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md) | The analysis is `dry4rust-core`, `no_std` and free of technology, behind four storage ports and the `Reporter`; `cargo-dry4rust` holds the command line and the adapters -- so mutation testing builds and runs the core alone: 989 mutants, a test binary half the size, no disk. |

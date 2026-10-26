@@ -448,9 +448,13 @@ The scanner automatically:
 **Requirements:** Rust 1.91+ (edition 2024), matching the `rust-version` every
 workspace crate declares.
 
-The repository is a workspace: `core/` is the published crate, `validation/` holds the
-end-to-end tests and the harness they share, `xtask/` runs the stage 2 gates, and
-`fixture/` is the corpus both are pointed at.
+The repository is a workspace of two published crates and two that are not:
+`core/` is `dry4rust-core`, the analysis as a `no_std` library, `dry4rust`, that
+touches no file system, process or format; `cli/` is `cargo-dry4rust`, the
+command, its command line and the adapters that give the core its sources, its
+configuration and its two suppression files; `validation/` holds the end-to-end
+tests and the harness they share; `xtask/` runs the stage 2 gates; and `fixture/`
+is the corpus they are pointed at. A library user depends on `dry4rust-core`.
 
 ```sh
 cargo build          # Build
@@ -464,22 +468,28 @@ the same way on Windows, Linux and macOS:
 
 ```sh
 just stage1   # fmt, clippy under -D warnings across all targets, tests
-just stage2   # stern4rust, dry4rust on itself, crap4rust, twin4rust, iceberg4rust
+just stage2   # technology-free core, stern4rust, cargo-shear, dry4rust on itself,
+              # crap4rust, twin4rust, iceberg4rust
 ```
 
 Stage 1 is cargo built-ins only, so it works on a fresh checkout with none of the
 tools below installed. Note that it lints **test targets too**
-(`--all-targets`) — combined with the `pedantic` and `nursery` groups that `core`
-and `xtask` enable, that holds the test files to the same bar as the sources.
+(`--all-targets`) — combined with the `pedantic` and `nursery` groups that `core`,
+`cli` and `xtask` enable, that holds the test files to the same bar as the sources.
 
 Stage 2 is `cargo xtask stage2`, a real crate rather than a script, so the gate
 argument lists and failure messages are covered by its own integration tests.
 `xtask` is itself a workspace member and is gated like everything else — the
 crate that runs the gates is not exempt from them.
 
-Its second gate is `cargo shear`, every declared dependency used; its third is
-dry4rust run on itself: this checkout's binary, built from
-source rather than installed, over `core/src` with zero ceilings against
+Its first gate keeps the core technology-free: core's manifest names only
+proc-macro2, syn and thiserror, its crate root carries `#![no_std]` and
+`#![forbid(unsafe_code)]`, and nothing under `core/src` or `core/tests` reaches
+the file system, a process, the environment or stdout. Its third gate is
+`cargo shear`, every declared dependency used; its fourth is dry4rust run on
+itself: this checkout's binary, built from source rather than installed, once
+over `core/src` and `cli/src` -- the tests, the corpus, `validation/` and
+`xtask/` excluded by path -- with zero ceilings against
 `dry4rust-baseline.json`, at a floor of 25 AST nodes. A tool that enforces a
 check it does not pass is not worth installing. It needs nothing beyond cargo,
 which is why it is not in the table below.

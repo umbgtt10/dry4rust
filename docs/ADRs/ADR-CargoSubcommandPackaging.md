@@ -20,9 +20,15 @@ and the `[package.metadata.dupes]` manifest key.
 
 ## Decision
 
-The crate publishes as `cargo-dry4rust` with library name `dry4rust`, so cargo
-resolves `cargo dry4rust`. A hidden positional argument absorbs the subcommand
-name cargo re-inserts at `argv[1]`.
+The command publishes as `cargo-dry4rust`, so cargo resolves `cargo dry4rust`.
+A hidden positional argument absorbs the subcommand name cargo re-inserts at
+`argv[1]`.
+
+Since 2026-10-26 ([ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md)) that
+package is `cli/`, with library `dry4rust_cli`, and the analysis library
+`dry4rust` publishes as `dry4rust-core` from `core/`; a release publishes both,
+`dry4rust-core` first. A library user's `use dry4rust::...` reads as it always
+did.
 
 Every user-facing name follows:
 
@@ -77,7 +83,8 @@ commit.
 
 ## Enforcement
 
-`cargo run -- --version` prints `cargo-dry4rust 0.4.0`. The configuration
+`cargo run --bin cargo-dry4rust -- --version` prints `cargo-dry4rust 0.4.0`;
+`cli/tests/invocation/args_tests.rs` holds the command line's tests. The configuration
 tests write `dry4rust.toml` and `[package.metadata.dry4rust]` and would fail
 if the reader and the writer disagreed.
 
@@ -85,3 +92,4 @@ if the reader and the writer disagreed.
 
 - [ADR-SingleCrateSingleLanguage](ADR-SingleCrateSingleLanguage.md)
 - [ADR-ForkedNotCopied](ADR-ForkedNotCopied.md)
+- [ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md)

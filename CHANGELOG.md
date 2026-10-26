@@ -12,9 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The binary changes in one respect: a plain constructor -- a method in an
 inherent impl whose whole body builds its own type from its parameters -- is no
 longer a code unit, so it is neither reported nor counted against a ceiling.
-Its command line, exit codes and file formats are 0.4.0's. The library changes
-more: `core/` modules are renamed, split or moved, and two types renamed,
-so each file is named after its subject; the types with behaviour keep their
+Its command line, exit codes and file formats are 0.4.0's, but at two edges: a
+`.rs` file the scanner keeps whose path is not UTF-8 fails the run naming it,
+and on Windows paths in the output show `/` and an exclusion pattern matches
+with either separator. The library changes more: it is two published crates
+now, `dry4rust-core` -- the analysis, `no_std` and free of technology behind
+ports -- and `cargo-dry4rust`, the command and its adapters; `core/` modules
+are renamed, split or moved, and two types renamed, so each file is named after
+its subject; the types with behaviour keep their
 fields behind getters, two that have none lose theirs, and the reporter is built
 where a run is composed rather than by the analysis.
 
@@ -129,7 +134,8 @@ where a run is composed rather than by the analysis.
   `CommandDispatcher::new` takes the `&dyn Reporter` to write through in place
   of the format, and `EntryPoint` builds that reporter from `--format`. What
   is printed is unchanged.
-- **Two published crates** (docs/CORE_CLI_SPLIT.md). `cargo-dry4rust` is now the
+- **Two published crates** (`docs/history/[IMPLEMENTED] CORE_CLI_SPLIT.md`,
+  ADR-TechnologyFreeCore). `cargo-dry4rust` is now the
   command-line crate, `cli/`: the binary and a library `dry4rust_cli`. The
   analysis library `dry4rust` is published by the new package `dry4rust-core`,
   `core/`, which no longer depends on clap; a dependent switches

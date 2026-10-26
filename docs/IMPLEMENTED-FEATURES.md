@@ -20,6 +20,14 @@ each scenario file, renamed `<scenario>_scenario_tests.rs`, pairs with a
 member with nothing skipped and nothing baselined. The published crate is
 unchanged.
 
+Two published crates (ADR-TechnologyFreeCore). The analysis is `dry4rust-core`,
+library `dry4rust`: `no_std`, free of every technology, with a trait for each
+thing it needs from the machine -- the source tree, the configuration files,
+the ignore file, the baseline and the reports. The command is
+`cargo-dry4rust`, which holds the command line, the adapters and the JSON
+reporter. A stage-2 gate keeps the core technology-free, and cargo-mutants is
+scoped to it. The binary's output and the files it writes are unchanged.
+
 ## Version 0.4.0
 
 The library returns what it used to write. Commands, the dispatcher and the

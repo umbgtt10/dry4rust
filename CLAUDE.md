@@ -10,6 +10,13 @@ It is a fork of [`cargo-dupes`](https://github.com/mpecan/cargo-dupes) by
 Matjaz Domen Pecan, MIT. The engine is his work; `LICENSE` carries both
 copyright notices and every source file repeats them. See `README.md`.
 
+The repository is a workspace of four members. `core/` publishes as
+`dry4rust-core`, library `dry4rust`: the analysis, `no_std` and free of every
+technology. `cli/` publishes as `cargo-dry4rust`, library `dry4rust_cli`: the
+command, its command line and the adapters the core's ports are given.
+`validation/` drives the whole tool against the corpus in `fixture/`, which sits
+outside the workspace; `xtask/` runs the gates.
+
 `docs/ARCHITECTURE.md` maps the code and `docs/FORMULA.md` states the scoring.
 `docs/ADRs/` holds the decisions this repository has settled and what forced
 them; `docs/OPEN_POINTS.md` holds what is known to be wrong with the model,
@@ -49,18 +56,22 @@ Stage 1 is formatting, clippy and tests -- cargo built-ins only, so it works on
 a fresh checkout. It runs with `RUSTFLAGS=-D warnings` and
 `cargo clippy --workspace --all-targets`, which is stricter than a bare
 `cargo test` in two ways: warnings are errors, and test targets are linted too.
-Because `core` and `xtask` both set clippy's `pedantic` and `nursery` groups to
-warn, that combination is what holds the tests to the same bar as the sources.
+Because `core`, `cli` and `xtask` set clippy's `pedantic` and `nursery` groups
+to warn, that combination is what holds the tests to the same bar as the
+sources. Every member forbids `unsafe` in every target, in a `[lints.rust]` of
+its own: core and xtask carry clippy tables of their own, and cargo does not
+combine those with workspace lints.
 
 Stage 2 is `cargo xtask stage2` -- a real crate under `xtask/`, gated like any
 other code, rather than a script. Each gate is a `Gate` implementation
 constructed against a `CommandRunner` trait, so the argument lists and the
-failure messages are covered by `xtask`'s own integration tests. It runs six
-gates, in this order -- five installed cargo subcommands and this checkout's own
-dry4rust, built from source:
+failure messages are covered by `xtask`'s own integration tests. It runs seven
+gates, in this order -- the xtask's own technology-free gate, five installed
+cargo subcommands and this checkout's own dry4rust, built from source:
 
 | gate | asks |
 |---|---|
+| Technology-free core | does `core` still touch no technology |
 | `cargo stern4rust` | do the house coding rules hold |
 | `cargo shear` | is every declared dependency used, in the section that uses it |
 | own duplication (`dry4rust`, from source) | did this change add duplicated code |
@@ -68,11 +79,26 @@ dry4rust, built from source:
 | `cargo twin4rust` | does every source file have a mirrored test file |
 | `cargo iceberg4rust` | is any file's private implementation risk too high |
 
-stern4rust runs **first** because its corrections are renames, file moves and
+The technology-free gate runs **first**. It is the xtask's own -- nothing to
+install -- and asks three things of `core`: that its manifest names only
+`proc-macro2`, `syn` and `thiserror`, in any section (read from
+`cargo metadata --no-deps`; a package missing from the metadata fails); that
+`core/src/lib.rs` carries `#![no_std]` and `#![forbid(unsafe_code)]`, which hand
+`core/src` to the compiler; and that no file under `core/src` or `core/tests`
+reaches `std::{env,fs,io,net,os,process}`, a printing macro, a file-system method
+or `extern crate std`, read with syn so a string literal is data. The `core/src`
+scan is a backstop to the compiler; `core/tests`, where std is linked, depends
+on it. Calls inside a macro's arguments are not seen, and a method of one's own
+named like a file-system one would be flagged -- which is why the ports'
+methods are `source_files`, `read_source`, `load`, `save` and `remove`. Its fix
+is moving code into `cli`, which changes what every gate behind it measures,
+and it takes a second.
+
+stern4rust runs **second** because its corrections are renames, file moves and
 directory splits: a layout it is about to reject is a layout the others would
 have measured for nothing. Its findings are also the cheapest to act on.
 
-cargo-shear runs **second**, after the house rules: its corrections edit
+cargo-shear runs **third**, after the house rules: its corrections edit
 manifests only -- a dependency removed, or moved to the section that uses it --
 so they change nothing the gates behind it measure, and it takes a second. It
 runs `--locked`, reading the lock file and never writing it, and
@@ -85,15 +111,21 @@ today is `proc-macro2`, declared for its `span-locations` feature: the code unit
 extractor reads line numbers from syn's spans, and only that feature gives a
 span its line. Pinned at 1.14.0, as CI installs it.
 
-dry4rust runs **third**, for the same reason: removing a duplicate moves code
+dry4rust runs **fourth**, for the same reason stern4rust runs early: removing a duplicate moves code
 between files, which changes what the three behind it measure. It is this
 checkout's dry4rust, run with `cargo run --bin cargo-dry4rust`, never an
 installed copy. A tool that enforces a check it does not pass is not worth
 installing -- and a duplicate this checkout carries is one it is about to
 publish.
 
-It scans `core/src` only -- tests repeat their arrangement by design, and
-`fixture/` is duplicated on purpose -- and checks with zero ceilings against
+It makes one run from the repository root with the trees it must not judge
+excluded by full path -- `cli/tests` and `core/tests`, which repeat their
+arrangement by design, `fixture/`, which is duplicated on purpose, and
+`validation/` and `xtask/`, which are not published -- so it judges `core/src`
+and `cli/src` together and sees a copy from one into the other. Each exclusion
+is joined below the root a component at a time: dry4rust matches an exclusion as
+a substring of a file's path, and cli gives a pattern the `/` its paths carry.
+It checks with zero ceilings against
 `dry4rust-baseline.json`, the duplication still there when the gate arrived. So
 it fails on what a change adds, not on what it inherited; a duplicate removed is
 admitted, a copy added to a recorded group is not. Exit 1 is the tool's own
@@ -118,9 +150,9 @@ different enums whose strings every fingerprint is computed from.
 Re-record the baseline only to drop groups that are gone, never to admit new
 ones, and at the same floor -- a baseline matches only at the floor it was
 recorded at:
-`cargo run --bin cargo-dry4rust -- dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
+`cargo run --bin cargo-dry4rust -- dry4rust --path "$PWD" --exclude "$PWD/cli/tests" --exclude "$PWD/core/tests" --exclude "$PWD/fixture" --exclude "$PWD/validation" --exclude "$PWD/xtask" --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
 
-All twenty-four of stern4rust's rules apply to every member -- `core`,
+All twenty-four of stern4rust's rules apply to every member -- `core`, `cli`,
 `validation` and `xtask` -- with nothing skipped, nothing selected, nothing
 baselined and nothing unconfigured. `stern4rust.toml` carries no `skip`, no
 `rules`, no `baseline` and no `[package.*]` section, and the report ends
@@ -159,10 +191,10 @@ Stage 1 covers the workspace. The stern gate covers every member, `validation`
 included. `twin4rust` and `iceberg4rust` take every member too, and in `validation` they have source to measure: each harness
 and scenario file is mirrored and scored like core's.
 
-`crap4rust` is the one gate that stays on core. `validation` has source -- the
-harness and the scenario types its tests call -- but crap4rust drives coverage
-with `-p validation`, which does not build core's binary for the tests that
-spawn it. On a clean target they fail outright; on a used one they run whatever
+`crap4rust` measures the two published crates, `core` and `cli`. `validation`
+has source -- the harness and the scenario types its tests call -- but crap4rust
+drives coverage with `-p validation`, which does not build cli's binary for the
+tests that spawn it. On a clean target they fail outright; on a used one they run whatever
 binary an earlier run left behind, which measures nothing about this checkout.
 
 `crap4rust` runs at 15 -- the family's number, with no override and no
@@ -178,7 +210,7 @@ each became a struct in a file of its own with a mirrored test file --
 move is the one taken here: split the function.
 
 `iceberg4rust` runs at 10 rather than the default, and that one is a real bound
--- the worst file is 9.55.
+-- the worst file, `core/src/rust/code_unit_extractor.rs`, is 9.73.
 
 `cargo install cargo-stern4rust`
 `cargo install cargo-crap4rust`
@@ -188,6 +220,26 @@ move is the one taken here: split the function.
 
 cargo-dry4rust is deliberately not in that list; the gate builds it from this
 checkout.
+
+## Technology-free core
+
+`core` touches no technology, so mutation testing it needs nothing but its own
+tests: `.cargo/mutants.toml` scopes cargo-mutants to `core/src`, and each mutant
+runs `dry4rust-core`'s tests only. What the core needs from the machine is a
+trait in `core/src/traits/` -- `SourceTree`, `ConfigSource`, `IgnoreStore`,
+`BaselineStore`, which travel together in `cli::ports::Ports`, and `Reporter` --
+with an in-memory fake under `core/tests/support/`, an adapter in
+`cli/src/system/`, and the adapters composed in `cli`'s `EntryPoint`, the one
+place that prints. A new need takes the same three steps. Paths in the core are
+`SourcePath`s with `/` as their only separator, converted by `cli` at the edge;
+the formats the files are written in, TOML and JSON, are cli's, over records of
+its own. The rules about those files stay in the core: which file wins, what a
+missing baseline says, that an emptied ignore file is removed.
+
+Publishing takes both crates, `dry4rust-core` first: `cargo publish --workspace`
+orders them and skips `validation` and `xtask`, which are `publish = false`, and
+`cargo publish --workspace --dry-run` is the check. The two share one version,
+from `[workspace.package]`.
 
 ## Strict Rules
 
@@ -224,7 +276,7 @@ is worth a test; if it is not, deleting it is the honest answer.
 - one object per file; records where record-home puts them
 - do not use fully qualified paths; use `use` imports instead
 - unit tests are not allowed. Only integration tests are, under `core/tests/`
-  for a single source file, or `validation/tests/` when the subject is the
+  or `cli/tests/` for a single source file, or `validation/tests/` when the subject is the
   whole tool -- a scenario, paired with its `validation/src/<scenario>_scenario.rs`
   -- or one of the harness files beside it
 - no unnecessary comments in code
@@ -244,7 +296,7 @@ is worth a test; if it is not, deleting it is the honest answer.
 
 ## Upstream's lint configuration
 
-`Cargo.toml` keeps upstream's `[lints.clippy]` block: `pedantic` and `nursery`
+`core/Cargo.toml` keeps upstream's `[lints.clippy]` block, and `cli/Cargo.toml` repeats it: `pedantic` and `nursery`
 at warn with a documented allow-list. It is stricter than stage 1's `-D
 warnings` on the default lints, it already passes, and it has caught three
 newly-public functions missing `#[must_use]` during this repository's cleanup.
