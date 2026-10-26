@@ -8,8 +8,8 @@ use std::path::Path;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
+use crate::cli::suppression::ignore_file::IgnoreFile;
 use crate::fingerprint::Fingerprint;
-use crate::suppression::ignore_file::IgnoreFile;
 
 /// `ignore`: record one fingerprint as a duplicate that is meant to be there.
 pub struct IgnoreCommand<'a> {

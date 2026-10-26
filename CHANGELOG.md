@@ -142,6 +142,11 @@ where a run is composed rather than by the analysis.
   `dry4rust_cli::invocation::cli_command::CliCommand`, whose `command()` hands
   it over. The members share one version from `[workspace.package]`, and every
   member forbids `unsafe` in every target.
+- `suppression` moves under `cli`: `dry4rust::suppression::*` is
+  `dry4rust::cli::suppression::*`, the ignore file and the baseline beside the
+  commands that write them. `core/src` holds five subfolders, the most
+  stern4rust's `directory-subfolder-count` allows, and the split needs room for
+  a sixth, `traits/`.
 
 ## [0.4.0] - 2026-10-10
 

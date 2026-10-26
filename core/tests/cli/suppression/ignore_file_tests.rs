@@ -3,12 +3,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::cli::suppression::ignore_file::IgnoreFile;
 use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::literal_kind::LiteralKind;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
-use dry4rust::suppression::ignore_file::IgnoreFile;
 use std::collections::HashSet;
 use std::iter::once;
 use std::path::{Path, PathBuf};

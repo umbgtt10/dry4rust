@@ -5,7 +5,7 @@
 
 use dry4rust::cli::cli_error::CliError;
 use dry4rust::cli::ignore_command::IgnoreCommand;
-use dry4rust::suppression::ignore_file::IgnoreFile;
+use dry4rust::cli::suppression::ignore_file::IgnoreFile;
 use tempfile::TempDir;
 
 #[test]

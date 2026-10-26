@@ -14,13 +14,13 @@ use serde_json::from_str;
 use serde_json::to_string_pretty;
 
 use crate::analysis::Analysis;
+use crate::cli::suppression::baseline_constants::DEFAULT_BASELINE_FILE;
+use crate::cli::suppression::baseline_constants::FORMAT_VERSION;
+use crate::cli::suppression::baseline_entry::BaselineEntry;
+use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::duplicate_group::DuplicateGroup;
 use crate::error::Error;
 use crate::error::Result;
-use crate::suppression::baseline_constants::DEFAULT_BASELINE_FILE;
-use crate::suppression::baseline_constants::FORMAT_VERSION;
-use crate::suppression::baseline_entry::BaselineEntry;
-use crate::suppression::baseline_kind::BaselineKind;
 
 /// The duplication a codebase already had when the baseline was recorded.
 #[derive(Debug, Clone, Serialize, Deserialize)]

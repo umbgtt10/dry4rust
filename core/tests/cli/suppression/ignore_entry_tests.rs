@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::suppression::ignore_entry::IgnoreEntry;
+use dry4rust::cli::suppression::ignore_entry::IgnoreEntry;
 use toml::from_str;
 use toml::to_string_pretty;
 

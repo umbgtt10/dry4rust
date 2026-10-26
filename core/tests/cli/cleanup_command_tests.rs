@@ -6,7 +6,7 @@
 use crate::common::result_with;
 use dry4rust::cli::cleanup_command::CleanupCommand;
 use dry4rust::cli::ignore_command::IgnoreCommand;
-use dry4rust::suppression::ignore_file::IgnoreFile;
+use dry4rust::cli::suppression::ignore_file::IgnoreFile;
 use std::fs;
 use tempfile::TempDir;
 

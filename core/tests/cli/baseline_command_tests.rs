@@ -7,8 +7,8 @@ use crate::common::group;
 use crate::common::result_with;
 use dry4rust::cli::baseline_command::BaselineCommand;
 use dry4rust::cli::cli_error::CliError;
+use dry4rust::cli::suppression::baseline_file::BaselineFile;
 use dry4rust::config::Config;
-use dry4rust::suppression::baseline_file::BaselineFile;
 use std::fs;
 use tempfile::TempDir;
 

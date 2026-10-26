@@ -27,5 +27,4 @@ pub mod scanner_tests;
 pub mod stable_hasher_tests;
 pub mod sub_unit_extractor_tests;
 pub mod sub_unit_tests;
-pub mod suppression;
 pub mod threshold_tests;

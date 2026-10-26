@@ -10,8 +10,8 @@ use crate::analysis::Analysis;
 use crate::cli::cli_error::CliError;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
+use crate::cli::suppression::baseline_file::BaselineFile;
 use crate::config::Config;
-use crate::suppression::baseline_file::BaselineFile;
 
 /// `baseline`: record the duplication that is already there.
 ///

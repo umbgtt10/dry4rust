@@ -5,9 +5,9 @@
 
 use dry4rust::cli::analysis_output::AnalysisOutput;
 use dry4rust::cli::cli_overrides::CliOverrides;
+use dry4rust::cli::suppression::baseline_file::BaselineFile;
 use dry4rust::config::Config;
 use dry4rust::rust::rust_analyzer::RustAnalyzer;
-use dry4rust::suppression::baseline_file::BaselineFile;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;

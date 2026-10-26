@@ -25,5 +25,4 @@ pub mod scanner;
 pub mod stable_hasher;
 pub mod sub_unit;
 pub mod sub_unit_extractor;
-pub mod suppression;
 pub mod threshold;

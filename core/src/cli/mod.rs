@@ -18,3 +18,4 @@ pub mod ignored_command;
 pub mod output;
 pub mod report_command;
 pub mod stats_command;
+pub mod suppression;

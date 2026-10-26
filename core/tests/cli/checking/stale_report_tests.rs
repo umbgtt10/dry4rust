@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::cli::checking::stale_report::StaleReport;
-use dry4rust::suppression::ignore_entry::IgnoreEntry;
+use dry4rust::cli::suppression::ignore_entry::IgnoreEntry;
 
 fn entry(fingerprint: &str) -> IgnoreEntry {
     IgnoreEntry {

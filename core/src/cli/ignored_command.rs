@@ -9,7 +9,7 @@ use std::path::Path;
 use crate::cli::cli_error::CliResult;
 use crate::cli::command_outcome::CommandOutcome;
 use crate::cli::ignore_entry_line::IgnoreEntryLine;
-use crate::suppression::ignore_file::IgnoreFile;
+use crate::cli::suppression::ignore_file::IgnoreFile;
 
 /// `ignored`: list what the ignore file holds.
 pub struct IgnoredCommand<'a> {

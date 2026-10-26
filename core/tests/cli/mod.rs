@@ -17,3 +17,4 @@ pub mod ignored_command_tests;
 pub mod output;
 pub mod report_command_tests;
 pub mod stats_command_tests;
+pub mod suppression;

@@ -5,8 +5,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::duplicate_group::DuplicateGroup;
-use crate::suppression::baseline_kind::BaselineKind;
 
 /// One duplicate group as the baseline recorded it.
 ///

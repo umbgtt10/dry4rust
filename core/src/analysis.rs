@@ -7,6 +7,9 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 
 use crate::analyzer::LanguageAnalyzer;
+use crate::cli::suppression::baseline_filter::BaselineFilter;
+use crate::cli::suppression::baseline_kind::BaselineKind;
+use crate::cli::suppression::ignore_file::IgnoreFile;
 use crate::code_unit::CodeUnit;
 use crate::config::Config;
 use crate::duplicate_group::DuplicateGroup;
@@ -16,9 +19,6 @@ use crate::fingerprint::Fingerprint;
 use crate::node::node_kind::NodeKind;
 use crate::node::normalized_node::NormalizedNode;
 use crate::sub_unit::SubUnit;
-use crate::suppression::baseline_filter::BaselineFilter;
-use crate::suppression::baseline_kind::BaselineKind;
-use crate::suppression::ignore_file::IgnoreFile;
 use std::fs;
 
 /// The result of a full analysis run.

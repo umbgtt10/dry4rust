@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 /// One duplicate somebody decided should stay.
 ///
-/// The counterpart of [`crate::suppression::baseline_entry::BaselineEntry`],
+/// The counterpart of [`crate::cli::suppression::baseline_entry::BaselineEntry`],
 /// and the difference is who writes it. This one is written by a person and
 /// carries a reason in their words; a baseline entry is written by the tool
 /// and read back by it.

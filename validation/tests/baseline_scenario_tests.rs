@@ -4,10 +4,10 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::cli::baseline_command::BaselineCommand;
+use dry4rust::cli::suppression::baseline_constants::FORMAT_VERSION;
+use dry4rust::cli::suppression::baseline_file::BaselineFile;
+use dry4rust::cli::suppression::baseline_kind::BaselineKind;
 use dry4rust::config::Config;
-use dry4rust::suppression::baseline_constants::FORMAT_VERSION;
-use dry4rust::suppression::baseline_file::BaselineFile;
-use dry4rust::suppression::baseline_kind::BaselineKind;
 use predicate::str;
 use predicates::prelude::*;
 use std::fs;
