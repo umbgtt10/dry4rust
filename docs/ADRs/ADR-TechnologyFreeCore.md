@@ -72,12 +72,12 @@ invocations after every step.
 Two published crates, `dry4rust-core` first, sharing one version. A new
 technology need is a trait in `core/src/traits/`, an in-memory fake in
 `core/tests/support/` and an adapter in `cli/src/system/`, composed in
-`EntryPoint`. Paths in the core are `SourcePath`s with `/` as their only
-separator, converted by cli at the edge; a `.rs` file the scanner keeps whose
-path is not UTF-8 fails the run instead of being analysed under a name it does
-not have, and on Windows the output shows `/` and an exclusion pattern matches
-with either separator. `suppression/` moved under the core's `cli/` so the ports
-fit within `directory-subfolder-count`.
+`EntryPoint`. Paths in the core are `SourcePath`s read with `/` as their only
+separator, converted by cli at the edge and shown as they were given; a `.rs`
+file the scanner keeps whose path is not UTF-8 fails the run instead of being
+analysed under a name it does not have, and on Windows an exclusion pattern
+matches with either separator. `suppression/` moved under the core's `cli/` so
+the ports fit within `directory-subfolder-count`.
 
 ## Enforcement
 

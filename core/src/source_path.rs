@@ -3,26 +3,50 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::cmp::Ordering;
 use core::fmt;
 
 // A path held as text, because the core has no `std::path`. `/` is its only
-// separator: the edge that hands paths in normalises the platform's own to it.
-// It compares by component, so `/a/b` and `/a/b/` are one path; `.` and `..`
-// are compared as written, which `std::path` would normalise -- neither walk
-// nor command line hands one over inside a path.
-#[derive(Debug, Clone, Default)]
+// separator: the edge that hands paths in says which character the platform
+// separates with, and the core reads each one as `/`. It keeps the path as it
+// was given too, and shows that: a message naming a path names the one the user
+// typed or the platform listed. It compares by component, so `/a/b` and `/a/b/`
+// are one path; `.` and `..` are compared as written, which `std::path` would
+// normalise -- neither walk nor command line hands one over inside a path.
+#[derive(Debug, Clone)]
 pub struct SourcePath {
     text: String,
+    given: String,
+    separator: char,
 }
 
 impl SourcePath {
     #[must_use]
-    pub const fn new(text: String) -> Self {
-        Self { text }
+    pub fn new(text: String) -> Self {
+        Self::native(text, '/')
+    }
+
+    // The two spellings differ only where `separator` stands for `/`, byte for
+    // byte, so a cut made in one is a cut in the other.
+    #[must_use]
+    pub fn native(given: String, separator: char) -> Self {
+        let text = if separator == '/' {
+            given.clone()
+        } else {
+            given.replace(separator, "/")
+        };
+        Self {
+            text,
+            given,
+            separator,
+        }
+    }
+
+    #[must_use]
+    pub const fn as_given(&self) -> &str {
+        self.given.as_str()
     }
 
     #[must_use]
@@ -47,23 +71,34 @@ impl SourcePath {
             .filter(|name| *name != "..")
     }
 
+    #[must_use]
+    pub fn given_below(&self, base: &Self) -> Option<&str> {
+        let rest = self.strip_prefix(base)?;
+        Some(&self.given[self.given.len() - rest.len()..])
+    }
+
     // Absolute where it starts at a root -- `/`, or a drive such as `C:/` once
-    // the edge has turned a Windows path's separators into `/`. A relative path
-    // is read from wherever it is joined to.
+    // a Windows path's separators are read as `/`. A relative path is read from
+    // wherever it is joined to.
     #[must_use]
     pub fn is_absolute(&self) -> bool {
         self.has_root() || self.has_drive()
     }
 
+    // `name` is spelt the way this path is, and joins it with this path's own
+    // separator, as `std::path` would.
     #[must_use]
     pub fn join(&self, name: &str) -> Self {
-        if self.text.is_empty() || name.starts_with(Self::is_separator) {
-            return Self::new(String::from(name));
+        let named = Self::native(String::from(name), self.separator);
+        if self.text.is_empty() || named.has_root() {
+            return named;
         }
-        if self.text.ends_with(Self::is_separator) {
-            return Self::new(format!("{}{name}", self.text));
+        let mut joined = self.clone();
+        if !self.text.ends_with(Self::is_separator) {
+            joined.text.push('/');
+            joined.given.push(self.separator);
         }
-        Self::new(format!("{}/{name}", self.text))
+        joined.extended(&named)
     }
 
     #[must_use]
@@ -75,9 +110,9 @@ impl SourcePath {
         let cut = trimmed.rfind(Self::is_separator).unwrap_or(0);
         let head = trimmed[..cut].trim_end_matches(Self::is_separator);
         if head.is_empty() && self.has_root() {
-            return Some(Self::new(String::from(&self.text[..1])));
+            return Some(self.cut(1));
         }
-        Some(Self::new(String::from(head)))
+        Some(self.cut(head.len()))
     }
 
     #[must_use]
@@ -104,6 +139,20 @@ impl SourcePath {
             .collect()
     }
 
+    fn cut(&self, end: usize) -> Self {
+        Self {
+            text: String::from(&self.text[..end]),
+            given: String::from(&self.given[..end]),
+            separator: self.separator,
+        }
+    }
+
+    fn extended(mut self, named: &Self) -> Self {
+        self.text.push_str(&named.text);
+        self.given.push_str(&named.given);
+        self
+    }
+
     const fn has_drive(&self) -> bool {
         let bytes = self.text.as_bytes();
         bytes.len() >= 3 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':' && bytes[2] == b'/'
@@ -118,9 +167,15 @@ impl SourcePath {
     }
 }
 
+impl Default for SourcePath {
+    fn default() -> Self {
+        Self::new(String::new())
+    }
+}
+
 impl fmt::Display for SourcePath {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(&self.text)
+        formatter.write_str(&self.given)
     }
 }
 

@@ -17,6 +17,10 @@ record below is the plan as it landed, row by row.
 | S9 `.cargo/mutants.toml` | `c20892d` |
 | S10 docs, and this move | the commit that added this file |
 
+One exception below did not survive the first Windows run of CI: paths in the
+output showing `/` on Windows. The commit after S10 withdrew it, and they show
+as given again, as in 0.4.0.
+
 Tests 718 -> 845 (core 511 -> 510, cli 99, validation 109, xtask 98 -> 127); no
 test deleted. `cargo mutants --list`: 989, all in `dry4rust-core`.
 

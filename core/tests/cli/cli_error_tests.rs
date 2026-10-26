@@ -81,6 +81,18 @@ fn fmt_of_no_recognized_files_says_which_flag_would_resolve_it() {
 }
 
 #[test]
+fn fmt_of_no_source_files_names_a_native_path_as_it_was_given() {
+    // Arrange
+    let error = CliError::NoSourceFiles(SourcePath::native(String::from("C:\\work\\empty"), '\\'));
+
+    // Act
+    let message = error.to_string();
+
+    // Assert
+    assert_eq!(message, "No source files found in C:\\work\\empty");
+}
+
+#[test]
 fn fmt_of_no_source_files_names_the_path_it_looked_in() {
     // Arrange
     let error = CliError::NoSourceFiles(SourcePath::new(String::from("/some/root")));

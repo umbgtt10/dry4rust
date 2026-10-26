@@ -80,7 +80,7 @@ bodies as further units, which then travel the same path.
 | module | responsibility |
 |---|---|
 | `scanner` | `Scanner`: the rules of the walk -- `descends_into` refuses `target/` and a hidden directory below the root, `admits` takes the extensions and the exclusions -- and `scan_files`, which hands them to a `SourceTree`. |
-| `source_path` | `SourcePath`, a path held as text with `/` as its only separator, compared by component. |
+| `source_path` | `SourcePath`, a path held as text with `/` as its only separator, compared by component and shown as it was given. |
 | `storage_failure` | `StorageFailure`, what a port's storage said: `Missing` or `Failed`, in the platform's words. |
 | `traits::source_tree` | `SourceTree`: the source files under a root, and a file's text. |
 | `traits::config_source` | `ConfigSource`: what a `dry4rust.toml`, or a `Cargo.toml`'s metadata table, states. |
@@ -148,7 +148,7 @@ And in `cli/src`, the crate that talks to the machine:
 | `system::json_baseline_store`, `baseline_document`, `baseline_entry_record`, `baseline_kind_record` | A baseline on disk, in JSON, over records of its own; the kind a serde mirror of the core's enum. |
 | `system::json_reporter` | `JsonReporter`, the JSON implementation of `Reporter`. |
 | `system::disk_file` | `DiskFile`, one file read, written or removed, with what the platform says as a `StorageFailure`. |
-| `system::portable_path` | `PortablePath`, a platform path or pattern as the core's, `\` turned into `/` on Windows. |
+| `system::portable_path` | `PortablePath`, a platform path or pattern as the core's, `\` read as `/` on Windows; a path still shows as given. |
 
 ## Data model
 

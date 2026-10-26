@@ -128,6 +128,27 @@ fn source_files_keeps_only_what_the_scanner_admits_where_it_enters() {
 }
 
 #[test]
+fn source_files_shows_each_file_as_the_platform_names_it() {
+    // Arrange
+    let tmp = TempDir::new().unwrap();
+    fs::write(tmp.path().join("lib.rs"), "fn f() {}").unwrap();
+    let scanner = Scanner::new(source_path(tmp.path()));
+
+    // Act
+    let files = WalkdirSourceTree::new()
+        .source_files(&scanner)
+        .expect("every name is UTF-8");
+
+    // Assert
+    let shown: Vec<String> = files.iter().map(ToString::to_string).collect();
+    let expected = tmp.path().join("lib.rs");
+    assert_eq!(
+        shown,
+        vec![expected.to_str().expect("a test path is UTF-8")]
+    );
+}
+
+#[test]
 fn source_files_under_a_root_that_does_not_exist_lists_nothing() {
     // Arrange
     let tmp = TempDir::new().unwrap();

@@ -84,6 +84,31 @@ fn into_units_leaves_out_a_plain_constructor() {
 }
 
 #[test]
+fn into_units_names_a_closure_by_its_file_as_given() {
+    // Arrange
+    let file = parse_file(
+        "fn outer() {\n    let f = |x: i32| {\n        let y = x + 1;\n        y * 2\n    };\n}\n",
+    )
+    .expect("parses");
+    let mut extractor = CodeUnitExtractor::new(
+        SourcePath::native(String::from("C:\\work\\src\\lib.rs"), '\\'),
+        1,
+        0,
+    );
+
+    // Act
+    extractor.visit_file(&file);
+    let units = extractor.into_units();
+
+    // Assert
+    let closure = units
+        .iter()
+        .find(|unit| unit.kind == CodeUnitKind::Closure)
+        .expect("the closure is a unit");
+    assert_eq!(closure.name, "closure at C:\\work\\src\\lib.rs:2");
+}
+
+#[test]
 fn into_units_of_an_extractor_that_visited_nothing_is_empty() {
     // Arrange
     let extractor = CodeUnitExtractor::new(SourcePath::new(String::from("src/alpha.rs")), 1, 0);

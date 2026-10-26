@@ -68,6 +68,18 @@ fn of_a_utf8_path_keeps_its_text() {
 
 // `\` separates only on Windows; elsewhere it is part of a name and must stay.
 #[test]
+fn of_text_shows_a_path_as_it_was_given() {
+    // Arrange
+    let text = "project\\src/lib.rs";
+
+    // Act
+    let source = PortablePath::of_text(text);
+
+    // Assert
+    assert_eq!(source.to_string(), "project\\src/lib.rs");
+}
+
+#[test]
 fn of_text_turns_a_backslash_into_a_slash_only_where_it_separates() {
     // Arrange
     let text = "project\\src\\lib.rs";

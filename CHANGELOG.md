@@ -14,14 +14,13 @@ inherent impl whose whole body builds its own type from its parameters -- is no
 longer a code unit, so it is neither reported nor counted against a ceiling.
 Its command line, exit codes and file formats are 0.4.0's, but at two edges: a
 `.rs` file the scanner keeps whose path is not UTF-8 fails the run naming it,
-and on Windows paths in the output show `/` and an exclusion pattern matches
-with either separator. The library changes more: it is two published crates
-now, `dry4rust-core` -- the analysis, `no_std` and free of technology behind
-ports -- and `cargo-dry4rust`, the command and its adapters; `core/` modules
-are renamed, split or moved, and two types renamed, so each file is named after
-its subject; the types with behaviour keep their
-fields behind getters, two that have none lose theirs, and the reporter is built
-where a run is composed rather than by the analysis.
+and on Windows an exclusion pattern matches with either separator. The library
+changes more: it is two published crates now, `dry4rust-core` -- the analysis,
+`no_std` and free of technology behind ports -- and `cargo-dry4rust`, the
+command and its adapters; `core/` modules are renamed, split or moved, and two
+types renamed, so each file is named after its subject; the types with
+behaviour keep their fields behind getters, two that have none lose theirs, and
+the reporter is built where a run is composed rather than by the analysis.
 
 ### Changed
 - **A plain constructor is not a code unit.** `Self { x, y }`, `Self { start:
@@ -172,8 +171,11 @@ where a run is composed rather than by the analysis.
   `system::walkdir_source_tree::WalkdirSourceTree`; core no longer depends on
   walkdir. A `.rs` file the scanner keeps whose path is not UTF-8 fails the run
   naming it, where it was analysed under a name it does not have; on Windows,
-  paths in the output show `/`, and an exclusion pattern matches with either
-  separator.
+  an exclusion pattern matches with either separator. A `SourcePath` keeps the
+  path as it was given beside its `/` text, and shows that: `native(given,
+  separator)` builds one, `as_given` and `given_below` read it, and every
+  message and report naming a path names it as the user typed it or the
+  platform listed it, as 0.4.0 did.
 - **The files a run reads and writes are ports.** `traits::config_source::ConfigSource`
   states what a `dry4rust.toml` or a `Cargo.toml`'s `[package.metadata.dry4rust]`
   says; `traits::ignore_store::IgnoreStore` loads, saves and removes the ignore

@@ -108,7 +108,7 @@ impl BaselineFile {
     pub fn baseline_path(root: &SourcePath, configured: Option<&SourcePath>) -> SourcePath {
         match configured {
             Some(named) if named.is_absolute() => named.clone(),
-            Some(named) => root.join(named.as_str()),
+            Some(named) => root.join(named.as_given()),
             None => root.join(DEFAULT_BASELINE_FILE),
         }
     }

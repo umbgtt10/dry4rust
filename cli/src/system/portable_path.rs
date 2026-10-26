@@ -8,9 +8,10 @@ use std::path::{MAIN_SEPARATOR, Path};
 use dry4rust::source_path::SourcePath;
 
 // Where a platform path becomes the core's: `/` is the core's only separator, so
-// on Windows each `\` turns into one; on Unix `\` is an ordinary byte of a name
-// and stays. `of` is `None` for a path that is not UTF-8, which the core cannot
-// hold; `lossy` holds it anyway, replacing what is not UTF-8.
+// on Windows the core reads each `\` as one, while the path still shows as it
+// was given; on Unix `\` is an ordinary byte of a name and stays. `of` is
+// `None` for a path that is not UTF-8, which the core cannot hold; `lossy`
+// holds it anyway, replacing what is not UTF-8.
 pub struct PortablePath;
 
 impl PortablePath {
@@ -26,7 +27,7 @@ impl PortablePath {
 
     #[must_use]
     pub fn of_text(text: &str) -> SourcePath {
-        SourcePath::new(Self::pattern(text))
+        SourcePath::native(String::from(text), MAIN_SEPARATOR)
     }
 
     // An exclusion pattern is matched against the core's paths as text, so it

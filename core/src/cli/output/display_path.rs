@@ -13,10 +13,10 @@ impl DisplayPath {
     #[must_use]
     pub fn of<'a>(base: Option<&SourcePath>, path: &'a SourcePath) -> &'a str {
         if let Some(base) = base
-            && let Some(rel) = path.strip_prefix(base)
+            && let Some(rel) = path.given_below(base)
         {
             return rel;
         }
-        path.as_str()
+        path.as_given()
     }
 }

@@ -24,7 +24,7 @@ impl<'a> DiskFile<'a> {
     #[must_use]
     pub fn new(file: &'a SourcePath) -> Self {
         Self {
-            path: Path::new(file.as_str()),
+            path: Path::new(file.as_given()),
         }
     }
 

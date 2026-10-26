@@ -10,6 +10,21 @@ use dry4rust::error::Error;
 use dry4rust::source_path::SourcePath;
 
 #[test]
+fn to_string_of_a_baseline_failure_names_a_native_file_as_given() {
+    // Arrange
+    let failure = Error::Baseline {
+        path: SourcePath::native(String::from("C:\\work\\dry4rust-baseline.json"), '\\'),
+        problem: String::from("denied"),
+    };
+
+    // Act
+    let text = failure.to_string();
+
+    // Assert
+    assert_eq!(text, "baseline C:\\work\\dry4rust-baseline.json: denied");
+}
+
+#[test]
 fn to_string_of_a_parse_failure_names_the_file_and_why() {
     // Arrange
     let failure = Error::Parse {

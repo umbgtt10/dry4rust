@@ -11,6 +11,19 @@ fn path(text: &str) -> SourcePath {
 }
 
 #[test]
+fn as_given_of_a_native_path_keeps_its_own_separators() {
+    // Arrange
+    let windows = SourcePath::native(String::from("C:\\work\\src\\lib.rs"), '\\');
+
+    // Act
+    let given = windows.as_given();
+
+    // Assert
+    assert_eq!(given, "C:\\work\\src\\lib.rs");
+    assert_eq!(windows.as_str(), "C:/work/src/lib.rs");
+}
+
+#[test]
 fn as_str_returns_the_text_it_was_given() {
     // Arrange
     let source = path("/p/src/lib.rs");
@@ -43,6 +56,18 @@ fn default_is_the_empty_path() {
     // Assert
     assert_eq!(empty.as_str(), "");
     assert_eq!(empty.file_name(), None);
+}
+
+#[test]
+fn eq_of_a_native_path_and_its_slashed_text_is_true() {
+    // Arrange
+    let windows = SourcePath::native(String::from("C:\\work\\src"), '\\');
+
+    // Act
+    let same = windows == path("C:/work/src");
+
+    // Assert
+    assert!(same, "two spellings of one path are one path");
 }
 
 #[test]
@@ -104,6 +129,32 @@ fn file_name_of_a_root_returns_none() {
 
     // Assert
     assert_eq!(name, None);
+}
+
+#[test]
+fn given_below_a_base_it_is_not_under_returns_none() {
+    // Arrange
+    let base = SourcePath::native(String::from("C:\\work"), '\\');
+    let file = SourcePath::native(String::from("C:\\elsewhere\\lib.rs"), '\\');
+
+    // Act
+    let rest = file.given_below(&base);
+
+    // Assert
+    assert_eq!(rest, None);
+}
+
+#[test]
+fn given_below_a_native_base_returns_the_rest_as_given() {
+    // Arrange
+    let base = SourcePath::native(String::from("C:\\work"), '\\');
+    let file = SourcePath::native(String::from("C:\\work\\src\\lib.rs"), '\\');
+
+    // Act
+    let rest = file.given_below(&base);
+
+    // Assert
+    assert_eq!(rest, Some("src\\lib.rs"));
 }
 
 #[test]
@@ -173,6 +224,31 @@ fn join_onto_a_directory_adds_the_name_below_it() {
 }
 
 #[test]
+fn join_onto_a_native_path_adds_its_own_separator_to_the_given_text() {
+    // Arrange
+    let windows = SourcePath::native(String::from("C:\\work"), '\\');
+
+    // Act
+    let joined = windows.join("ci/recorded.json");
+
+    // Assert
+    assert_eq!(joined.to_string(), "C:\\work\\ci/recorded.json");
+    assert_eq!(joined.as_str(), "C:/work/ci/recorded.json");
+}
+
+#[test]
+fn join_onto_a_native_path_ending_in_a_slash_adds_no_separator() {
+    // Arrange
+    let windows = SourcePath::native(String::from("C:/work/"), '\\');
+
+    // Act
+    let joined = windows.join("dry4rust-baseline.json");
+
+    // Assert
+    assert_eq!(joined.to_string(), "C:/work/dry4rust-baseline.json");
+}
+
+#[test]
 fn join_onto_a_path_ending_in_a_separator_adds_none() {
     // Arrange & Act
     let joined = path("/p/").join("src");
@@ -206,6 +282,20 @@ fn parent_of_a_name_alone_returns_the_empty_path() {
         parent.map(|parent| String::from(parent.as_str())),
         Some(String::new())
     );
+}
+
+#[test]
+fn parent_of_a_native_path_keeps_its_given_text() {
+    // Arrange
+    let windows = SourcePath::native(String::from("C:\\work\\src\\lib.rs"), '\\');
+
+    // Act
+    let parent = windows.parent();
+
+    // Assert
+    let parent = parent.expect("a file has a directory");
+    assert_eq!(parent.to_string(), "C:\\work\\src");
+    assert_eq!(parent.as_str(), "C:/work/src");
 }
 
 #[test]
@@ -284,4 +374,16 @@ fn to_string_displays_the_text_it_was_given() {
 
     // Assert
     assert_eq!(text, "/p/src/lib.rs");
+}
+
+#[test]
+fn to_string_of_a_native_path_shows_it_as_given() {
+    // Arrange
+    let windows = SourcePath::native(String::from("C:\\work\\src\\lib.rs"), '\\');
+
+    // Act
+    let shown = windows.to_string();
+
+    // Assert
+    assert_eq!(shown, "C:\\work\\src\\lib.rs");
 }

@@ -13,6 +13,7 @@ use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::source_path::SourcePath;
 use dry4rust_cli::system::json_baseline_store::JsonBaselineStore;
+use dry4rust_cli::system::portable_path::PortablePath;
 use dry4rust_cli::system::toml_config_source::TomlConfigSource;
 use dry4rust_cli::system::toml_ignore_store::TomlIgnoreStore;
 use dry4rust_cli::system::walkdir_source_tree::WalkdirSourceTree;
@@ -80,9 +81,5 @@ pub fn result_with(
 /// A path on disk as the core holds it.
 #[must_use]
 pub fn source_path(path: &Path) -> SourcePath {
-    SourcePath::new(
-        path.to_str()
-            .expect("a test path is UTF-8")
-            .replace('\\', "/"),
-    )
+    PortablePath::of(path).expect("a test path is UTF-8")
 }

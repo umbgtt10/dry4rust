@@ -44,7 +44,7 @@ impl SourceTree for WalkdirSourceTree {
 
     fn source_files(&self, scanner: &Scanner) -> Result<Vec<SourcePath>, StorageFailure> {
         let mut files = Vec::new();
-        for entry in WalkDir::new(scanner.root().as_str())
+        for entry in WalkDir::new(scanner.root().as_given())
             .into_iter()
             .filter_entry(|entry| Self::enters(scanner, entry.path()))
             .flatten()

@@ -49,6 +49,28 @@ fn run_in_dry_run_leaves_the_store_untouched() {
 }
 
 #[test]
+fn run_names_the_baseline_below_a_native_root_as_it_was_given() {
+    // Arrange
+    let store = InMemoryBaselineStore::new();
+    let root = SourcePath::native(String::from("C:\\work"), '\\');
+    let result = result_with(vec![], vec![], vec![], vec![]);
+    let config = Config::default().with_root(root.clone());
+
+    // Act
+    let text = BaselineCommand::new(&store, &root, &config, &result, false)
+        .run()
+        .expect("recording succeeds")
+        .text()
+        .to_string();
+
+    // Assert
+    assert_eq!(
+        text,
+        "Recorded 0 groups in C:\\work\\dry4rust-baseline.json.\n"
+    );
+}
+
+#[test]
 fn run_outside_dry_run_hands_the_store_the_recording() {
     // Arrange & Act
     let (store, text) = recorded(false);
