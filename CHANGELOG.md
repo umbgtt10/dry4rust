@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-27
+
 The binary changes in one respect: a plain constructor -- a method in an
 inherent impl whose whole body builds its own type from its parameters -- is no
 longer a code unit, so it is neither reported nor counted against a ceiling.

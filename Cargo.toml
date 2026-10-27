@@ -15,7 +15,7 @@ exclude = ["fixture"]
 
 # One version for every member: the two published crates release together.
 [workspace.package]
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 rust-version = "1.91"
 license = "MIT"
@@ -32,7 +32,7 @@ authors = [
 # code the gates measure rather than whatever is on crates.io. core carries its
 # version because a published cli has to name a registry version of it.
 cargo-dry4rust = { path = "cli" }
-dry4rust-core = { path = "core", version = "0.4.0" }
+dry4rust-core = { path = "core", version = "0.5.0" }
 clap = { version = "4", features = ["derive"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
 serde = { version = "1", features = ["derive"] }
