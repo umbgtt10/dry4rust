@@ -13,6 +13,7 @@ use xtask::boundary::disk_source_files::DiskSourceFiles;
 use xtask::boundary::package_dependencies::PackageDependencies;
 use xtask::crap::crap_report_parser::CrapReportParser;
 use xtask::gates::boundary_gate::BoundaryGate;
+use xtask::gates::cargo_update_gate::CargoUpdateGate;
 use xtask::gates::crap_gate::CrapGate;
 use xtask::gates::deny_gate::DenyGate;
 use xtask::gates::dry_self_gate::DrySelfGate;
@@ -69,11 +70,29 @@ const DRY_MIN_NODES: &str = "25";
 // Reading the real process argv and wiring the concrete runner are the two
 // things no test can reach, so they are all this binary does.
 fn main() -> ExitCode {
-    if args().nth(1).as_deref() == Some("stage2") {
-        run_stage2()
-    } else {
-        eprintln!("usage: cargo xtask stage2");
-        ExitCode::FAILURE
+    match args().nth(1).as_deref() {
+        Some("stage2") => run_stage2(),
+        Some("sync") => run_sync(),
+        _ => {
+            eprintln!("usage: cargo xtask <stage2|sync>");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+// Stage 1's first step: the lock file to the newest compatible versions.
+fn run_sync() -> ExitCode {
+    let runner = SystemCommandRunner::new();
+    let update = CargoUpdateGate::new(&runner, workspace_manifest_path());
+    match Stage2::new(vec![&update]).run() {
+        Ok(()) => {
+            println!("\ndry4rust sync done");
+            ExitCode::SUCCESS
+        }
+        Err(reason) => {
+            eprintln!("\nFailed: {reason}");
+            ExitCode::FAILURE
+        }
     }
 }
 

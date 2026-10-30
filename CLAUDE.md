@@ -62,6 +62,12 @@ sources. Every member forbids `unsafe` in every target, in a `[lints.rust]` of
 its own: core and xtask carry clippy tables of their own, and cargo does not
 combine those with workspace lints.
 
+`just stage1` starts with `just sync`: `cargo update`, every dependency to its
+newest compatible version, in the lock file only, while the tools are in
+development. It needs the network. A requirement in a manifest never moves, so a
+published crate's users can still resolve what they could; what it moves is
+committed on its own. Breaking versions are a separate decision, not taken here.
+
 Stage 2 is `cargo xtask stage2` -- a real crate under `xtask/`, gated like any
 other code, rather than a script. Each gate is a `Gate` implementation
 constructed against a `CommandRunner` trait, so the argument lists and the
