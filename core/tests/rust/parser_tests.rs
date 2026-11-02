@@ -378,6 +378,26 @@ fn parse_source_extracts_closures_as_their_own_units() {
 }
 
 #[test]
+fn parse_source_of_source_that_does_not_parse_names_the_file_and_why() {
+    // Arrange
+    let source = "fn broken( { }";
+    let reason = parse_str::<File>(source)
+        .expect_err("the source does not parse")
+        .to_string();
+
+    // Act
+    let result = parse_source(&path("src/a.rs"), source, 1, 0);
+
+    // Assert
+    assert_eq!(
+        result
+            .expect_err("a source that does not parse is a failure")
+            .to_string(),
+        format!("Failed to parse src/a.rs: {reason}")
+    );
+}
+
+#[test]
 fn parse_source_works() {
     // Arrange & Act
     let file = path("test.rs");

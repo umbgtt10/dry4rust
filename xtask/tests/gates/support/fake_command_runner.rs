@@ -8,9 +8,8 @@ use xtask::process::command_outcome::CommandOutcome;
 use xtask::process::command_runner::CommandRunner;
 use xtask::process::launch_failure::LaunchFailure;
 
-// The seam every gate is constructed against. Lives here, beside the trait it
-// implements, so the gate tests share one fake rather than each growing their
-// own.
+// The seam every gate is constructed against, faked once so the gate tests
+// share one fake rather than each growing their own.
 pub struct FakeCommandRunner {
     available: bool,
     streaming_code: Option<i32>,
@@ -86,72 +85,4 @@ impl CommandRunner for FakeCommandRunner {
             String::new(),
         ))
     }
-}
-
-#[test]
-fn is_available_reports_what_the_implementation_was_given() {
-    // Arrange
-    let runner = FakeCommandRunner::new().with_available(false);
-
-    // Act
-    let available = runner.is_available("cargo-anything");
-
-    // Assert
-    assert!(!available);
-}
-
-#[test]
-fn run_capturing_returns_the_canned_stdout() {
-    // Arrange
-    let runner = FakeCommandRunner::new().with_stdout("payload");
-
-    // Act
-    let outcome = runner.run_capturing("cargo", &[]).expect("capturing");
-
-    // Assert
-    assert_eq!(outcome.stdout(), "payload");
-}
-
-#[test]
-fn run_capturing_with_a_code_of_its_own_answers_with_it_rather_than_the_streaming_one() {
-    // Arrange
-    let runner = FakeCommandRunner::new()
-        .with_streaming_code(Some(1))
-        .with_capturing_code(Some(0));
-
-    // Act
-    let outcome = runner
-        .run_capturing("cargo", &[])
-        .expect("the fake always launches");
-
-    // Assert
-    assert_eq!(outcome.exit_code(), Some(0));
-}
-
-#[test]
-fn run_streaming_records_the_arguments_it_was_called_with() {
-    // Arrange
-    let runner = FakeCommandRunner::new();
-    let args = vec![String::from("first"), String::from("second")];
-
-    // Act
-    let _ = runner.run_streaming("cargo", &args);
-
-    // Assert
-    assert_eq!(runner.calls(), vec![args]);
-}
-
-#[test]
-fn run_streaming_through_a_trait_object_returns_the_canned_code() {
-    // Arrange
-    let runner = FakeCommandRunner::new().with_streaming_code(Some(2));
-    let as_trait_object: &dyn CommandRunner = &runner;
-
-    // Act
-    let code = as_trait_object
-        .run_streaming("cargo", &[])
-        .expect("running");
-
-    // Assert
-    assert_eq!(code, Some(2));
 }

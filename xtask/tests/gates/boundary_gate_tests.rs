@@ -3,8 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::boundary::source_files_tests::InMemorySourceFiles;
-use crate::process::command_runner_tests::FakeCommandRunner;
+use crate::gates::support::fake_command_runner::FakeCommandRunner;
+use crate::gates::support::in_memory_source_files::InMemorySourceFiles;
 use std::path::PathBuf;
 use xtask::boundary::boundary_rule::BoundaryRule;
 use xtask::boundary::crate_root_attributes::CrateRootAttributes;

@@ -9,9 +9,9 @@ use std::path::PathBuf;
 use xtask::boundary::source_files::SourceFiles;
 use xtask::boundary::source_read_failure::SourceReadFailure;
 
-// The seam the boundary gate reads source through. Lives here, beside the trait
-// it implements, so the gate's tests share one fake: files held in memory, and a
-// directory it was not given is one it cannot list.
+// The seam the boundary gate reads source through, faked once so the gate's
+// tests share one fake: files held in memory, and a directory it was not given
+// is one it cannot list.
 pub struct InMemorySourceFiles {
     files: BTreeMap<PathBuf, String>,
 }
@@ -62,28 +62,4 @@ impl SourceFiles for InMemorySourceFiles {
         }
         Ok(files)
     }
-}
-
-#[test]
-fn read_of_a_file_it_holds_returns_its_contents() {
-    // Arrange
-    let sources = InMemorySourceFiles::new().with_file("/w/core/src/lib.rs", "pub mod a;");
-
-    // Act
-    let source = sources.read(Path::new("/w/core/src/lib.rs"));
-
-    // Assert
-    assert_eq!(source, Ok(String::from("pub mod a;")));
-}
-
-#[test]
-fn rust_files_of_a_directory_it_holds_nothing_under_returns_a_failure() {
-    // Arrange
-    let sources = InMemorySourceFiles::new();
-
-    // Act
-    let files = sources.rust_files(Path::new("/w/core/src"));
-
-    // Assert
-    assert!(files.is_err());
 }

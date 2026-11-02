@@ -5,7 +5,6 @@
 
 pub mod baseline_document_tests;
 pub mod baseline_entry_record_tests;
-pub mod baseline_kind_record_tests;
 pub mod disk_file_tests;
 pub mod ignore_document_tests;
 pub mod ignore_entry_record_tests;

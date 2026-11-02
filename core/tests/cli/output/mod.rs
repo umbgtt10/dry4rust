@@ -6,5 +6,4 @@
 pub mod display_path_tests;
 pub mod group_section_tests;
 pub mod render_failure_tests;
-pub mod report_tests;
 pub mod text_reporter_tests;

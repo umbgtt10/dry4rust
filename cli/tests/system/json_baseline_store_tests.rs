@@ -8,7 +8,9 @@ use crate::common::result_with;
 use crate::common::source_path;
 use dry4rust::cli::baseline_command::BaselineCommand;
 use dry4rust::cli::suppression::baseline_constants::FORMAT_VERSION;
+use dry4rust::cli::suppression::baseline_entry::BaselineEntry;
 use dry4rust::cli::suppression::baseline_file::BaselineFile;
+use dry4rust::cli::suppression::baseline_kind::BaselineKind;
 use dry4rust::config::Config;
 use dry4rust::traits::baseline_store::BaselineStore;
 use dry4rust_cli::system::json_baseline_store::JsonBaselineStore;
@@ -86,6 +88,38 @@ fn load_of_a_missing_baseline_names_the_command_that_would_record_one() {
     let message = outcome.expect_err("nothing is there to load").to_string();
     assert!(message.contains("no such file"), "{message}");
     assert!(message.contains("cargo dry4rust baseline"), "{message}");
+}
+
+#[test]
+fn load_of_what_save_wrote_reads_back_every_kind() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    let file = source_path(&tmp.path().join("dry4rust-baseline.json"));
+    let recorded = BaselineFile::record(&result_with(
+        vec![group(0x11, &["a", "b"])],
+        vec![group(0x22, &["c", "d"])],
+        vec![group(0x33, &["e", "f"])],
+        vec![group(0x44, &["g", "h"])],
+    ));
+    JsonBaselineStore::new()
+        .save(&file, &recorded)
+        .expect("written");
+
+    // Act
+    let loaded = JsonBaselineStore::new().load(&file).expect("read back");
+
+    // Assert
+    let kinds: Vec<BaselineKind> = loaded.entries().iter().map(BaselineEntry::kind).collect();
+    assert_eq!(
+        kinds,
+        vec![
+            BaselineKind::Exact,
+            BaselineKind::Near,
+            BaselineKind::SubExact,
+            BaselineKind::SubNear,
+        ]
+    );
+    assert_eq!(loaded.entries(), recorded.entries());
 }
 
 #[test]
@@ -183,5 +217,32 @@ fn save_where_the_parent_is_a_file_reports_the_failure() {
     assert!(
         message.contains("baseline"),
         "a write that failed says which file it was, got: {message}"
+    );
+}
+
+#[test]
+fn save_writes_a_kind_by_its_name_rather_than_its_position() {
+    // Arrange
+    let tmp = TempDir::new().expect("temp dir");
+    let file = tmp.path().join("dry4rust-baseline.json");
+    let recorded = BaselineFile::record(&result_with(
+        vec![],
+        vec![],
+        vec![group(0x11, &["a", "b"])],
+        vec![],
+    ));
+
+    // Act
+    JsonBaselineStore::new()
+        .save(&source_path(&file), &recorded)
+        .expect("written");
+
+    // Assert
+    let written = fs::read_to_string(&file).expect("read back");
+    assert_eq!(
+        written,
+        "{\n  \"version\": 1,\n  \"entries\": [\n    {\n      \"kind\": \"sub_exact\",\n      \"fingerprint\": \"0000000000000011\",\n      \"members\": 2,\n      \"names\": [\n        \"a\",\n        \"b\"\n      ]\n    }\n  ]\n}\n",
+        "a persisted file cannot rest on the order the variants happen to be \
+         declared in; reordering them would silently repoint every entry"
     );
 }

@@ -8,7 +8,6 @@
 // rewriting unrelated tests.
 #![allow(clippy::assert_is_empty)]
 
-pub mod analysis_config_tests;
 pub mod analysis_tests;
 pub mod cli;
 pub mod code_unit_kind_tests;
@@ -17,7 +16,6 @@ pub mod common;
 pub mod config_tests;
 pub mod duplicate_group_tests;
 pub mod duplication_stats_tests;
-pub mod error_tests;
 pub mod file_config_tests;
 pub mod fingerprint_tests;
 pub mod near_duplicate;

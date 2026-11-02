@@ -5,7 +5,6 @@
 
 pub mod baseline_document;
 pub mod baseline_entry_record;
-pub mod baseline_kind_record;
 pub mod disk_file;
 pub mod ignore_document;
 pub mod ignore_entry_record;

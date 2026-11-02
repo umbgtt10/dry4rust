@@ -4,6 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::in_memory_config_source::InMemoryConfigSource;
+use dry4rust::analysis_config::AnalysisConfig;
 use dry4rust::config::Config;
 use dry4rust::file_config::FileConfig;
 use dry4rust::source_path::SourcePath;
@@ -11,6 +12,30 @@ use dry4rust::threshold::Threshold;
 
 fn root() -> SourcePath {
     SourcePath::new(String::from("/p"))
+}
+
+#[test]
+fn analysis_config_carries_only_the_two_floors_a_parser_needs() {
+    // Arrange
+    let config = Config::default()
+        .with_min_nodes(7)
+        .with_min_lines(3)
+        .with_sub_function(true)
+        .with_exclude_tests(true);
+
+    // Act
+    let analysis = config.analysis_config();
+
+    // Assert
+    assert_eq!(
+        analysis,
+        AnalysisConfig {
+            min_nodes: 7,
+            min_lines: 3
+        },
+        "a backend turns source into code units; nothing else in Config is its \
+         business"
+    );
 }
 
 #[test]

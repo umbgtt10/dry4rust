@@ -169,6 +169,23 @@ fn save_hands_the_store_the_recording() {
 }
 
 #[test]
+fn save_through_a_store_that_fails_names_a_native_baseline_as_given() {
+    // Arrange
+    let store = InMemoryBaselineStore::failing("denied");
+    let recorded = BaselineFile::new(FORMAT_VERSION, Vec::new());
+    let native = SourcePath::native(String::from("C:\\work\\dry4rust-baseline.json"), '\\');
+
+    // Act
+    let outcome = recorded.save(&store, &native);
+
+    // Assert
+    assert_eq!(
+        outcome.expect_err("the store refused it").to_string(),
+        "baseline C:\\work\\dry4rust-baseline.json: denied"
+    );
+}
+
+#[test]
 fn save_through_a_store_that_fails_names_the_baseline() {
     // Arrange
     let store = InMemoryBaselineStore::failing("Not a directory (os error 20)");

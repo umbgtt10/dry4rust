@@ -7,8 +7,6 @@ use dry4rust::cli::suppression::baseline_entry::BaselineEntry;
 use dry4rust::cli::suppression::baseline_kind::BaselineKind;
 use serde::{Deserialize, Serialize};
 
-use crate::system::baseline_kind_record::BaselineKindRecord;
-
 /// One baseline entry as the file spells it. `names` is decoration and is left
 /// out when there are none.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -41,4 +39,17 @@ impl From<BaselineEntryRecord> for BaselineEntry {
             record.names,
         )
     }
+}
+
+/// How the file spells a baseline entry's kind: by name, never by position, so
+/// reordering the variants cannot repoint a recorded entry. A mirror of the
+/// core's enum for serde, which a field names with
+/// `#[serde(with = "BaselineKindRecord")]`.
+#[derive(Serialize, Deserialize)]
+#[serde(remote = "BaselineKind", rename_all = "snake_case")]
+enum BaselineKindRecord {
+    Exact,
+    Near,
+    SubExact,
+    SubNear,
 }

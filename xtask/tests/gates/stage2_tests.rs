@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::gates::gate_tests::FakeGate;
+use crate::gates::support::fake_gate::FakeGate;
 use xtask::gates::gate::Gate;
 use xtask::gates::stage2::Stage2;
 

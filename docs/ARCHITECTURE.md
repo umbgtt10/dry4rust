@@ -145,7 +145,7 @@ And in `cli/src`, the crate that talks to the machine:
 | `system::walkdir_source_tree` | `WalkdirSourceTree`, the walk on disk, asking the scanner per directory and per file. |
 | `system::toml_config_source` | `TomlConfigSource`, the two configuration files read as TOML. |
 | `system::toml_ignore_store`, `ignore_document`, `ignore_entry_record` | The ignore file on disk, in TOML, over records of its own. |
-| `system::json_baseline_store`, `baseline_document`, `baseline_entry_record`, `baseline_kind_record` | A baseline on disk, in JSON, over records of its own; the kind a serde mirror of the core's enum. |
+| `system::json_baseline_store`, `baseline_document`, `baseline_entry_record` | A baseline on disk, in JSON, over records of its own; the kind a serde mirror of the core's enum, private in the entry record. |
 | `system::json_reporter` | `JsonReporter`, the JSON implementation of `Reporter`. |
 | `system::disk_file` | `DiskFile`, one file read, written or removed, with what the platform says as a `StorageFailure`. |
 | `system::portable_path` | `PortablePath`, a platform path or pattern as the core's, `\` read as `/` on Windows; a path still shows as given. |
