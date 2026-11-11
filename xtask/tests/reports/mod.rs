@@ -7,3 +7,4 @@ pub mod crap_function_tests;
 pub mod crap_report_parser_tests;
 pub mod crap_report_tests;
 pub mod report_failure_tests;
+pub mod scores;
