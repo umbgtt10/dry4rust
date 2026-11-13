@@ -8,6 +8,7 @@ use dry4rust::error::Error;
 use dry4rust::rust::parser::*;
 use dry4rust::source_path::SourcePath;
 use syn::File;
+use syn::Item;
 use syn::parse_str;
 
 fn path(text: &str) -> SourcePath {
@@ -484,12 +485,12 @@ fn test_has_cfg_test_attr() {
     let items = &file.items;
 
     // Assert
-    if let syn::Item::Mod(m) = &items[0] {
+    if let Item::Mod(m) = &items[0] {
         assert!(has_cfg_test_attr(&m.attrs));
     } else {
         panic!("expected module");
     }
-    if let syn::Item::Mod(m) = &items[1] {
+    if let Item::Mod(m) = &items[1] {
         assert!(!has_cfg_test_attr(&m.attrs));
     } else {
         panic!("expected module");
@@ -511,12 +512,12 @@ fn test_has_test_attr() {
     let items = &file.items;
 
     // Assert
-    if let syn::Item::Fn(f) = &items[0] {
+    if let Item::Fn(f) = &items[0] {
         assert!(has_test_attr(&f.attrs));
     } else {
         panic!("expected function");
     }
-    if let syn::Item::Fn(f) = &items[1] {
+    if let Item::Fn(f) = &items[1] {
         assert!(!has_test_attr(&f.attrs));
     } else {
         panic!("expected function");

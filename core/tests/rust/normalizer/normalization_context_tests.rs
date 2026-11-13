@@ -12,6 +12,7 @@ use syn::BinOp;
 use syn::Block;
 use syn::Expr;
 use syn::ExprClosure;
+use syn::ImplItem;
 use syn::ItemFn;
 use syn::ItemImpl;
 use syn::Lit;
@@ -432,7 +433,7 @@ fn normalize_impl_item_fn_splits_a_method_into_signature_and_body() {
     // Arrange
     let item: ItemImpl =
         parse_str("impl Foo { fn bar(&self, x: i32) -> i32 { x + 1 } }").expect("parses");
-    let syn::ImplItem::Fn(method) = item.items.first().expect("one method").clone() else {
+    let ImplItem::Fn(method) = item.items.first().expect("one method").clone() else {
         panic!("expected a method");
     };
 

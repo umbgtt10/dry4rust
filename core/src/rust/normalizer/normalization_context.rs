@@ -19,6 +19,8 @@ use syn::BinOp;
 use syn::Block;
 use syn::Expr;
 use syn::ExprClosure;
+use syn::FnArg;
+use syn::ImplItem;
 use syn::ImplItemFn;
 use syn::ItemFn;
 use syn::ItemImpl;
@@ -26,9 +28,12 @@ use syn::Lit;
 use syn::Macro;
 use syn::Member;
 use syn::Pat;
+use syn::ReturnType;
 use syn::Signature;
 use syn::Stmt;
+use syn::Token;
 use syn::Type;
+use syn::TypeParamBound;
 use syn::UnOp;
 use syn::punctuated::Punctuated;
 
@@ -371,7 +376,7 @@ impl NormalizationContext {
         imp.items
             .iter()
             .filter_map(|item| {
-                if let syn::ImplItem::Fn(method) = item {
+                if let ImplItem::Fn(method) = item {
                     let name = method.sig.ident.to_string();
                     Some((name, Self::normalize_impl_item_fn(method)))
                 } else {
@@ -418,7 +423,7 @@ impl NormalizationContext {
         let args = if mac.tokens.is_empty() {
             Vec::new()
         } else {
-            match mac.parse_body_with(Punctuated::<Expr, syn::Token![,]>::parse_terminated) {
+            match mac.parse_body_with(Punctuated::<Expr, Token![,]>::parse_terminated) {
                 Ok(punct) => punct.into_iter().map(|e| self.normalize_expr(&e)).collect(),
                 Err(_) => vec![NormalizedNode::leaf(NodeKind::Opaque)],
             }
@@ -523,12 +528,12 @@ impl NormalizationContext {
     pub fn normalize_signature(&mut self, sig: &Signature) -> NormalizedNode {
         // FnSignature -> [return_type_or_None, param0, param1, ...]
         let return_type = match &sig.output {
-            syn::ReturnType::Default => NormalizedNode::none(),
-            syn::ReturnType::Type(_, ty) => self.normalize_type(ty),
+            ReturnType::Default => NormalizedNode::none(),
+            ReturnType::Type(_, ty) => self.normalize_type(ty),
         };
         let mut children = vec![return_type];
         children.extend(sig.inputs.iter().map(|arg| match arg {
-            syn::FnArg::Receiver(r) => {
+            FnArg::Receiver(r) => {
                 let idx = self.placeholder("self", PlaceholderKind::Variable);
                 let self_node =
                     NormalizedNode::leaf(NodeKind::Placeholder(PlaceholderKind::Variable, idx));
@@ -543,7 +548,7 @@ impl NormalizationContext {
                     self_node
                 }
             }
-            syn::FnArg::Typed(pt) => {
+            FnArg::Typed(pt) => {
                 let pat = self.normalize_pat(&pt.pat);
                 let ty = self.normalize_type(&pt.ty);
                 NormalizedNode::with_children(NodeKind::FieldValue, vec![pat, ty])
@@ -649,7 +654,7 @@ impl NormalizationContext {
                 i.bounds
                     .iter()
                     .filter_map(|b| {
-                        if let syn::TypeParamBound::Trait(t) = b {
+                        if let TypeParamBound::Trait(t) = b {
                             let segments: Vec<NormalizedNode> = t
                                 .path
                                 .segments
