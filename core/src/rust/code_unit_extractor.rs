@@ -22,7 +22,9 @@ use crate::rust::parser::has_cfg_test_attr;
 use crate::rust::parser::has_test_attr;
 use crate::rust::plain_constructor::PlainConstructor;
 use crate::source_path::SourcePath;
+use syn::Expr;
 use syn::ExprClosure;
+use syn::ImplItem;
 use syn::ItemFn;
 use syn::ItemImpl;
 use syn::ItemMod;
@@ -178,7 +180,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
 
         // Visit each method in the impl block
         for item in &node.items {
-            if let syn::ImplItem::Fn(method) = item {
+            if let ImplItem::Fn(method) = item {
                 if !is_trait_impl && PlainConstructor::is_plain(method, &type_name) {
                     continue;
                 }
@@ -223,7 +225,7 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
     fn visit_expr_closure(&mut self, node: &'ast ExprClosure) {
         let line_start = node.or1_token.span.start().line;
         let line_end = match &*node.body {
-            syn::Expr::Block(eb) => eb.block.brace_token.span.close().end().line,
+            Expr::Block(eb) => eb.block.brace_token.span.close().end().line,
             other => {
                 let end = other.span().end().line;
                 if end > 0 { end } else { line_start }
