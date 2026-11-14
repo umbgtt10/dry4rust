@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 use dry4rust::code_unit::CodeUnit;
-use dry4rust::duplicate_group::DuplicateGroup;
+use dry4rust::groups::duplicate_group::DuplicateGroup;
 use dry4rust::rust::parser::parse_source;
 use dry4rust::source_path::SourcePath;
 

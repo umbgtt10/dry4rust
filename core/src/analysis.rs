@@ -11,13 +11,13 @@ use alloc::vec::Vec;
 
 use crate::analyzer::LanguageAnalyzer;
 use crate::cli::suppression::baseline_filter::BaselineFilter;
-use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::cli::suppression::ignore_file::IgnoreFile;
 use crate::code_unit::CodeUnit;
 use crate::config::Config;
-use crate::duplicate_group::DuplicateGroup;
-use crate::duplication_stats::DuplicationStats;
 use crate::fingerprint::Fingerprint;
+use crate::groups::duplicate_group::DuplicateGroup;
+use crate::groups::duplication_stats::DuplicationStats;
+use crate::groups::findings::Findings;
 use crate::node::node_kind::NodeKind;
 use crate::node::normalized_node::NormalizedNode;
 use crate::source_path::SourcePath;
@@ -27,10 +27,7 @@ use crate::traits::source_tree::SourceTree;
 /// The result of a full analysis run.
 pub struct Analysis {
     stats: DuplicationStats,
-    exact_groups: Vec<DuplicateGroup>,
-    near_groups: Vec<DuplicateGroup>,
-    sub_exact_groups: Vec<DuplicateGroup>,
-    sub_near_groups: Vec<DuplicateGroup>,
+    findings: Findings,
     warnings: Vec<String>,
     /// All group fingerprints (exact + near) before ignore filtering.
     /// Used by the cleanup command to identify stale ignore entries.
@@ -57,7 +54,7 @@ impl Analysis {
         // 2. Find near-duplicates
         let exact_fps: Vec<_> = exact_groups
             .iter()
-            .map(super::duplicate_group::DuplicateGroup::fingerprint)
+            .map(crate::groups::duplicate_group::DuplicateGroup::fingerprint)
             .collect();
         let near_groups = DuplicateGroup::find_near_duplicates(
             units,
@@ -91,7 +88,7 @@ impl Analysis {
             let sub_exact = DuplicateGroup::group_exact_duplicates(&sub_units);
             let sub_exact_fps: Vec<_> = sub_exact
                 .iter()
-                .map(super::duplicate_group::DuplicateGroup::fingerprint)
+                .map(crate::groups::duplicate_group::DuplicateGroup::fingerprint)
                 .collect();
             let sub_near = DuplicateGroup::find_near_duplicates(
                 &sub_units,
@@ -103,47 +100,27 @@ impl Analysis {
             (Vec::new(), Vec::new())
         };
 
-        // 4. Collect all fingerprints before filtering (for cleanup staleness check)
-        let all_fingerprints: BTreeSet<Fingerprint> = exact_groups
-            .iter()
-            .chain(near_groups.iter())
-            .chain(sub_exact_groups.iter())
-            .chain(sub_near_groups.iter())
-            .map(super::duplicate_group::DuplicateGroup::fingerprint)
-            .collect();
+        // 4. Every fingerprint found, before any is set aside (for cleanup's
+        //    staleness check)
+        let found = Findings::new(exact_groups, near_groups, sub_exact_groups, sub_near_groups);
+        let all_fingerprints = found.fingerprints();
 
-        // 5. Apply ignore filtering
-        let exact_groups = ignore_file.retain_unsuppressed(exact_groups);
-        let near_groups = ignore_file.retain_unsuppressed(near_groups);
-        let sub_exact_groups = ignore_file.retain_unsuppressed(sub_exact_groups);
-        let sub_near_groups = ignore_file.retain_unsuppressed(sub_near_groups);
+        // 5. Set aside what the ignore file suppresses, then what the
+        //    baseline already accounted for
+        let found = found.retain_unsuppressed(ignore_file);
+        let found_count = found.count();
+        let findings = found.retain_new(baseline);
 
-        // 6. Set aside what the baseline already accounted for
-        let found =
-            exact_groups.len() + near_groups.len() + sub_exact_groups.len() + sub_near_groups.len();
-        let exact_groups = baseline.retain_new(BaselineKind::Exact, exact_groups);
-        let near_groups = baseline.retain_new(BaselineKind::Near, near_groups);
-        let sub_exact_groups = baseline.retain_new(BaselineKind::SubExact, sub_exact_groups);
-        let sub_near_groups = baseline.retain_new(BaselineKind::SubNear, sub_near_groups);
-        let reported =
-            exact_groups.len() + near_groups.len() + sub_exact_groups.len() + sub_near_groups.len();
-
-        // 7. Compute stats
-        let stats = DuplicateGroup::compute_stats_with_sub(
-            units,
-            &exact_groups,
-            &near_groups,
-            &sub_exact_groups,
-            &sub_near_groups,
-        )
-        .with_baseline_suppressed(baseline.is_in_effect().then_some(found - reported));
+        // 6. Compute stats
+        let stats = findings.stats(units).with_baseline_suppressed(
+            baseline
+                .is_in_effect()
+                .then_some(found_count - findings.count()),
+        );
 
         Self {
             stats,
-            exact_groups,
-            near_groups,
-            sub_exact_groups,
-            sub_near_groups,
+            findings,
             warnings,
             all_fingerprints,
         }
@@ -201,10 +178,7 @@ impl Analysis {
     ) -> Self {
         Self {
             stats,
-            exact_groups,
-            near_groups,
-            sub_exact_groups,
-            sub_near_groups,
+            findings: Findings::new(exact_groups, near_groups, sub_exact_groups, sub_near_groups),
             warnings,
             all_fingerprints,
         }
@@ -217,12 +191,12 @@ impl Analysis {
 
     #[must_use]
     pub fn exact_groups(&self) -> &[DuplicateGroup] {
-        &self.exact_groups
+        self.findings.exact()
     }
 
     #[must_use]
     pub fn near_groups(&self) -> &[DuplicateGroup] {
-        &self.near_groups
+        self.findings.near()
     }
 
     #[must_use]
@@ -232,12 +206,12 @@ impl Analysis {
 
     #[must_use]
     pub fn sub_exact_groups(&self) -> &[DuplicateGroup] {
-        &self.sub_exact_groups
+        self.findings.sub_exact()
     }
 
     #[must_use]
     pub fn sub_near_groups(&self) -> &[DuplicateGroup] {
-        &self.sub_near_groups
+        self.findings.sub_near()
     }
 
     #[must_use]

@@ -8,8 +8,8 @@ use alloc::string::String;
 use crate::cli::output::check_breach::CheckBreach;
 use crate::cli::output::render_failure::RenderFailure;
 use crate::cli::output::report::Report;
-use crate::duplicate_group::DuplicateGroup;
-use crate::duplication_stats::DuplicationStats;
+use crate::groups::duplicate_group::DuplicateGroup;
+use crate::groups::duplication_stats::DuplicationStats;
 
 /// Trait for reporting analysis results.
 ///

@@ -6,8 +6,8 @@
 use alloc::vec::Vec;
 
 use crate::code_unit::CodeUnit;
-use crate::near_duplicate::similarity::similarity_score;
-use crate::near_duplicate::similarity_pair::SimilarityPair;
+use crate::groups::near_duplicate::similarity::similarity_score;
+use crate::groups::near_duplicate::similarity_pair::SimilarityPair;
 
 /// Decides which pairs of candidates are worth scoring, and scores them.
 ///

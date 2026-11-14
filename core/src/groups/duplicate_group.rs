@@ -7,9 +7,9 @@ use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 
 use crate::code_unit::CodeUnit;
-use crate::duplication_stats::DuplicationStats;
 use crate::fingerprint::Fingerprint;
-use crate::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
+use crate::groups::duplication_stats::DuplicationStats;
+use crate::groups::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
 
 /// A group of duplicate code units.
 #[derive(Debug, Clone)]

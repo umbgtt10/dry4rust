@@ -48,4 +48,5 @@ fn rust_analyzer_through_trait() {
 
     // Default is_test_code() delegates to is_test field
     assert!(!analyzer.is_test_code(prod[0]));
+    assert!(analyzer.is_test_code(test[0]));
 }

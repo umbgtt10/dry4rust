@@ -7,15 +7,17 @@
 //! These tests exercise fingerprint, similarity, duplicate-group, and sub-unit functionality
 //! Every case is driven from syn-parsed Rust source.
 
+use crate::common::baseline_recording;
 use crate::support::in_memory_source_tree::InMemorySourceTree;
 use dry4rust::analysis::Analysis;
 use dry4rust::cli::suppression::baseline_filter::BaselineFilter;
+use dry4rust::cli::suppression::baseline_kind::BaselineKind;
 use dry4rust::cli::suppression::ignore_file::IgnoreFile;
 use dry4rust::config::Config;
-use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::duplication_stats::DuplicationStats;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::near_duplicate::similarity::similarity_score;
+use dry4rust::groups::duplicate_group::DuplicateGroup;
+use dry4rust::groups::duplication_stats::DuplicationStats;
+use dry4rust::groups::near_duplicate::similarity::similarity_score;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
@@ -49,6 +51,81 @@ pub fn compute_total(values: Vec<i32>) -> i32 {
     sum
 }
 ";
+const DUPLICATED_IN_TESTS: &str = r"#[cfg(test)]
+mod tests {
+    pub fn process_data(input: Vec<i32>) -> i32 {
+        let mut sum = 0;
+        for item in input.iter() {
+            if *item > 0 {
+                sum += *item;
+            }
+        }
+        sum
+    }
+
+    pub fn compute_total(values: Vec<i32>) -> i32 {
+        let mut sum = 0;
+        for value in values.iter() {
+            if *value > 0 {
+                sum += *value;
+            }
+        }
+        sum
+    }
+}
+";
+const DUPLICATED_TWICE: &str = r"pub fn process_data(input: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for item in input.iter() {
+        if *item > 0 {
+            sum += *item;
+        }
+    }
+    sum
+}
+
+pub fn compute_total(values: Vec<i32>) -> i32 {
+    let mut sum = 0;
+    for value in values.iter() {
+        if *value > 0 {
+            sum += *value;
+        }
+    }
+    sum
+}
+
+pub fn join_names(names: Vec<String>) -> String {
+    let mut joined = String::new();
+    for name in names.iter() {
+        joined.push_str(name);
+        joined.push(',');
+    }
+    joined
+}
+
+pub fn join_labels(labels: Vec<String>) -> String {
+    let mut joined = String::new();
+    for label in labels.iter() {
+        joined.push_str(label);
+        joined.push(',');
+    }
+    joined
+}
+";
+
+// The analysis of one file at /project/lib.rs holding `source`.
+fn analysis_of(source: &str, config: &Config, baseline: &BaselineFilter) -> Analysis {
+    Analysis::analyze(
+        &RustAnalyzer::new(),
+        &InMemorySourceTree::new().with_file("/project/lib.rs", source),
+        &[SourcePath::new(String::from("/project/lib.rs"))],
+        &config
+            .clone()
+            .with_root(SourcePath::new(String::from("/project"))),
+        &IgnoreFile::default(),
+        baseline,
+    )
+}
 
 fn expr_similarity(code1: &str, code2: &str) -> f64 {
     let e1 = parse_expr(code1);
@@ -84,6 +161,18 @@ fn parse_expr(code: &str) -> Expr {
 
 fn parse_fn(code: &str) -> ItemFn {
     parse_str::<ItemFn>(code).unwrap()
+}
+
+#[test]
+fn analyze_by_default_reports_the_duplication_in_test_code() {
+    // Arrange
+    let config = Config::default();
+
+    // Act
+    let result = analysis_of(DUPLICATED_IN_TESTS, &config, &BaselineFilter::none());
+
+    // Assert
+    assert_eq!(result.exact_groups().len(), 1);
 }
 
 #[test]
@@ -127,6 +216,35 @@ fn analyze_units_over_no_units_reports_nothing_duplicated() {
     // Assert
     assert_eq!(result.stats().total_code_units(), 0);
     assert!(result.exact_groups().is_empty());
+}
+
+#[test]
+fn analyze_with_a_baseline_counts_the_groups_it_set_aside() {
+    // Arrange
+    let config = Config::default();
+    let unrecorded = analysis_of(DUPLICATED_TWICE, &config, &BaselineFilter::none());
+    let baseline = baseline_recording(&[(BaselineKind::Exact, &unrecorded.exact_groups()[0])]);
+
+    // Act
+    let result = analysis_of(DUPLICATED_TWICE, &config, &baseline);
+
+    // Assert
+    assert_eq!(unrecorded.exact_groups().len(), 2);
+    assert_eq!(result.exact_groups().len(), 1);
+    assert_eq!(result.stats().baseline_suppressed(), Some(1));
+}
+
+#[test]
+fn analyze_with_tests_excluded_leaves_out_the_duplication_in_test_code() {
+    // Arrange
+    let config = Config::default().with_exclude_tests(true);
+
+    // Act
+    let result = analysis_of(DUPLICATED_IN_TESTS, &config, &BaselineFilter::none());
+
+    // Assert
+    assert!(result.exact_groups().is_empty());
+    assert_eq!(result.stats().total_code_units(), 0);
 }
 
 #[test]
@@ -625,7 +743,7 @@ fn near_duplicates_exclude_exact() {
     let exact = DuplicateGroup::group_exact_duplicates(&units);
     let exact_fps: Vec<_> = exact
         .iter()
-        .map(dry4rust::duplicate_group::DuplicateGroup::fingerprint)
+        .map(dry4rust::groups::duplicate_group::DuplicateGroup::fingerprint)
         .collect();
     let near = DuplicateGroup::find_near_duplicates(&units, 0.7, &exact_fps);
 
@@ -655,7 +773,7 @@ fn near_duplicates_found() {
     let exact = DuplicateGroup::group_exact_duplicates(&units);
     let exact_fps: Vec<_> = exact
         .iter()
-        .map(dry4rust::duplicate_group::DuplicateGroup::fingerprint)
+        .map(dry4rust::groups::duplicate_group::DuplicateGroup::fingerprint)
         .collect();
     let near = DuplicateGroup::find_near_duplicates(&units, 0.7, &exact_fps);
 

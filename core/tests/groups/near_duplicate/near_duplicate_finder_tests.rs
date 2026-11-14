@@ -5,9 +5,9 @@
 
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
-use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
+use dry4rust::groups::duplicate_group::DuplicateGroup;
+use dry4rust::groups::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::rust::parser::parse_source;

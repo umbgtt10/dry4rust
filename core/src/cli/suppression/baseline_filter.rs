@@ -8,8 +8,8 @@ use alloc::vec::Vec;
 use crate::cli::suppression::baseline_file::BaselineFile;
 use crate::cli::suppression::baseline_kind::BaselineKind;
 use crate::config::Config;
-use crate::duplicate_group::DuplicateGroup;
 use crate::error::Result;
+use crate::groups::duplicate_group::DuplicateGroup;
 use crate::traits::baseline_store::BaselineStore;
 
 /// Keeps the duplication a baseline did not already account for.

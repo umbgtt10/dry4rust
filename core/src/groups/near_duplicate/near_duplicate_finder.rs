@@ -9,12 +9,12 @@ use alloc::vec::Vec;
 use core::cmp::Ordering;
 
 use crate::code_unit::CodeUnit;
-use crate::duplicate_group::DuplicateGroup;
 use crate::fingerprint::Fingerprint;
-use crate::near_duplicate::pair_key::PairKey;
-use crate::near_duplicate::pair_scanner::PairScanner;
-use crate::near_duplicate::similarity_pair::SimilarityPair;
-use crate::near_duplicate::union_find::UnionFind;
+use crate::groups::duplicate_group::DuplicateGroup;
+use crate::groups::near_duplicate::pair_key::PairKey;
+use crate::groups::near_duplicate::pair_scanner::PairScanner;
+use crate::groups::near_duplicate::similarity_pair::SimilarityPair;
+use crate::groups::near_duplicate::union_find::UnionFind;
 
 /// Finds groups of units that are similar without being identical.
 ///

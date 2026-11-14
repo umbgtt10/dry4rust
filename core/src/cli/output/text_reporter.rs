@@ -11,8 +11,8 @@ use crate::cli::output::check_breach::CheckBreach;
 use crate::cli::output::group_section::GroupSection;
 use crate::cli::output::render_failure::RenderFailure;
 use crate::cli::output::report::Report;
-use crate::duplicate_group::DuplicateGroup;
-use crate::duplication_stats::DuplicationStats;
+use crate::groups::duplicate_group::DuplicateGroup;
+use crate::groups::duplication_stats::DuplicationStats;
 use crate::source_path::SourcePath;
 use crate::traits::reporter::Reporter;
 

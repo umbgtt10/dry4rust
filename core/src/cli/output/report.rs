@@ -3,8 +3,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::duplicate_group::DuplicateGroup;
-use crate::duplication_stats::DuplicationStats;
+use crate::groups::duplicate_group::DuplicateGroup;
+use crate::groups::duplication_stats::DuplicationStats;
 
 /// Everything a full report shows, handed to a reporter in one piece.
 ///

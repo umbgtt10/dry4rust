@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::near_duplicate::similarity::*;
+use dry4rust::groups::near_duplicate::similarity::*;
 use dry4rust::node::bin_op_kind::BinOpKind;
 use dry4rust::node::literal_kind::LiteralKind;
 use dry4rust::node::node_kind::NodeKind;

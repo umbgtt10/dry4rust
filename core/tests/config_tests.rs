@@ -47,6 +47,8 @@ fn default_returns_the_documented_thresholds() {
     assert_eq!(config.min_nodes(), 10);
     assert!((config.similarity_threshold().as_fraction() - 0.9).abs() < f64::EPSILON);
     assert!(config.exclude().is_empty());
+    assert!(!config.exclude_tests());
+    assert!(!config.sub_function());
 }
 
 #[test]
