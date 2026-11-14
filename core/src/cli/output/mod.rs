@@ -9,3 +9,4 @@ pub mod group_section;
 pub mod render_failure;
 pub mod report;
 pub mod text_reporter;
+pub mod thousands_separated;

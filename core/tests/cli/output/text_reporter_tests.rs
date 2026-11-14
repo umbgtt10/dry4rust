@@ -95,6 +95,62 @@ fn report_in_text_writes_every_section_that_has_something_in_it() {
 }
 
 #[test]
+fn report_stats_with_no_sub_function_group_states_no_sub_function_figure() {
+    // Arrange
+    let stats = DuplicationStats::default().with_exact_duplicate_groups(1);
+
+    // Act
+    let output = TextReporter::new(None).report_stats(&stats).unwrap();
+
+    // Assert
+    assert!(!output.contains("Sub-function"), "{output}");
+}
+
+// The sub-function figures are stated once either kind has a group, both
+// together.
+#[test]
+fn report_stats_with_sub_function_exact_groups_alone_states_both_sub_function_figures() {
+    // Arrange
+    let stats = DuplicationStats::default()
+        .with_sub_exact_groups(2)
+        .with_sub_exact_units(4);
+
+    // Act
+    let output = TextReporter::new(None).report_stats(&stats).unwrap();
+
+    // Assert
+    assert!(
+        output.contains("Sub-function exact: 2 groups (4 units)"),
+        "{output}"
+    );
+    assert!(
+        output.contains("Sub-function near:  0 groups (0 units)"),
+        "{output}"
+    );
+}
+
+#[test]
+fn report_stats_with_sub_function_near_groups_alone_states_both_sub_function_figures() {
+    // Arrange
+    let stats = DuplicationStats::default()
+        .with_sub_near_groups(3)
+        .with_sub_near_units(7);
+
+    // Act
+    let output = TextReporter::new(None).report_stats(&stats).unwrap();
+
+    // Assert
+    assert!(
+        output.contains("Sub-function exact: 0 groups (0 units)"),
+        "{output}"
+    );
+    assert!(
+        output.contains("Sub-function near:  3 groups (7 units)"),
+        "{output}"
+    );
+}
+
+#[test]
 fn text_report_check_puts_each_breach_before_the_groups_behind_it() {
     // Arrange
     let reporter = TextReporter::new(None);
@@ -223,6 +279,7 @@ fn text_report_stats() {
     assert!(output.contains("100"));
     assert!(output.contains("5 groups"));
     assert!(output.contains("3 groups"));
+    assert!(output.contains("(of 1,000 total lines)"), "{output}");
 }
 
 #[test]

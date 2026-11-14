@@ -17,7 +17,7 @@ format. It declares a trait for everything it needs from the machine, and
 parses the command line, prints, and returns the exit code. `cli` depends on
 `core`, never the reverse.
 
-`core/src` holds 88 source files, roughly 7,000 lines, one object each and
+`core/src` holds 89 source files, roughly 7,000 lines, one object each and
 records where `record-home` puts them. Five directories group the modules that
 answer one question between them: `groups/`, what an analysis finds -- the
 groups, the four kinds of them together (`Findings`), the statistics over them
@@ -136,6 +136,7 @@ bodies as further units, which then travel the same path.
 | `command_dispatcher` | Routes a parsed `Command` to the type that serves it. |
 | `cli::output::render_failure` | `RenderFailure`, a reporter's reason for not writing its document. |
 | `cli::output::report` | What a full report shows, handed over in one piece. |
+| `cli::output::thousands_separated` | A count with a comma between each group of three digits, as the text report states its totals. |
 | `cli::output::check_breach` | One exceeded ceiling and the groups behind it. |
 | `cli::output::group_section` | One headed section of a text report, and how its groups read. |
 | `cli::output::display_path` | `DisplayPath::of`, a file as a reporter shows it: relative to the base when it lies under one. |
