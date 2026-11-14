@@ -33,10 +33,11 @@ pub fn similarity_score(a: &NormalizedNode, b: &NormalizedNode) -> f64 {
 
 /// Count matching nodes between two trees by traversing them together.
 fn count_matching(a: &NormalizedNode, b: &NormalizedNode) -> usize {
-    if a.is_none() || b.is_none() {
+    if mem::discriminant(a.kind()) != mem::discriminant(b.kind()) {
         return 0;
     }
-    if mem::discriminant(a.kind()) != mem::discriminant(b.kind()) {
+    // Of the same kind, one absent slot means two: they match nothing.
+    if a.is_none() {
         return 0;
     }
     // MacroCall: different names = no match (no recursion into children)
@@ -86,9 +87,6 @@ fn slotted_children(a: &[NormalizedNode], b: &[NormalizedNode]) -> usize {
 /// stays bounded by the smaller list -- which is what lets `PairScanner`
 /// treat `2 * min / (min + max)` as a ceiling.
 fn aligned_children(a: &[NormalizedNode], b: &[NormalizedNode]) -> usize {
-    if a.is_empty() || b.is_empty() {
-        return 0;
-    }
     let mut best = vec![vec![0usize; b.len() + 1]; a.len() + 1];
     for i in 1..=a.len() {
         for j in 1..=b.len() {

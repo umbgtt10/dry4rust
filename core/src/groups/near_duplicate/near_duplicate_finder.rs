@@ -7,6 +7,7 @@ use alloc::collections::BTreeMap;
 use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::cmp::Ordering;
+use core::iter::successors;
 
 use crate::code_unit::CodeUnit;
 use crate::fingerprint::Fingerprint;
@@ -127,11 +128,9 @@ impl NearDuplicateFinder {
     /// without an A-C score. When no pair was recorded at all the threshold
     /// stands in, since every pair that built the group cleared it.
     fn weakest_link(&self, member_indices: &[usize], scores: &Scores) -> f64 {
-        let lowest = member_indices
-            .iter()
-            .flat_map(|&i| member_indices.iter().map(move |&j| (i, j)))
-            .filter(|(i, j)| i < j)
-            .filter_map(|(i, j)| scores.get(&PairKey::new(i, j)))
+        let lowest = successors(member_indices.split_first(), |(_, rest)| rest.split_first())
+            .flat_map(|(&i, rest)| rest.iter().map(move |&j| PairKey::new(i, j)))
+            .filter_map(|key| scores.get(&key))
             .copied()
             .fold(f64::INFINITY, f64::min);
         if lowest.is_infinite() {
