@@ -80,6 +80,12 @@ fn produce_ignoring_baseline_reports_what_produce_would_have_suppressed() {
         1,
         "recording against it must not, or the second recording empties the file"
     );
+    assert!(recording.config().baseline().is_some());
+    assert_eq!(
+        recording.config().baseline(),
+        judging.config().baseline(),
+        "the recording still names the baseline it is to be written to"
+    );
 }
 
 #[test]

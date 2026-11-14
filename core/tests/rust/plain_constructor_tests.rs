@@ -26,6 +26,16 @@ fn method(source: &str) -> ImplItemFn {
         .expect("a method")
 }
 
+// A call to another function is no constructor, whatever it is given.
+#[test]
+fn is_plain_of_a_call_to_another_function_given_the_parameters_is_false() {
+    // Arrange
+    let new = method("impl Pair { fn new(a: u8, b: u8) -> Self { build(a, b) } }");
+
+    // Act & Assert
+    assert!(!PlainConstructor::is_plain(&new, "Pair"));
+}
+
 #[test]
 fn is_plain_of_a_constructor_moving_its_parameters_by_shorthand_is_true() {
     // Arrange
@@ -52,6 +62,16 @@ fn is_plain_of_a_field_given_a_default_is_false() {
 
     // Act & Assert
     assert!(!PlainConstructor::is_plain(&new, "Report"));
+}
+
+#[test]
+fn is_plain_of_a_field_given_a_value_no_parameter_holds_is_false() {
+    // Arrange
+    let new =
+        method("impl Limit { fn new(low: u8, high: u8) -> Self { Self { low, high: MAX } } }");
+
+    // Act & Assert
+    assert!(!PlainConstructor::is_plain(&new, "Limit"));
 }
 
 #[test]

@@ -60,6 +60,25 @@ fn baseline_path_without_a_name_uses_the_family_default() {
 }
 
 #[test]
+fn is_empty_of_a_recording_of_groups_is_false_and_of_none_true() {
+    // Arrange
+    let recorded = BaselineFile::record(&result_with(
+        vec![group(0x11, &["a", "b"])],
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+    ));
+    let clean = BaselineFile::record(&result_with(Vec::new(), Vec::new(), Vec::new(), Vec::new()));
+
+    // Act
+    let (recorded_empty, clean_empty) = (recorded.is_empty(), clean.is_empty());
+
+    // Assert
+    assert!(!recorded_empty);
+    assert!(clean_empty);
+}
+
+#[test]
 fn load_of_a_baseline_from_a_later_format_says_to_re_record_it() {
     // Arrange
     let store = InMemoryBaselineStore::new().with_baseline(
@@ -199,6 +218,20 @@ fn save_through_a_store_that_fails_names_the_baseline() {
         outcome.expect_err("the store refused it").to_string(),
         "baseline /p/blocker/dry4rust-baseline.json: Not a directory (os error 20)"
     );
+}
+
+// A file read in another format keeps the one it states, for the refusal to
+// name.
+#[test]
+fn version_of_a_file_read_in_another_format_is_that_format() {
+    // Arrange
+    let file = BaselineFile::new(FORMAT_VERSION + 1, Vec::new());
+
+    // Act
+    let version = file.version();
+
+    // Assert
+    assert_eq!(version, FORMAT_VERSION + 1);
 }
 
 #[test]
