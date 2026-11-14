@@ -5,6 +5,7 @@
 
 use clap::Parser;
 use dry4rust::cli::command::Command;
+use dry4rust::config::Config;
 use dry4rust::source_path::SourcePath;
 use dry4rust_cli::invocation::args::Args;
 use dry4rust_cli::invocation::output_format::OutputFormat;
@@ -54,7 +55,7 @@ fn format_reads_the_flag_when_it_is_given() {
 #[test]
 fn overrides_carries_every_flag_that_was_passed() {
     // Arrange & Act
-    let overrides = parsed(&[
+    let config = parsed(&[
         "cargo-dry4rust",
         "dry4rust",
         "--min-nodes",
@@ -74,36 +75,51 @@ fn overrides_carries_every_flag_that_was_passed() {
         "--baseline",
         "ci/recorded.json",
     ])
-    .overrides();
+    .overrides()
+    .apply_to(Config::default())
+    .expect("the overrides are in range");
 
     // Assert
-    assert_eq!(overrides.min_nodes(), Some(42));
-    assert_eq!(overrides.min_lines(), Some(7));
-    assert_eq!(overrides.threshold(), Some(0.75));
-    assert_eq!(overrides.exclude(), vec!["vendor", "benches"]);
-    assert_eq!(overrides.exclude_tests(), Some(true));
-    assert_eq!(overrides.sub_function(), Some(true));
-    assert_eq!(overrides.min_sub_nodes(), Some(3));
+    assert_eq!(config.min_nodes(), 42);
+    assert_eq!(config.min_lines(), 7);
+    assert!((config.similarity_threshold().as_fraction() - 0.75).abs() < f64::EPSILON);
+    assert_eq!(config.exclude(), vec!["vendor", "benches"]);
+    assert!(config.exclude_tests());
+    assert!(config.sub_function());
+    assert_eq!(config.min_sub_nodes(), 3);
     assert_eq!(
-        overrides.baseline(),
+        config.baseline(),
         Some(&SourcePath::new(String::from("ci/recorded.json")))
     );
 }
 
 #[test]
 fn overrides_leaves_a_flag_that_was_not_passed_with_no_opinion() {
-    // Arrange & Act
+    // Arrange
+    let turned_on = Config::default()
+        .with_sub_function(true)
+        .with_exclude_tests(true)
+        .with_exclude(vec![String::from("kept")]);
+
+    // Act
     let overrides = parsed(&["cargo-dry4rust", "dry4rust"]).overrides();
+    let on = overrides
+        .apply_to(turned_on)
+        .expect("no override is always in range");
+    let off = overrides
+        .apply_to(Config::default())
+        .expect("no override is always in range");
 
     // Assert
-    assert_eq!(
-        overrides.sub_function(),
-        None,
+    assert!(
+        on.sub_function(),
         "Some(false) would switch off a dry4rust.toml that turned it on; \
          absence has to mean absence"
     );
-    assert_eq!(overrides.exclude_tests(), None);
-    assert!(overrides.exclude().is_empty());
+    assert!(on.exclude_tests());
+    assert_eq!(on.exclude(), vec!["kept"]);
+    assert!(!off.sub_function());
+    assert!(!off.exclude_tests());
 }
 
 #[test]
