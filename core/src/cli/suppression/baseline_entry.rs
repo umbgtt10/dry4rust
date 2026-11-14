@@ -7,7 +7,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use crate::cli::suppression::baseline_kind::BaselineKind;
-use crate::duplicate_group::DuplicateGroup;
+use crate::groups::duplicate_group::DuplicateGroup;
 
 /// One duplicate group as the baseline recorded it.
 ///

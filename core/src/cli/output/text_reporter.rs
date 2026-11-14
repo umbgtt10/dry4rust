@@ -4,15 +4,15 @@
 // SPDX-License-Identifier: MIT
 
 use alloc::string::String;
-use alloc::string::ToString;
 use core::fmt::Write as _;
 
 use crate::cli::output::check_breach::CheckBreach;
 use crate::cli::output::group_section::GroupSection;
 use crate::cli::output::render_failure::RenderFailure;
 use crate::cli::output::report::Report;
-use crate::duplicate_group::DuplicateGroup;
-use crate::duplication_stats::DuplicationStats;
+use crate::cli::output::thousands_separated::ThousandsSeparated;
+use crate::groups::duplicate_group::DuplicateGroup;
+use crate::groups::duplication_stats::DuplicationStats;
 use crate::source_path::SourcePath;
 use crate::traits::reporter::Reporter;
 
@@ -25,18 +25,6 @@ impl TextReporter {
     #[must_use]
     pub const fn new(base_path: Option<SourcePath>) -> Self {
         Self { base_path }
-    }
-
-    fn format_with_commas(n: usize) -> String {
-        let s = n.to_string();
-        let mut result = String::with_capacity(s.len() + s.len() / 3);
-        for (i, c) in s.chars().enumerate() {
-            if i > 0 && (s.len() - i).is_multiple_of(3) {
-                result.push(',');
-            }
-            result.push(c);
-        }
-        result
     }
 
     fn section(&self, section: &GroupSection, groups: &[DuplicateGroup]) -> String {
@@ -119,7 +107,9 @@ impl Reporter for TextReporter {
             "Duplication: {:.1}% exact, {:.1}% near (of {} total lines)",
             stats.exact_duplicate_percent(),
             stats.near_duplicate_percent(),
-            Self::format_with_commas(stats.total_lines()),
+            ThousandsSeparated {
+                count: stats.total_lines()
+            },
         );
         if let Some(suppressed) = stats.baseline_suppressed() {
             let _ = writeln!(out, "Baseline: {suppressed} groups suppressed");

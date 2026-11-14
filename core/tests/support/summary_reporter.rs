@@ -6,8 +6,8 @@
 use dry4rust::cli::output::check_breach::CheckBreach;
 use dry4rust::cli::output::render_failure::RenderFailure;
 use dry4rust::cli::output::report::Report;
-use dry4rust::duplicate_group::DuplicateGroup;
-use dry4rust::duplication_stats::DuplicationStats;
+use dry4rust::groups::duplicate_group::DuplicateGroup;
+use dry4rust::groups::duplication_stats::DuplicationStats;
 use dry4rust::traits::reporter::Reporter;
 
 // A reporter that writes one line naming what it was handed, so a test can see

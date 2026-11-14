@@ -17,20 +17,25 @@ format. It declares a trait for everything it needs from the machine, and
 parses the command line, prints, and returns the exit code. `cli` depends on
 `core`, never the reverse.
 
-`core/src` holds 84 source files, roughly 6,900 lines, one object each and
+`core/src` holds 89 source files, roughly 7,000 lines, one object each and
 records where `record-home` puts them. Five directories group the modules that
-answer one question between them: `near_duplicate/`, which only
-`duplicate_group` reaches; `cli/`, one file per command, with `checking/`,
+answer one question between them: `groups/`, what an analysis finds -- the
+groups, the four kinds of them together (`Findings`), the statistics over them
+-- with `near_duplicate/`, which only `duplicate_group` reaches, under it;
+`cli/`, one file per command, with `checking/`,
 `output/` -- the text reporter -- and `suppression/`, the two ways duplication
 is kept out of a report, under it; `node/`, the normalised tree, the kinds its
 nodes are named by, and the encoder and the placeholder collector that read it;
 `rust/`, the only `LanguageAnalyzer` there is; and `traits/`, the ports.
 
 The house rules allow twenty files at the top of `src/` and five directories
-under it, and both are full: nineteen files beside `lib.rs`, and `traits/` took
-the fifth directory slot, freed by moving `suppression/` under `cli/`. The next
-file or directory forces a grouping decision rather than another loose one,
-which is what the limits are for.
+under it. Both were full on 2026-11-14, when `Findings` needed a place:
+`groups/` took `duplicate_group` and `duplication_stats` from the top and
+`near_duplicate/` from beside it, and `line_span` took one of the slots that
+freed. Eighteen files sit beside `lib.rs` and five directories under `src/`,
+`traits/` having taken the fifth when `suppression/` moved under `cli/`. The
+next directory forces a grouping decision rather than another loose one, which
+is what the limits are for.
 
 ## Pipeline
 
@@ -90,6 +95,7 @@ bodies as further units, which then travel the same path.
 | `analyzer` | `LanguageAnalyzer`, the trait every backend implements. One implementation today. |
 | `rust::parser` | `syn` -> `CodeUnit`, one per function, method and closure. |
 | `rust::code_unit_extractor` | `CodeUnitExtractor`, the visitor that walks a parsed file and keeps each unit over the floors. |
+| `rust::size_floor` | `SizeFloor`, the floors a unit must reach -- its nodes and its lines -- the one rule a function and a closure are both held to. |
 | `rust::normalizer` | The normalisation rules, and the normalised function they return. |
 | `rust::normalizer::normalization_context` | `NormalizationContext`: every normalisation rule, a method per syntax category, and the placeholder counters they share, so the context that numbers the placeholders is `self` rather than a `&mut` threaded through every call. Two identifiers map to the same placeholder only within one context. |
 | `rust::normalizer::normalized_fn` | `NormalizedFn`, a normalised function's signature and body, named and kept apart. |
@@ -99,13 +105,15 @@ bodies as further units, which then travel the same path.
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
 | `node::node_encoder` | The byte format a fingerprint is computed over -- variants by name, children counted. |
 | `stable_hasher` | FNV-1a 64, defined here so a fingerprint survives a toolchain upgrade. |
+| `line_span` | `LineSpan`, the lines a unit spans, its first and its last counted: what the line floor and the statistics both count. |
 | `sub_unit` / `sub_unit_extractor` | Compound structures inside a body, as further comparable units. |
-| `duplicate_group` | `DuplicateGroup`, exact grouping, and the statistics computed over the groups. |
-| `near_duplicate::near_duplicate_finder` | Candidate filtering and transitive closure into groups. |
-| `near_duplicate::pair_scanner` | Which pairs are worth scoring, and their scores. |
-| `near_duplicate::similarity` | The Dice score between two normalised trees. |
-| `near_duplicate::union_find` | Disjoint-set forest turning similar-pairs into groups. |
-| `near_duplicate::similarity_pair` | One scored pair, and the ordered key a symmetric lookup needs. |
+| `groups::duplicate_group` | `DuplicateGroup`, exact grouping, and the statistics computed over the groups. |
+| `groups::findings` | `Findings`, the four kinds of group a run finds -- exact and near, over whole units and within them -- set aside by the ignore file and the baseline, and counted, as one. |
+| `groups::near_duplicate::near_duplicate_finder` | Candidate filtering and transitive closure into groups. |
+| `groups::near_duplicate::pair_scanner` | Which pairs are worth scoring, and their scores. |
+| `groups::near_duplicate::similarity` | The Dice score between two normalised trees. |
+| `groups::near_duplicate::union_find` | Disjoint-set forest turning similar-pairs into groups. |
+| `groups::near_duplicate::similarity_pair` | One scored pair, and the ordered key a symmetric lookup needs. |
 | `cli::suppression::ignore_entry` | One duplicate somebody decided should stay, with their reason. |
 | `cli::suppression::ignore_file` | The ignore file: load and save through its store, add, prune, filter; an unreadable one is empty, an emptied one is removed. |
 | `cli::suppression::baseline_kind` | Which of the four group sets an entry was recorded from. |
@@ -128,10 +136,11 @@ bodies as further units, which then travel the same path.
 | `command_dispatcher` | Routes a parsed `Command` to the type that serves it. |
 | `cli::output::render_failure` | `RenderFailure`, a reporter's reason for not writing its document. |
 | `cli::output::report` | What a full report shows, handed over in one piece. |
+| `cli::output::thousands_separated` | A count with a comma between each group of three digits, as the text report states its totals. |
 | `cli::output::check_breach` | One exceeded ceiling and the groups behind it. |
 | `cli::output::group_section` | One headed section of a text report, and how its groups read. |
 | `cli::output::display_path` | `DisplayPath::of`, a file as a reporter shows it: relative to the base when it lies under one. |
-| `duplication_stats` | `DuplicationStats`, the counts and percentages a report states. |
+| `groups::duplication_stats` | `DuplicationStats`, the counts and percentages a report states. |
 | `cli::output::text_reporter` | `TextReporter`, the core's implementation of `Reporter`. |
 
 And in `cli/src`, the crate that talks to the machine:

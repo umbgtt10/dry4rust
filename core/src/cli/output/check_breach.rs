@@ -5,7 +5,7 @@
 
 use alloc::string::String;
 
-use crate::duplicate_group::DuplicateGroup;
+use crate::groups::duplicate_group::DuplicateGroup;
 
 /// One ceiling that was exceeded, and the groups that exceeded it.
 ///

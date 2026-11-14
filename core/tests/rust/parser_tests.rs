@@ -9,6 +9,7 @@ use dry4rust::rust::parser::*;
 use dry4rust::source_path::SourcePath;
 use syn::File;
 use syn::Item;
+use syn::ItemMod;
 use syn::parse_str;
 
 fn path(text: &str) -> SourcePath {
@@ -265,6 +266,16 @@ fn handles_parse_errors_gracefully() {
     // Assert
 
     assert!(matches!(result, Err(Error::Parse { .. })), "{result:?}");
+}
+
+// `test` given to another attribute is no cfg(test).
+#[test]
+fn has_cfg_test_attr_of_test_given_to_another_attribute_is_false() {
+    // Arrange
+    let module: ItemMod = parse_str("#[serial(test)] mod checks {}").expect("parses");
+
+    // Act & Assert
+    assert!(!has_cfg_test_attr(&module.attrs));
 }
 
 #[test]

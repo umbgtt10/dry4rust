@@ -5,15 +5,16 @@
 
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
-use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
-use dry4rust::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
+use dry4rust::groups::duplicate_group::DuplicateGroup;
+use dry4rust::groups::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::rust::parser::parse_source;
 use dry4rust::source_path::SourcePath;
 
 const NEAR_PAIR: &str = r"
+
 fn alpha(items: &[i32]) -> i32 {
     let mut total = 0;
     for item in items {
@@ -33,6 +34,7 @@ fn beta(values: &[i32]) -> i32 {
     }
     sum
 }
+
 ";
 
 fn sized_unit(name: &str, node_count: usize) -> CodeUnit {
@@ -89,6 +91,26 @@ fn find_groups_a_pair_whose_sizes_straddle_a_power_of_two() {
          boundary between them and lost the pair"
     );
     assert!((groups[0].similarity() - 14.0 / 15.0).abs() < 1e-9);
+}
+
+// Units of 8, 9 and 10 nodes score 16/17, 18/19 and 16/18 pairwise: one group
+// of three, as similar as its weakest pair.
+#[test]
+fn find_groups_three_similar_units_at_the_score_of_their_weakest_pair() {
+    // Arrange
+    let units = vec![sized_unit("a", 8), sized_unit("b", 9), sized_unit("c", 10)];
+
+    // Act
+    let groups = NearDuplicateFinder::new(0.85).find(&units, &[]);
+
+    // Assert
+    assert_eq!(groups.len(), 1);
+    assert_eq!(groups[0].members().len(), 3);
+    assert!(
+        (groups[0].similarity() - 16.0 / 18.0).abs() < 1e-9,
+        "got {}",
+        groups[0].similarity()
+    );
 }
 
 #[test]

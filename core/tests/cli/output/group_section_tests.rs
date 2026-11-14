@@ -6,7 +6,7 @@
 use crate::common::group;
 use dry4rust::cli::output::group_section::GroupSection;
 use dry4rust::code_unit::CodeUnit;
-use dry4rust::duplicate_group::DuplicateGroup;
+use dry4rust::groups::duplicate_group::DuplicateGroup;
 use dry4rust::source_path::SourcePath;
 
 fn parented(name: &str, parent: &str) -> DuplicateGroup {

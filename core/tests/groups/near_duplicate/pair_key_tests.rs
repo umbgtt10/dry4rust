@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::near_duplicate::pair_key::PairKey;
+use dry4rust::groups::near_duplicate::pair_key::PairKey;
 
 #[test]
 fn new_keeps_equal_indices_as_both_ends() {

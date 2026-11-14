@@ -68,46 +68,6 @@ impl CliOverrides {
     }
 
     #[must_use]
-    pub const fn baseline(&self) -> Option<&SourcePath> {
-        self.baseline.as_ref()
-    }
-
-    #[must_use]
-    pub fn exclude(&self) -> &[String] {
-        &self.exclude
-    }
-
-    #[must_use]
-    pub const fn exclude_tests(&self) -> Option<bool> {
-        self.exclude_tests
-    }
-
-    #[must_use]
-    pub const fn min_lines(&self) -> Option<usize> {
-        self.min_lines
-    }
-
-    #[must_use]
-    pub const fn min_nodes(&self) -> Option<usize> {
-        self.min_nodes
-    }
-
-    #[must_use]
-    pub const fn min_sub_nodes(&self) -> Option<usize> {
-        self.min_sub_nodes
-    }
-
-    #[must_use]
-    pub const fn sub_function(&self) -> Option<bool> {
-        self.sub_function
-    }
-
-    #[must_use]
-    pub const fn threshold(&self) -> Option<f64> {
-        self.threshold
-    }
-
-    #[must_use]
     pub fn with_baseline(self, baseline: Option<SourcePath>) -> Self {
         Self { baseline, ..self }
     }

@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::near_duplicate::pair_key::PairKey;
+use crate::groups::near_duplicate::pair_key::PairKey;
 
 /// Two candidate units found similar enough to be worth grouping, and how
 /// similar they were.

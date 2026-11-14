@@ -5,6 +5,7 @@
 
 use dry4rust::cli::cli_overrides::CliOverrides;
 use dry4rust::config::Config;
+use dry4rust::source_path::SourcePath;
 
 #[test]
 fn apply_to_appends_excludes_rather_than_replacing_the_configured_ones() {
@@ -58,6 +59,39 @@ fn apply_to_with_a_threshold_sets_the_similarity_threshold() {
     assert!((config.similarity_threshold().as_fraction() - 0.75).abs() < f64::EPSILON);
 }
 
+// Each override given stands in for the configured value: every one set here
+// differs from the config it is applied to.
+#[test]
+fn apply_to_with_every_override_given_sets_each_one() {
+    // Arrange
+    let config = Config::default()
+        .with_min_lines(3)
+        .with_min_sub_nodes(11)
+        .with_exclude_tests(false)
+        .with_sub_function(false);
+    let overrides = CliOverrides::default()
+        .with_min_lines(Some(4))
+        .with_min_sub_nodes(Some(12))
+        .with_exclude_tests(Some(true))
+        .with_sub_function(Some(true))
+        .with_baseline(Some(SourcePath::new(String::from("recorded.json"))));
+
+    // Act
+    let config = overrides
+        .apply_to(config)
+        .expect("the overrides are in range");
+
+    // Assert
+    assert_eq!(config.min_lines(), 4);
+    assert_eq!(config.min_sub_nodes(), 12);
+    assert!(config.exclude_tests());
+    assert!(config.sub_function());
+    assert_eq!(
+        config.baseline().map(SourcePath::as_str),
+        Some("recorded.json")
+    );
+}
+
 #[test]
 fn apply_to_with_nothing_set_leaves_every_field_as_it_was() {
     // Arrange
@@ -79,16 +113,4 @@ fn apply_to_with_nothing_set_leaves_every_field_as_it_was() {
     assert_eq!(config.min_sub_nodes(), 11);
     assert!(config.sub_function());
     assert!(config.exclude_tests());
-}
-
-#[test]
-fn threshold_returns_the_override_it_was_given() {
-    // Arrange
-    let overrides = CliOverrides::default().with_threshold(Some(0.75));
-
-    // Act
-    let threshold = overrides.threshold();
-
-    // Assert
-    assert_eq!(threshold, Some(0.75));
 }

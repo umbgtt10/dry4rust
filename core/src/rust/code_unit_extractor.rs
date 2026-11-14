@@ -16,11 +16,13 @@ use syn::visit::Visit;
 use crate::code_unit::CodeUnit;
 use crate::code_unit_kind::CodeUnitKind;
 use crate::fingerprint::Fingerprint;
+use crate::line_span::LineSpan;
 use crate::node::node_kind::NodeKind;
 use crate::node::normalized_node::NormalizedNode;
 use crate::rust::parser::has_cfg_test_attr;
 use crate::rust::parser::has_test_attr;
 use crate::rust::plain_constructor::PlainConstructor;
+use crate::rust::size_floor::SizeFloor;
 use crate::source_path::SourcePath;
 use syn::Expr;
 use syn::ExprClosure;
@@ -34,8 +36,7 @@ use syn::visit;
 /// Extracts code units from a syn file by visiting the AST.
 pub struct CodeUnitExtractor {
     file: SourcePath,
-    min_node_count: usize,
-    min_line_count: usize,
+    floor: SizeFloor,
     units: Vec<CodeUnit>,
     /// Track current impl block context for method naming.
     current_impl: Option<String>,
@@ -50,8 +51,7 @@ impl CodeUnitExtractor {
     pub const fn new(file: SourcePath, min_node_count: usize, min_line_count: usize) -> Self {
         Self {
             file,
-            min_node_count,
-            min_line_count,
+            floor: SizeFloor::new(min_node_count, min_line_count),
             units: Vec::new(),
             current_impl: None,
             in_trait_impl: false,
@@ -77,11 +77,10 @@ impl CodeUnitExtractor {
         is_test: bool,
     ) {
         let node_count = NormalizedNode::count_nodes(&sig) + NormalizedNode::count_nodes(&body);
-        if node_count < self.min_node_count {
-            return;
-        }
-        let line_count = line_end.saturating_sub(line_start) + 1;
-        if self.min_line_count > 0 && line_count < self.min_line_count {
+        if !self
+            .floor
+            .admits(node_count, LineSpan::new(line_start, line_end).lines())
+        {
             return;
         }
         let fingerprint = Fingerprint::from_sig_and_body(&sig, &body);
@@ -226,17 +225,14 @@ impl<'ast> Visit<'ast> for CodeUnitExtractor {
         let line_start = node.or1_token.span.start().line;
         let line_end = match &*node.body {
             Expr::Block(eb) => eb.block.brace_token.span.close().end().line,
-            other => {
-                let end = other.span().end().line;
-                if end > 0 { end } else { line_start }
-            }
+            other => other.span().end().line,
         };
 
         let normalized = NormalizationContext::normalize_closure_expr(node);
         let node_count = NormalizedNode::count_nodes(&normalized);
-        let line_count = line_end.saturating_sub(line_start) + 1;
-        if node_count >= self.min_node_count
-            && (self.min_line_count == 0 || line_count >= self.min_line_count)
+        if self
+            .floor
+            .admits(node_count, LineSpan::new(line_start, line_end).lines())
         {
             let name = format!("closure at {}:{}", self.file, line_start);
             let fingerprint = Fingerprint::from_node(&normalized);

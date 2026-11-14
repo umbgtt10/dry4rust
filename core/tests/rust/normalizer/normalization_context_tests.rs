@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use dry4rust::fingerprint::Fingerprint;
 use dry4rust::node::literal_kind::LiteralKind;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;
@@ -25,10 +26,45 @@ use syn::UnOp;
 use syn::parse::Parser;
 use syn::parse_str;
 
+fn fingerprint_of_expr(source: &str) -> String {
+    Fingerprint::from_node(&normalize_code_expr(source)).to_string()
+}
+
+fn fingerprint_of_stmt(source: &str) -> String {
+    let stmt: Stmt = parse_str(source).expect("the statement parses");
+    let mut ctx = NormalizationContext::new();
+    Fingerprint::from_node(&ctx.normalize_stmt(&stmt)).to_string()
+}
+
+fn fingerprint_of_type(source: &str) -> String {
+    let ty: Type = parse_str(source).expect("the type parses");
+    let mut ctx = NormalizationContext::new();
+    Fingerprint::from_node(&ctx.normalize_type(&ty)).to_string()
+}
+
 fn normalize_code_expr(code: &str) -> NormalizedNode {
     let expr = parse_expr(code);
     let mut ctx = NormalizationContext::new();
     ctx.normalize_expr(&expr)
+}
+
+// Each source beside the fingerprint `fingerprint_of` gives it now, to set
+// against the one recorded.
+fn now(
+    recorded: &[(&'static str, &'static str)],
+    fingerprint_of: fn(&str) -> String,
+) -> Vec<(&'static str, String)> {
+    recorded
+        .iter()
+        .map(|(source, _)| (*source, fingerprint_of(source)))
+        .collect()
+}
+
+fn owned(recorded: &[(&'static str, &'static str)]) -> Vec<(&'static str, String)> {
+    recorded
+        .iter()
+        .map(|(source, fingerprint)| (*source, (*fingerprint).to_string()))
+        .collect()
 }
 
 fn parse_expr(code: &str) -> Expr {
@@ -428,6 +464,112 @@ fn normalize_closures_ignores_the_parameter_names() {
     assert_eq!(n1, n2);
 }
 
+// The recorded fingerprints below are the ones every baseline and ignore file
+// written so far holds (ADR-TheFingerprintFormatIsOwned): a form that changes
+// its fingerprint makes every record of it stale, in every repository that
+// keeps one. One table per family of syntax, every form in it, so a change
+// names the form it moved. A deliberate change re-records the table.
+#[test]
+fn normalize_expr_of_each_binary_operator_keeps_its_recorded_fingerprint() {
+    // Arrange
+    let recorded = [
+        ("a + b", "4aa32b5421479a34"),
+        ("a - b", "260a8257cdeba479"),
+        ("a * b", "c3415637237da065"),
+        ("a / b", "31e285ee474cb540"),
+        ("a % b", "8321ad7108b5b28b"),
+        ("a && b", "b79871e17912fbfa"),
+        ("a || b", "0d9b95da0c1eab15"),
+        ("a ^ b", "41550b04910dcb24"),
+        ("a & b", "be87b8ffc7683458"),
+        ("a | b", "a321d6a7fd2480f7"),
+        ("a << b", "efd6daed54713866"),
+        ("a >> b", "cd918aebac1ade34"),
+        ("a == b", "91f03ea5d8dbc5ca"),
+        ("a < b", "1a9b5f60ac907e10"),
+        ("a <= b", "455ede45a0d8b2a7"),
+        ("a != b", "dc1399af3475d2b5"),
+        ("a >= b", "3cb80e7d1500feec"),
+        ("a > b", "0f266be3d3537a53"),
+        ("a += b", "fac49840e4dd989b"),
+        ("a -= b", "5f9c0bf35e5dba2e"),
+        ("a *= b", "06d11ab66029657a"),
+        ("a /= b", "520a2c335724aa13"),
+        ("a %= b", "cb82daaf3997fa64"),
+        ("a ^= b", "84349e809bb9e273"),
+        ("a &= b", "c2079f0ee2eecd63"),
+        ("a |= b", "2e72c96be5f44820"),
+        ("a <<= b", "762be107fa3e0571"),
+        ("a >>= b", "b0bf8b4c913b749b"),
+    ];
+
+    // Act
+    let fingerprints = now(&recorded, fingerprint_of_expr);
+
+    // Assert
+    assert_eq!(fingerprints, owned(&recorded));
+}
+
+#[test]
+fn normalize_expr_of_each_expression_form_keeps_its_recorded_fingerprint() {
+    // Arrange
+    let recorded = [
+        ("break", "aabc40250076283d"),
+        ("break x", "b028cc011ef101a4"),
+        ("continue", "387495cafad1edbc"),
+        ("f(x)", "62b9b979beee731c"),
+        ("const { x }", "5af2ae9d5e7e6ba2"),
+        ("(x)", "4e45e6ab2f14a935"),
+        ("if let Some(y) = x {}", "2f4cff4a2099faa7"),
+        ("[x; 3]", "9088ae8ca8da39f2"),
+        ("return x", "db4e9d17655b18c8"),
+        ("unsafe { x }", "5af2ae9d5e7e6ba2"),
+    ];
+
+    // Act
+    let fingerprints = now(&recorded, fingerprint_of_expr);
+
+    // Assert
+    assert_eq!(fingerprints, owned(&recorded));
+}
+
+#[test]
+fn normalize_expr_of_each_literal_kind_keeps_its_recorded_fingerprint() {
+    // Arrange
+    let recorded = [
+        ("\"s\"", "136739df81b783d5"),
+        ("b\"s\"", "3932f02db7bc5b2b"),
+        ("c\"s\"", "26bb9557651f33df"),
+        ("b'x'", "d06814c6cd6c3d31"),
+        ("'x'", "9c174d1ad40452bb"),
+        ("1", "9d7caafe3198ff8b"),
+        ("1.5", "868a13452337999a"),
+        ("true", "b0e041a7c70a4547"),
+    ];
+
+    // Act
+    let fingerprints = now(&recorded, fingerprint_of_expr);
+
+    // Assert
+    assert_eq!(fingerprints, owned(&recorded));
+}
+
+#[test]
+fn normalize_expr_of_each_unary_operator_keeps_its_recorded_fingerprint() {
+    // Arrange
+    let recorded = [
+        ("*a", "6e2f30afe011bbd8"),
+        ("!a", "7c9731f02e0761ed"),
+        ("-a", "f5ba673aac17c95c"),
+    ];
+
+    // Act
+    let fingerprints = now(&recorded, fingerprint_of_expr);
+
+    // Assert
+    assert_eq!(fingerprints, owned(&recorded));
+}
+
 #[test]
 fn normalize_impl_item_fn_splits_a_method_into_signature_and_body() {
     // Arrange
@@ -626,6 +768,23 @@ fn normalize_stmt_gives_alpha_equivalent_lets_the_same_node() {
 }
 
 #[test]
+fn normalize_stmt_of_each_pattern_form_keeps_its_recorded_fingerprint() {
+    // Arrange
+    let recorded = [
+        ("let (a, b) = v;", "4d7472e07c8b8c7b"),
+        ("let m!(a) = v;", "efa8ffd124039a70"),
+        ("let a::B = v;", "bb00016b86f2f009"),
+        ("let a: u8 = v;", "913ade0162413faa"),
+    ];
+
+    // Act
+    let fingerprints = now(&recorded, fingerprint_of_stmt);
+
+    // Assert
+    assert_eq!(fingerprints, owned(&recorded));
+}
+
+#[test]
 fn normalize_type_gives_distinct_types_distinct_placeholders_in_one_context() {
     // Arrange -- types become positional placeholders, so telling two apart is
     // only meaningful within a single context. In separate contexts the first
@@ -702,6 +861,25 @@ fn normalize_type_keeps_never_and_infer_apart() {
 
     // Assert
     assert_ne!(a, b);
+}
+
+#[test]
+fn normalize_type_of_each_type_form_keeps_its_recorded_fingerprint() {
+    // Arrange
+    let recorded = [
+        ("a::B", "bdbc8ba52dc8a22b"),
+        ("<T>::A", "d7a56413d49ae9fd"),
+        ("&T", "0fd4d29d38de0d18"),
+        ("&mut T", "c06cda420e1fc7d5"),
+        ("m!(T)", "7a92f483d54cda1f"),
+        ("impl a::B", "48baca26ca1c7d9d"),
+    ];
+
+    // Act
+    let fingerprints = now(&recorded, fingerprint_of_type);
+
+    // Assert
+    assert_eq!(fingerprints, owned(&recorded));
 }
 
 #[test]

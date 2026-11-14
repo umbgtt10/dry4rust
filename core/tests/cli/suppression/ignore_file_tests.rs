@@ -5,8 +5,8 @@
 
 use crate::support::in_memory_ignore_store::InMemoryIgnoreStore;
 use dry4rust::cli::suppression::ignore_file::IgnoreFile;
-use dry4rust::duplicate_group::DuplicateGroup;
 use dry4rust::fingerprint::Fingerprint;
+use dry4rust::groups::duplicate_group::DuplicateGroup;
 use dry4rust::node::literal_kind::LiteralKind;
 use dry4rust::node::node_kind::NodeKind;
 use dry4rust::node::normalized_node::NormalizedNode;

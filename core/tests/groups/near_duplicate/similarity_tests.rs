@@ -3,7 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use dry4rust::near_duplicate::similarity::*;
+use dry4rust::groups::near_duplicate::similarity::*;
 use dry4rust::node::bin_op_kind::BinOpKind;
 use dry4rust::node::literal_kind::LiteralKind;
 use dry4rust::node::node_kind::NodeKind;
@@ -301,4 +301,47 @@ fn similarity_score_never_matches_a_then_branch_against_an_else_branch() {
          match; free alignment would have paired a then-branch against an \
          else-branch and called these two identical, got {score}"
     );
+}
+
+// Two absent slots are not a match: identical ifs without an else score one,
+// not more.
+#[test]
+fn similarity_score_of_two_ifs_without_an_else_is_one() {
+    // Arrange
+    let without_else = || {
+        NormalizedNode::with_children(
+            NodeKind::If,
+            vec![
+                var(0),
+                block_of(&[NodeKind::Return]),
+                NormalizedNode::none(),
+            ],
+        )
+    };
+
+    // Act
+    let score = similarity_score(&without_else(), &without_else());
+
+    // Assert
+    assert!((score - 1.0).abs() < f64::EPSILON, "got {score}");
+}
+
+// Each child of one list pairs with one child of the other at most: a
+// statement written once matches one of the two copies, whichever side holds
+// them. Block + Return against Block + Return + Return: 2 * 2 / (2 + 3).
+#[test]
+fn similarity_score_pairs_each_child_with_one_child_at_most() {
+    // Arrange
+    let once = block_of(&[NodeKind::Return]);
+    let twice = block_of(&[NodeKind::Return, NodeKind::Return]);
+
+    // Act
+    let (forward, backward) = (
+        similarity_score(&once, &twice),
+        similarity_score(&twice, &once),
+    );
+
+    // Assert
+    assert!((forward - 0.8).abs() < 1e-9, "got {forward}");
+    assert!((backward - 0.8).abs() < 1e-9, "got {backward}");
 }

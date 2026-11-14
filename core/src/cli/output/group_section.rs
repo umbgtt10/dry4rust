@@ -9,7 +9,7 @@ use core::fmt::Write as _;
 
 use crate::cli::output::display_path::DisplayPath;
 use crate::code_unit::CodeUnit;
-use crate::duplicate_group::DuplicateGroup;
+use crate::groups::duplicate_group::DuplicateGroup;
 use crate::source_path::SourcePath;
 
 /// One headed section of a text report, and how the groups under it read.

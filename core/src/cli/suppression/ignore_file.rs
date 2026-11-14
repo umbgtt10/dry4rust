@@ -8,8 +8,8 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use crate::cli::suppression::ignore_entry::IgnoreEntry;
-use crate::duplicate_group::DuplicateGroup;
 use crate::fingerprint::Fingerprint;
+use crate::groups::duplicate_group::DuplicateGroup;
 use crate::source_path::SourcePath;
 use crate::storage_failure::StorageFailure;
 use crate::traits::ignore_store::IgnoreStore;
