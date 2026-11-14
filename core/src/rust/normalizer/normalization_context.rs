@@ -363,7 +363,6 @@ impl NormalizationContext {
                 vec![self.normalize_pat(&el.pat), self.normalize_expr(&el.expr)],
             ),
             Expr::Macro(em) => self.normalize_macro(&em.mac),
-            Expr::Group(eg) => self.normalize_expr(&eg.expr),
             Expr::Unsafe(eu) => self.normalize_block(&eu.block),
             Expr::Const(ec) => self.normalize_block(&ec.block),
             _ => NormalizedNode::leaf(NodeKind::Opaque),
