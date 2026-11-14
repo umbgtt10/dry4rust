@@ -17,6 +17,7 @@ pub mod config_tests;
 pub mod file_config_tests;
 pub mod fingerprint_tests;
 pub mod groups;
+pub mod line_span_tests;
 pub mod node;
 pub mod rust;
 pub mod scanner_tests;

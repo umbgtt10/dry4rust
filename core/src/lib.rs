@@ -20,6 +20,7 @@ pub mod error;
 pub mod file_config;
 pub mod fingerprint;
 pub mod groups;
+pub mod line_span;
 pub mod node;
 pub mod rust;
 pub mod scanner;

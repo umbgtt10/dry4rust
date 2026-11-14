@@ -3,6 +3,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::common::group;
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::groups::duplicate_group::DuplicateGroup;
 use dry4rust::rust::parser::parse_source;
@@ -11,6 +12,27 @@ use dry4rust::source_path::SourcePath;
 fn units_from(code: &str) -> Vec<CodeUnit> {
     parse_source(&SourcePath::new(String::from("sample.rs")), code, 1, 0)
         .expect("the sample parses")
+}
+
+// Every member of the helper's groups spans lines 1 to 9.
+#[test]
+fn compute_stats_counts_the_lines_of_every_unit_and_of_each_kind_of_group() {
+    // Arrange
+    let exact = vec![group(1, &["a", "b"])];
+    let near = vec![group(2, &["c", "d", "e"])];
+    let units: Vec<CodeUnit> = exact
+        .iter()
+        .chain(near.iter())
+        .flat_map(|group| group.members().to_vec())
+        .collect();
+
+    // Act
+    let stats = DuplicateGroup::compute_stats(&units, &exact, &near);
+
+    // Assert
+    assert_eq!(stats.total_lines(), 45);
+    assert_eq!(stats.exact_duplicate_lines(), 18);
+    assert_eq!(stats.near_duplicate_lines(), 27);
 }
 
 #[test]

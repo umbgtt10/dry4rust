@@ -17,7 +17,7 @@ format. It declares a trait for everything it needs from the machine, and
 parses the command line, prints, and returns the exit code. `cli` depends on
 `core`, never the reverse.
 
-`core/src` holds 86 source files, roughly 7,000 lines, one object each and
+`core/src` holds 88 source files, roughly 7,000 lines, one object each and
 records where `record-home` puts them. Five directories group the modules that
 answer one question between them: `groups/`, what an analysis finds -- the
 groups, the four kinds of them together (`Findings`), the statistics over them
@@ -29,12 +29,13 @@ nodes are named by, and the encoder and the placeholder collector that read it;
 `rust/`, the only `LanguageAnalyzer` there is; and `traits/`, the ports.
 
 The house rules allow twenty files at the top of `src/` and five directories
-under it. Both were full when `Findings` came, on 2026-11-14: `groups/` took
-`duplicate_group` and `duplication_stats` from the top, and `near_duplicate/`
-from beside it, so seventeen files sit beside `lib.rs` and five directories
-under `src/`, `traits/` having taken the fifth slot when `suppression/` moved
-under `cli/`. The next directory forces a grouping decision rather than
-another loose one, which is what the limits are for.
+under it. Both were full on 2026-11-14, when `Findings` needed a place:
+`groups/` took `duplicate_group` and `duplication_stats` from the top and
+`near_duplicate/` from beside it, and `line_span` took one of the slots that
+freed. Eighteen files sit beside `lib.rs` and five directories under `src/`,
+`traits/` having taken the fifth when `suppression/` moved under `cli/`. The
+next directory forces a grouping decision rather than another loose one, which
+is what the limits are for.
 
 ## Pipeline
 
@@ -94,6 +95,7 @@ bodies as further units, which then travel the same path.
 | `analyzer` | `LanguageAnalyzer`, the trait every backend implements. One implementation today. |
 | `rust::parser` | `syn` -> `CodeUnit`, one per function, method and closure. |
 | `rust::code_unit_extractor` | `CodeUnitExtractor`, the visitor that walks a parsed file and keeps each unit over the floors. |
+| `rust::size_floor` | `SizeFloor`, the floors a unit must reach -- its nodes and its lines -- the one rule a function and a closure are both held to. |
 | `rust::normalizer` | The normalisation rules, and the normalised function they return. |
 | `rust::normalizer::normalization_context` | `NormalizationContext`: every normalisation rule, a method per syntax category, and the placeholder counters they share, so the context that numbers the placeholders is `self` rather than a `&mut` threaded through every call. Two identifiers map to the same placeholder only within one context. |
 | `rust::normalizer::normalized_fn` | `NormalizedFn`, a normalised function's signature and body, named and kept apart. |
@@ -103,6 +105,7 @@ bodies as further units, which then travel the same path.
 | `fingerprint` | `Fingerprint`, a hashed `NormalizedNode`. |
 | `node::node_encoder` | The byte format a fingerprint is computed over -- variants by name, children counted. |
 | `stable_hasher` | FNV-1a 64, defined here so a fingerprint survives a toolchain upgrade. |
+| `line_span` | `LineSpan`, the lines a unit spans, its first and its last counted: what the line floor and the statistics both count. |
 | `sub_unit` / `sub_unit_extractor` | Compound structures inside a body, as further comparable units. |
 | `groups::duplicate_group` | `DuplicateGroup`, exact grouping, and the statistics computed over the groups. |
 | `groups::findings` | `Findings`, the four kinds of group a run finds -- exact and near, over whole units and within them -- set aside by the ignore file and the baseline, and counted, as one. |

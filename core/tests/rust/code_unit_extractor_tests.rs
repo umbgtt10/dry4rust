@@ -5,12 +5,27 @@
 
 use dry4rust::code_unit::CodeUnit;
 use dry4rust::code_unit_kind::CodeUnitKind;
+use dry4rust::node::normalized_node::NormalizedNode;
 use dry4rust::rust::code_unit_extractor::CodeUnitExtractor;
+use dry4rust::rust::normalizer::normalization_context::NormalizationContext;
 use dry4rust::source_path::SourcePath;
+use syn::ItemFn;
 use syn::parse_file;
+use syn::parse_str;
 use syn::visit::Visit;
 
 const SOURCE: &str = "fn alpha() -> i32 {\n    let x = 1;\n    x + 1\n}\n";
+
+fn floored(source: &str, min_line_count: usize) -> Vec<CodeUnit> {
+    let file = parse_file(source).expect("parses");
+    let mut extractor = CodeUnitExtractor::new(
+        SourcePath::new(String::from("src/alpha.rs")),
+        1,
+        min_line_count,
+    );
+    extractor.visit_file(&file);
+    extractor.into_units()
+}
 
 fn visited(source: &str, min_node_count: usize) -> Vec<CodeUnit> {
     let file = parse_file(source).expect("parses");
@@ -36,6 +51,22 @@ fn into_units_after_visiting_a_function_holds_it_with_its_file() {
     assert_eq!((units[0].line_start, units[0].line_end), (1, 4));
 }
 
+// A unit's size is its signature's nodes and its body's together.
+#[test]
+fn into_units_counts_a_function_s_signature_and_body_nodes() {
+    // Arrange
+    let normalized =
+        NormalizationContext::normalize_item_fn(&parse_str::<ItemFn>(SOURCE).expect("parses"));
+    let expected = NormalizedNode::count_nodes(&normalized.signature)
+        + NormalizedNode::count_nodes(&normalized.body);
+
+    // Act
+    let units = visited(SOURCE, 1);
+
+    // Assert
+    assert_eq!(units[0].node_count, expected);
+}
+
 #[test]
 fn into_units_keeps_a_constructor_that_converts_its_parameters() {
     // Arrange & Act
@@ -59,6 +90,19 @@ fn into_units_keeps_a_trait_impls_plain_function() {
 
     // Assert
     assert_eq!(units.len(), 1);
+}
+
+#[test]
+fn into_units_leaves_out_a_closure_below_the_line_floor() {
+    // Arrange
+    let source = "fn outer() {\n    let g = |x: i32| x + 1;\n    g(1);\n}\n";
+
+    // Act
+    let units = floored(source, 3);
+
+    // Assert
+    assert_eq!(units.len(), 1);
+    assert_eq!(units[0].kind, CodeUnitKind::Function);
 }
 
 #[test]
@@ -118,4 +162,22 @@ fn into_units_of_an_extractor_that_visited_nothing_is_empty() {
 
     // Assert
     assert!(units.is_empty());
+}
+
+// An expression closure ends where its expression does, here two lines
+// below the bars.
+#[test]
+fn into_units_spans_an_expression_closure_to_its_last_line() {
+    // Arrange
+    let source = "fn outer() {\n    let f = |x: i32|\n        x\n            + 1;\n}\n";
+
+    // Act
+    let units = floored(source, 3);
+
+    // Assert
+    let closure = units
+        .iter()
+        .find(|unit| unit.kind == CodeUnitKind::Closure)
+        .expect("the closure reaches the line floor");
+    assert_eq!((closure.line_start, closure.line_end), (2, 4));
 }

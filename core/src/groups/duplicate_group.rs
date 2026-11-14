@@ -10,6 +10,7 @@ use crate::code_unit::CodeUnit;
 use crate::fingerprint::Fingerprint;
 use crate::groups::duplication_stats::DuplicationStats;
 use crate::groups::near_duplicate::near_duplicate_finder::NearDuplicateFinder;
+use crate::line_span::LineSpan;
 
 /// A group of duplicate code units.
 #[derive(Debug, Clone)]
@@ -85,7 +86,7 @@ impl DuplicateGroup {
     ) -> DuplicationStats {
         let total_lines: usize = units
             .iter()
-            .map(|u| u.line_end.saturating_sub(u.line_start) + 1)
+            .map(|u| LineSpan::new(u.line_start, u.line_end).lines())
             .sum();
 
         DuplicationStats::default()
@@ -135,7 +136,7 @@ impl DuplicateGroup {
         group
             .members
             .iter()
-            .map(|m| m.line_end.saturating_sub(m.line_start) + 1)
+            .map(|m| LineSpan::new(m.line_start, m.line_end).lines())
             .sum()
     }
 }
